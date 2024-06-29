@@ -1,3 +1,9 @@
 <resources>
-    <string name="app_name">BleSmartKey</string>
+    <string name="app_name">Ble Smart Key</string>
+    <string name="signal_strength">Signal Strength</string>
+    <string name="open_door">Open door</string>
+    <string name="state_open">Opened</string>
+    <string name="state_close">Closed</string>
+    <string name="connect">Connect</string>
+
 </resources>
