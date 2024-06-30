@@ -31,20 +31,17 @@ fun DeviceListItem(
     modifier: Modifier = Modifier,
     deviceName: String,
     isDoorOpen: Boolean,
-    isVisible: Boolean,
-    rssi: Int,
+    rssi: Int?,
     onOpenDoorClick: () -> Unit,
 ){
     DeviceItem(
         modifier = modifier,
         deviceName = deviceName,
         rssi = rssi,
-        isVisible = isVisible,
         infoText = if (isDoorOpen) stringResource(id = R.string.state_open) else stringResource(id = R.string.state_close),
-        infoWarnings = !isVisible && isDoorOpen,
+        infoWarnings = (rssi == null) && isDoorOpen,
         buttonText = stringResource(id = R.string.open_door),
-        buttonEnable = isVisible,
-        onButtonClick = onOpenDoorClick
+        onButtonClick = if(rssi != null) onOpenDoorClick else null
     )
 }
 
@@ -53,19 +50,16 @@ fun DeviceScanItem(
     modifier: Modifier = Modifier,
     deviceName: String,
     deviceAdd: String,
-    isVisible: Boolean = true,
-    rssi: Int,
+    rssi: Int?,
     onConnectClick: () -> Unit,
 ){
     DeviceItem(
         modifier = modifier,
         deviceName = deviceName,
         rssi = rssi,
-        isVisible = isVisible,
         infoText = deviceAdd,
         infoWarnings = false,
         buttonText = stringResource(id = R.string.connect),
-        buttonEnable = isVisible,
         onButtonClick = onConnectClick
     )
 }
@@ -74,13 +68,11 @@ fun DeviceScanItem(
 fun DeviceItem(
     modifier: Modifier = Modifier,
     deviceName: String,
-    rssi: Int,
-    isVisible: Boolean,
+    rssi: Int?,
     infoText: String,
     infoWarnings: Boolean,
     buttonText: String,
-    buttonEnable: Boolean,
-    onButtonClick: () -> Unit
+    onButtonClick: (() -> Unit)?
 ) {
     Card (
         modifier = modifier
@@ -90,7 +82,7 @@ fun DeviceItem(
                 .padding(dimensionResource(id = R.dimen.padding_medium)),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            SignalStrengthIcon(isVisible, rssi)
+            SignalStrengthIcon(rssi)
 
             Spacer(modifier = Modifier.width(dimensionResource(id = R.dimen.padding_medium)))
 
@@ -115,8 +107,8 @@ fun DeviceItem(
 
             // Place the button at the end of the row
             Button(
-                onClick = onButtonClick,
-                enabled = buttonEnable,
+                onClick = { onButtonClick?.invoke() },
+                enabled = onButtonClick != null,
                 modifier = Modifier.padding(start = dimensionResource(id = R.dimen.padding_medium))
             ) {
                 Text(
@@ -129,9 +121,9 @@ fun DeviceItem(
 }
 
 @Composable
-fun SignalStrengthIcon(isDeviceVisible: Boolean, rssi: Int) {
+fun SignalStrengthIcon(rssi: Int?) {
     val signalStrengthIcon = when {
-        !isDeviceVisible -> R.drawable.rounded_signal_cellular_off_24
+        rssi == null -> R.drawable.rounded_signal_cellular_off_24
         rssi > -40 -> R.drawable.rounded_signal_cellular_4_bar_24
         rssi > -55 -> R.drawable.rounded_signal_cellular_3_bar_24
         rssi > -70 -> R.drawable.rounded_signal_cellular_2_bar_24
@@ -148,7 +140,7 @@ fun SignalStrengthIcon(isDeviceVisible: Boolean, rssi: Int) {
             modifier = Modifier.size(dimensionResource(id = R.dimen.rssi_height))
         )
         Spacer(Modifier.height(dimensionResource(id = R.dimen.padding_tiny)))
-        Text(text = "$rssi dBm")
+        Text(text = if (rssi != null) "$rssi dBm" else stringResource(id = R.string.offline))
     }
 }
 
@@ -158,8 +150,7 @@ private fun DeviceItemPreview() {
     DeviceListItem(
         deviceName = "My Device",
         isDoorOpen = false,
-        isVisible = false,
-        rssi = -54,
+        rssi = null,
         onOpenDoorClick = {}
     )
 }

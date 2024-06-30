@@ -13,6 +13,7 @@ fun DevicesListScreen(modifier: Modifier = Modifier) {
     LazyColumn (
         modifier = modifier
     ){
+        
     }
 }
 

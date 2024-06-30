@@ -5,5 +5,5 @@
     <string name="state_open">Opened</string>
     <string name="state_close">Closed</string>
     <string name="connect">Connect</string>
-
+    <string name="offline">Offline</string>
 </resources>
