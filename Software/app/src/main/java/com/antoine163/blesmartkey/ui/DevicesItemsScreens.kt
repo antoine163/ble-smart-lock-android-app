@@ -27,33 +27,33 @@ import com.antoine163.blesmartkey.R
 
 
 @Composable
-fun DeviceListItem(
+fun DeviceListItemScreen(
     modifier: Modifier = Modifier,
     deviceName: String,
     isDoorOpen: Boolean,
     rssi: Int?,
     onOpenDoorClick: () -> Unit,
 ){
-    DeviceItem(
+    DeviceItemScreen(
         modifier = modifier,
         deviceName = deviceName,
         rssi = rssi,
         infoText = if (isDoorOpen) stringResource(id = R.string.state_open) else stringResource(id = R.string.state_close),
         infoWarnings = (rssi == null) && isDoorOpen,
         buttonText = stringResource(id = R.string.open_door),
-        onButtonClick = if(rssi != null) onOpenDoorClick else null
+        onButtonClick = if((rssi != null) && !isDoorOpen) onOpenDoorClick else null
     )
 }
 
 @Composable
-fun DeviceScanItem(
+fun DeviceScanItemScreen(
     modifier: Modifier = Modifier,
     deviceName: String,
     deviceAdd: String,
     rssi: Int?,
     onConnectClick: () -> Unit,
 ){
-    DeviceItem(
+    DeviceItemScreen(
         modifier = modifier,
         deviceName = deviceName,
         rssi = rssi,
@@ -65,7 +65,7 @@ fun DeviceScanItem(
 }
 
 @Composable
-fun DeviceItem(
+fun DeviceItemScreen(
     modifier: Modifier = Modifier,
     deviceName: String,
     rssi: Int?,
@@ -146,8 +146,8 @@ fun SignalStrengthIcon(rssi: Int?) {
 
 @Preview
 @Composable
-private fun DeviceItemPreview() {
-    DeviceListItem(
+private fun DeviceItemScreenPreview() {
+    DeviceListItemScreen(
         deviceName = "My Device",
         isDoorOpen = false,
         rssi = null,
@@ -157,8 +157,8 @@ private fun DeviceItemPreview() {
 
 @Preview
 @Composable
-private fun DeviceScanItemPreview() {
-    DeviceScanItem(
+private fun DeviceScanItemScreenPreview() {
+    DeviceScanItemScreen(
         deviceName = "My Device",
         deviceAdd = "46:AF:B8:A6:76:10",
         rssi = -54,
