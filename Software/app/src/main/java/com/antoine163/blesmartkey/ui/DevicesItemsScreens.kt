@@ -1,5 +1,6 @@
 package com.antoine163.blesmartkey.ui
 
+import android.content.res.Configuration
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -49,7 +50,7 @@ fun DeviceListItemScreen(
 fun DeviceScanItemScreen(
     modifier: Modifier = Modifier,
     deviceName: String,
-    deviceAdd: String,
+    deviceAddress: String,
     rssi: Int?,
     onConnectClick: () -> Unit,
 ){
@@ -57,10 +58,10 @@ fun DeviceScanItemScreen(
         modifier = modifier,
         deviceName = deviceName,
         rssi = rssi,
-        infoText = deviceAdd,
+        infoText = deviceAddress,
         infoWarnings = false,
         buttonText = stringResource(id = R.string.connect),
-        onButtonClick = onConnectClick
+        onButtonClick = if (rssi != null) onConnectClick else null
     )
 }
 
@@ -137,14 +138,19 @@ fun SignalStrengthIcon(rssi: Int?) {
         Icon(
             painter = painterResource(id = signalStrengthIcon),
             contentDescription = stringResource(id = R.string.signal_strength),
-            modifier = Modifier.size(dimensionResource(id = R.dimen.rssi_height))
+            modifier = Modifier.size(dimensionResource(id = R.dimen.icon_medium_height))
         )
         Spacer(Modifier.height(dimensionResource(id = R.dimen.padding_tiny)))
         Text(text = if (rssi != null) "$rssi dBm" else stringResource(id = R.string.offline))
     }
 }
 
-@Preview
+@Preview(name = "Light Mode")
+@Preview(
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    showBackground = true,
+    name = "Dark Mode"
+)
 @Composable
 private fun DeviceItemScreenPreview() {
     DeviceListItemScreen(
@@ -155,12 +161,17 @@ private fun DeviceItemScreenPreview() {
     )
 }
 
-@Preview
+@Preview(name = "Light Mode")
+@Preview(
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    showBackground = true,
+    name = "Dark Mode"
+)
 @Composable
 private fun DeviceScanItemScreenPreview() {
     DeviceScanItemScreen(
         deviceName = "My Device",
-        deviceAdd = "46:AF:B8:A6:76:10",
+        deviceAddress = "46:AF:B8:A6:76:10",
         rssi = -54,
         onConnectClick = {}
     )

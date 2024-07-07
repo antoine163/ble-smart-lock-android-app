@@ -1,9 +1,33 @@
 <resources>
     <string name="app_name">Ble Smart Key</string>
     <string name="signal_strength">Signal Strength</string>
-    <string name="open_door">Open door</string>
+    <string name="open_door">Open</string>
     <string name="state_open">Opened</string>
     <string name="state_close">Closed</string>
+    <string name="edite">Edite</string>
     <string name="connect">Connect</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="dissociate">Dissociate</string>
+    <string name="unlock">Unlock</string>
     <string name="offline">Offline</string>
+    <string name="scaning">Scaning …</string>
+    <string name="actions">Actions</string>
+    <string name="threshold">Threshold</string>
+    <string name="distance">Distance</string>
+    <string name="current_brightness">Current brightness</string>
+    <string name="current_distance">Current distance</string>
+
+    <string name="pair_device_image_description">Illustration
+        showing how to press the BOND button on the smart lock.</string>
+    <string name="touch_app_icon_description">Touch to initiate pairing</string>
+    <string name="pair_device_instructions">To pair your smart lock, press the
+        BOND
+        button as shown in the image below.</string>
+    <string name="pair_device_information">In pairing mode,
+        the LED blinks green, and the smart lock is visible for 10 seconds.</string>
+
+    <string name="night_brightness">Night brightness</string>
+    <string name="night_brightness_info">Activate the lighting upon door opening if the ambient brightness is under the specified level.</string>
+    <string name="auto_unlock">Auto unlock</string>
+    <string name="auto_unlock_info">Unlock automatically when the lock is closer than the set distance.</string>
 </resources>
