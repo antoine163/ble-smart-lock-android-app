@@ -66,7 +66,7 @@ fun EmptyScanResultsCard(modifier: Modifier = Modifier) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = stringResource(id = R.string.scaning),
+                text = stringResource(id = R.string.scanning),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )

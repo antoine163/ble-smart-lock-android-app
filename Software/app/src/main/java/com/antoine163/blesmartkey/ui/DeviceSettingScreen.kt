@@ -4,6 +4,8 @@ import android.content.res.Configuration
 import android.graphics.LinearGradient
 import android.util.Log
 import androidx.compose.animation.expandHorizontally
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -61,6 +63,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -105,19 +108,45 @@ fun DevicesSettingScreen(
             // Door Icon
             Column {
                 Spacer(modifier = Modifier.padding(top = 50.dp))
-                val doorStateIconId = when {
-                    device.isDoorOpen -> R.drawable.rounded_door_open_24
-                    else -> R.drawable.rounded_door_front_24
+
+                Box {
+                    var doorStateIconId = R.drawable.rounded_door_front_24
+                    var doorStateDescId = R.string.state_close
+                    if (device.isOpened) {
+                        doorStateIconId = R.drawable.rounded_door_open_24
+                        doorStateDescId = R.string.state_open
+                    }
+
+                    var lockIconId = R.drawable.rounded_lock_24
+                    var lockDescId = R.string.locked
+                    if (device.isUnlocked) {
+                        lockIconId = R.drawable.rounded_lock_open_right_24
+                        lockDescId = R.string.unlocked
+                    }
+
+                    Icon(
+                        painter = painterResource(id = doorStateIconId),
+                        contentDescription = stringResource(doorStateDescId),
+                        modifier = Modifier.size(180.dp)
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .size(180.dp * 0.2f)
+                            .offset(125.dp, 5.dp)
+                            .border(3.dp, LocalContentColor.current, CircleShape)
+                            .background(
+                                color = MaterialTheme.colorScheme.surface,
+                                shape = CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(id = lockIconId),
+                            contentDescription = stringResource(id = lockDescId),
+                        )
+                    }
                 }
-                val doorDescIconId = when {
-                    device.isDoorOpen -> R.string.state_open
-                    else -> R.string.state_close
-                }
-                Icon(
-                    painter = painterResource(id = doorStateIconId),
-                    contentDescription = stringResource(doorDescIconId),
-                    modifier = Modifier.size(180.dp)
-                )
             }
 
             // Signal Strength
@@ -129,7 +158,9 @@ fun DevicesSettingScreen(
         // Device Name and Address
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = dimensionResource(id = R.dimen.padding_small))
         ) {
             Row {
                 Text(
@@ -154,8 +185,8 @@ fun DevicesSettingScreen(
         ActionsCard(modifier = Modifier
             .padding(vertical = dimensionResource(id = R.dimen.padding_small))
             .fillMaxWidth(),
-            isUnlock = device.isUnlock,
-            isDoorOpen = device.isDoorOpen,
+            isUnlock = device.isUnlocked,
+            isDoorOpen = device.isOpened,
             onUnlock = { /*TODO*/ },
             onOpenDoor = { /*TODO*/ },
             onDisconnect = {/*TODO*/ })
@@ -179,7 +210,7 @@ fun DevicesSettingScreen(
         AutoUnlockCard(modifier = Modifier
             .padding(vertical = dimensionResource(id = R.dimen.padding_small))
             .fillMaxWidth(),
-            autoUnlock = device.autoUnlock,
+            autoUnlock = device.autoUnlockEnable,
             unlockDistanceValue = device.autoUnlockDistance,
             currentDistanceValue = currentDistanceValue,
             onAutoUnlockChange = { /*TODO*/ },
@@ -427,11 +458,11 @@ private fun DevicesSettingScreenPreview() {
         name = "Device 1",
         address = "12:34:56:78:90:AB",
         rssi = -20,
-        isDoorOpen = false,
-        isUnlock = false,
+        isOpened = true,
+        isUnlocked = true,
         thresholdNight = 42.8f,
         currentBrightness = 68.7f,
-        autoUnlock = true,
+        autoUnlockEnable = true,
         autoUnlockDistance = 1.5f,
         txPower = -14
     )
@@ -442,9 +473,5 @@ private fun DevicesSettingScreenPreview() {
         device = device
     )
 }
-
-
-
-
 
 

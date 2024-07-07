@@ -18,7 +18,7 @@ fun DevicesListScreen(modifier: Modifier = Modifier,
             DeviceListItemScreen(
                 modifier = if (index == 0) Modifier else Modifier.padding( top = dimensionResource(id = R.dimen.padding_small)),
                 deviceName = device.name,
-                isDoorOpen = device.isDoorOpen,
+                isDoorOpen = device.isOpened,
                 rssi = device.rssi,
                 onOpenDoorClick = {})
         }
@@ -36,25 +36,25 @@ private fun DevicesListScreenPreview() {
             name = "Device 1",
             address = "12:34:56:78:90:AB",
             rssi = -55,
-            isDoorOpen = true
+            isOpened = true
         ),
         DeviceListItem(
             name = "Device 2",
             address = "CD:EF:GH:IJ:KL:MN",
             rssi = -60,
-            isDoorOpen = false
+            isOpened = false
         ),
         DeviceListItem(
             name = "Device 3",
             address = "OP:QR:ST:UV:WX:YZ",
             rssi = -70,
-            isDoorOpen = true
+            isOpened = true
         ),
         DeviceListItem(
             name = "Device 4",
             address = "12:34:56:78:90:AB",
             rssi = null,
-            isDoorOpen = true)
+            isOpened = true)
     )
 
     DevicesListScreen(devices = devices)

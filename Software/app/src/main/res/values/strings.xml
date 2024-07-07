@@ -9,8 +9,10 @@
     <string name="disconnect">Disconnect</string>
     <string name="dissociate">Dissociate</string>
     <string name="unlock">Unlock</string>
+    <string name="unlocked">Unlocked</string>
+    <string name="locked">Locked</string>
     <string name="offline">Offline</string>
-    <string name="scaning">Scaning …</string>
+    <string name="scanning">Scanning …</string>
     <string name="actions">Actions</string>
     <string name="threshold">Threshold</string>
     <string name="distance">Distance</string>
