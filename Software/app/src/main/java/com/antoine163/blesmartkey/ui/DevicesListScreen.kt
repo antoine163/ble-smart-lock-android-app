@@ -1,14 +1,18 @@
 package com.antoine163.blesmartkey.ui
 
+import android.content.res.Configuration
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.content.pm.ShortcutInfoCompat.Surface
 import com.antoine163.blesmartkey.R
 import com.antoine163.blesmartkey.model.DeviceListItem
+import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
 
 @Composable
 fun DevicesListScreen(modifier: Modifier = Modifier,
@@ -27,7 +31,15 @@ fun DevicesListScreen(modifier: Modifier = Modifier,
 
 
 
-@Preview
+@Preview(
+    name = "Light Mode",
+    device = "id:S21 FE"
+)
+@Preview(
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    name = "Dark Mode",
+    device = "id:S21 FE"
+)
 @Composable
 private fun DevicesListScreenPreview() {
     // Create a dummy list of devices for previewing
@@ -56,6 +68,9 @@ private fun DevicesListScreenPreview() {
             rssi = null,
             isOpened = true)
     )
-
-    DevicesListScreen(devices = devices)
+    BleSmartKeyTheme {
+        Surface {
+            DevicesListScreen(devices = devices)
+        }
+    }
 }

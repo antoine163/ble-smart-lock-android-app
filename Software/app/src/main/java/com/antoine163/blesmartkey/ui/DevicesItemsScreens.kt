@@ -24,7 +24,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import com.antoine163.blesmartkey.R
+import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
 
 
 @Composable
@@ -80,10 +82,12 @@ fun DeviceItemScreen(
     ) {
         Row(
             modifier = Modifier
-                .padding(dimensionResource(id = R.dimen.padding_medium)),
+                .padding(dimensionResource(id = R.dimen.padding_small)),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            SignalStrengthIcon(rssi)
+            SignalStrengthIcon(
+                modifier = Modifier.width(50.dp),
+                rssi = rssi)
 
             Spacer(modifier = Modifier.width(dimensionResource(id = R.dimen.padding_medium)))
 
@@ -110,7 +114,8 @@ fun DeviceItemScreen(
             Button(
                 onClick = { onButtonClick?.invoke() },
                 enabled = onButtonClick != null,
-                modifier = Modifier.padding(start = dimensionResource(id = R.dimen.padding_medium))
+                modifier = Modifier
+                    .padding(start = dimensionResource(id = R.dimen.padding_medium))
             ) {
                 Text(
                     text = buttonText,
@@ -122,7 +127,10 @@ fun DeviceItemScreen(
 }
 
 @Composable
-fun SignalStrengthIcon(rssi: Int?) {
+fun SignalStrengthIcon(
+    modifier: Modifier = Modifier,
+    rssi: Int?
+) {
     val signalStrengthIcon = when {
         rssi == null -> R.drawable.rounded_signal_cellular_off_24
         rssi > -40 -> R.drawable.rounded_signal_cellular_4_bar_24
@@ -134,45 +142,59 @@ fun SignalStrengthIcon(rssi: Int?) {
     }
 
     // Use a Column to arrange the icon and text vertically
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally) {
         Icon(
             painter = painterResource(id = signalStrengthIcon),
             contentDescription = stringResource(id = R.string.signal_strength),
             modifier = Modifier.size(dimensionResource(id = R.dimen.icon_medium_height))
         )
         Spacer(Modifier.height(dimensionResource(id = R.dimen.padding_tiny)))
-        Text(text = if (rssi != null) "$rssi dBm" else stringResource(id = R.string.offline))
+        Text(
+            text = if (rssi != null) "$rssi dBm" else stringResource(id = R.string.offline),
+            style = MaterialTheme.typography.bodySmall)
     }
 }
 
-@Preview(name = "Light Mode")
+@Preview(
+    name = "Light Mode",
+    device = "id:S21 FE"
+)
 @Preview(
     uiMode = Configuration.UI_MODE_NIGHT_YES,
-    showBackground = true,
-    name = "Dark Mode"
+    name = "Dark Mode",
+    device = "id:S21 FE"
 )
 @Composable
 private fun DeviceItemScreenPreview() {
-    DeviceListItemScreen(
-        deviceName = "My Device",
-        isDoorOpen = false,
-        rssi = null,
-        onOpenDoorClick = {}
-    )
+    BleSmartKeyTheme {
+        DeviceListItemScreen(
+            deviceName = "My Device",
+            isDoorOpen = false,
+            rssi = null,
+            onOpenDoorClick = {}
+        )
+    }
 }
 
-@Preview(name = "Light Mode")
+@Preview(
+    name = "Light Mode",
+    device = "id:S21 FE"
+)
 @Preview(
     uiMode = Configuration.UI_MODE_NIGHT_YES,
-    showBackground = true,
-    name = "Dark Mode"
+    name = "Dark Mode",
+    device = "id:S21 FE"
 )
 @Composable
 private fun DeviceScanItemScreenPreview() {
-    DeviceScanItemScreen(
-        deviceName = "My Device",
-        deviceAddress = "46:AF:B8:A6:76:10",
-        rssi = -54,
-        onConnectClick = {}
-    )
+    BleSmartKeyTheme {
+        DeviceScanItemScreen(
+            deviceName = "My Device",
+            deviceAddress = "46:AF:B8:A6:76:10",
+            rssi = -54,
+            onConnectClick = {}
+        )
+    }
 }

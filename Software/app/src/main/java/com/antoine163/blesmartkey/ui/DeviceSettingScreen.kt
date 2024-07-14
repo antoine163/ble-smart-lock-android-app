@@ -4,6 +4,7 @@ import android.content.res.Configuration
 import android.graphics.LinearGradient
 import android.util.Log
 import androidx.compose.animation.expandHorizontally
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -45,6 +46,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -77,6 +79,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.antoine163.blesmartkey.R
 import com.antoine163.blesmartkey.model.DeviceSetting
+import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
 import kotlin.math.pow
 import kotlin.text.toFloatOrNull
 
@@ -84,7 +87,6 @@ import kotlin.text.toFloatOrNull
 fun DevicesSettingScreen(
     modifier: Modifier = Modifier, device: DeviceSetting
 ) {
-
     Column(modifier = modifier) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -445,15 +447,19 @@ fun calculateDistanceFromRssi(txPower: Int, rssi: Int): Float {
 }
 
 @Preview(
-    name = "Light Mode", showBackground = true, device = "id:S21 FE"
+    name = "Light Mode",
+    showBackground = true,
+    device = "id:S21 FE"
 )
-//@Preview(
-//    uiMode = Configuration.UI_MODE_NIGHT_YES,
-//    showBackground = true,
-//    name = "Dark Mode"
-//)
+@Preview(
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    name = "Dark Mode",
+    showBackground = true,
+    device = "id:S21 FE"
+)
 @Composable
 private fun DevicesSettingScreenPreview() {
+
     val device = DeviceSetting(
         name = "Device 1",
         address = "12:34:56:78:90:AB",
@@ -466,12 +472,17 @@ private fun DevicesSettingScreenPreview() {
         autoUnlockDistance = 1.5f,
         txPower = -14
     )
-    DevicesSettingScreen(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(dimensionResource(id = R.dimen.padding_small)),
-        device = device
-    )
+
+    BleSmartKeyTheme {
+        Surface {
+            DevicesSettingScreen(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(dimensionResource(id = R.dimen.padding_small)),
+                device = device
+            )
+        }
+    }
 }
 
 

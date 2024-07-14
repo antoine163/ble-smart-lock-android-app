@@ -1,5 +1,6 @@
 package com.antoine163.blesmartkey.ui
 
+import android.content.res.Configuration
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,6 +15,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -31,6 +33,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.antoine163.blesmartkey.R
 import com.antoine163.blesmartkey.model.DeviceScanItem
+import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
 import kotlin.text.substring
 
 /**
@@ -59,30 +62,28 @@ fun DevicesScanScreen(modifier: Modifier = Modifier,
  */
 @Composable
 fun EmptyScanResultsCard(modifier: Modifier = Modifier) {
-    Card(modifier = modifier) {
-        Column(
-            modifier = Modifier.padding(dimensionResource(id = R.dimen.padding_small)),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = stringResource(id = R.string.scanning),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = stringResource(id = R.string.scanning),
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold
+        )
 
-            Spacer(modifier = Modifier.height(dimensionResource(id = R.dimen.padding_medium)))
-            InstructionsText();
+        Spacer(modifier = Modifier.height(dimensionResource(id = R.dimen.padding_medium)))
+        InstructionsText();
 
-            Spacer(modifier = Modifier.height(dimensionResource(id = R.dimen.padding_small)))
-            PairingImage();
+        Spacer(modifier = Modifier.height(dimensionResource(id = R.dimen.padding_small)))
+        PairingImage();
 
-            Spacer(modifier = Modifier.height(dimensionResource(id = R.dimen.padding_small)))
-            Text(
-                text = stringResource(id = R.string.pair_device_information),
-                style = MaterialTheme.typography.bodyMedium
-            )
-        }
+        Spacer(modifier = Modifier.height(dimensionResource(id = R.dimen.padding_small)))
+        Text(
+            text = stringResource(id = R.string.pair_device_information),
+            style = MaterialTheme.typography.bodyMedium
+        )
     }
 }
 
@@ -103,7 +104,6 @@ fun InstructionsText() {
         append(instructions.substring(0, startBondStrIndex))
         withStyle(
             style = SpanStyle(
-                color = Color.Black,
                 fontWeight = FontWeight.Bold
             )
         ) {
@@ -142,7 +142,7 @@ fun PairingImage() {
             contentDescription = stringResource(id = R.string.pair_device_instructions),
             tint = Color.Red,
             modifier = Modifier
-                .size(300.dp*0.2f)
+                .size(300.dp * 0.2f)
                 .offset(145.dp, 75.dp)
                 .rotate(-45f)
         )
@@ -178,7 +178,17 @@ fun DeviceList(
     }
 }
 
-@Preview
+@Preview(
+    name = "Light Mode",
+    showBackground = true,
+    device = "id:S21 FE"
+)
+@Preview(
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    name = "Dark Mode",
+    showBackground = true,
+    device = "id:S21 FE"
+)
 @Composable
 private fun DevicesScanScreenPreview() {
     // Create a dummy list of devices for previewing
@@ -204,12 +214,28 @@ private fun DevicesScanScreenPreview() {
             rssi = null)
     )
 
-    DevicesScanScreen(devices = devices)
+    BleSmartKeyTheme {
+        Surface {
+            DevicesScanScreen(devices = devices)
+        }
+    }
 }
 
-@Preview(device = "id:Megane E-Tech")
+@Preview(
+    name = "Light Mode",
+    device = "id:S21 FE"
+)
+@Preview(
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    name = "Dark Mode",
+    device = "id:S21 FE"
+)
 @Composable
 private fun DevicesScanScreenEmptyPreview() {
     val devices: List<DeviceScanItem> = emptyList()
-    DevicesScanScreen(devices = devices)
+    BleSmartKeyTheme {
+        Surface {
+            DevicesScanScreen(devices = devices)
+        }
+    }
 }
