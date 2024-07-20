@@ -11,7 +11,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.content.pm.ShortcutInfoCompat.Surface
 import com.antoine163.blesmartkey.R
 import com.antoine163.blesmartkey.model.DeviceListItem
 import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme

@@ -73,10 +73,10 @@ fun EmptyScanResultsCard(modifier: Modifier = Modifier) {
         )
 
         Spacer(modifier = Modifier.height(dimensionResource(id = R.dimen.padding_medium)))
-        InstructionsText();
+        InstructionsText()
 
         Spacer(modifier = Modifier.height(dimensionResource(id = R.dimen.padding_small)))
-        PairingImage();
+        PairingImage()
 
         Spacer(modifier = Modifier.height(dimensionResource(id = R.dimen.padding_small)))
         Text(
