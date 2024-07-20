@@ -1,16 +1,99 @@
 package com.antoine163.blesmartkey
 
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.tooling.preview.Preview
 
+import android.content.res.Configuration
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
+import com.antoine163.blesmartkey.ui.DevicesListScreen
+import com.antoine163.blesmartkey.ui.createDemoDeviceList
+import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BleSmartKeyApp() {
-    Text("test")
+    //val scrollBehavior = TopAppBarScrollBehavior()
+
+    Scaffold(
+        //modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        topBar = {
+            CenterAlignedTopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.primary,
+                ),
+                title = {
+                    Text(
+                        stringResource(R.string.app_name),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = { /* do something */ }) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.rounded_menu_24),
+                            contentDescription = stringResource(R.string.open_menu)
+                        )
+                    }
+                },
+                //scrollBehavior = scrollBehavior,
+            )
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { /* do something */ },
+                containerColor = MaterialTheme.colorScheme.primary,
+                elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation()
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.rounded_add_24),
+                    contentDescription = stringResource(R.string.add_device)
+                )
+            }
+        }
+    ) { innerPadding ->
+//        val uiState by viewModel.uiState.collectAsState()
+        DevicesListScreen(
+            modifier = Modifier.padding(dimensionResource(R.dimen.padding_medium)),
+            contentPadding = innerPadding,
+            devices = createDemoDeviceList()
+        )
+    }
 }
 
-@Preview(showSystemUi = true)
+
+@Preview(
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    name = "Dark Mode",
+    device = "id:S21 FE",
+    showSystemUi = false,
+    showBackground = false
+)
+@Preview(
+    name = "Light Mode",
+    device = "id:S21 FE",
+    showSystemUi = false,
+    showBackground = false
+)
 @Composable
 private fun BleSmartKeyAppPreview () {
-    BleSmartKeyApp()
+    BleSmartKeyTheme {
+        BleSmartKeyApp()
+    }
 }

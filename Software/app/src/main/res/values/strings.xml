@@ -18,6 +18,8 @@
     <string name="distance">Distance</string>
     <string name="current_brightness">Current brightness</string>
     <string name="current_distance">Current distance</string>
+    <string name="open_menu">Open menu</string>
+    <string name="add_device">Add device</string>
 
     <string name="pair_device_image_description">Illustration
         showing how to press the BOND button on the smart lock.</string>

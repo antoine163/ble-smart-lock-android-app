@@ -85,7 +85,16 @@ import kotlin.text.toFloatOrNull
 
 @Composable
 fun DevicesSettingScreen(
-    modifier: Modifier = Modifier, device: DeviceSetting
+    modifier: Modifier = Modifier,
+    device: DeviceSetting,
+    onDissociateClick: () -> Unit,
+    onEditNameClick: () -> Unit,
+    onUnlock: () -> Unit,
+    onOpenDoor: () -> Unit,
+    onDisconnect: () -> Unit,
+    onThresholdChange: (Float) -> Unit,
+    onAutoUnlockChange: (Boolean) -> Unit,
+    onUnlockDistanceValue: (Float) -> Unit
 ) {
     Column(modifier = modifier) {
         Row(
@@ -95,7 +104,7 @@ fun DevicesSettingScreen(
 
             // Dissociate Button
             Column(
-                modifier = Modifier.clickable { /*TODO*/ },
+                modifier = Modifier.clickable { onDissociateClick() },
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Icon(
@@ -112,18 +121,22 @@ fun DevicesSettingScreen(
                 Spacer(modifier = Modifier.padding(top = 50.dp))
 
                 Box {
-                    var doorStateIconId = R.drawable.rounded_door_front_24
-                    var doorStateDescId = R.string.state_close
-                    if (device.isOpened) {
-                        doorStateIconId = R.drawable.rounded_door_open_24
-                        doorStateDescId = R.string.state_open
+                    val doorStateIconId = when (device.isOpened) {
+                        true -> R.drawable.rounded_door_open_24
+                        false -> R.drawable.rounded_door_front_24
+                    }
+                    val doorStateDescId = when (device.isOpened) {
+                        true -> R.string.state_open
+                        false -> R.string.state_close
                     }
 
-                    var lockIconId = R.drawable.rounded_lock_24
-                    var lockDescId = R.string.locked
-                    if (device.isUnlocked) {
-                        lockIconId = R.drawable.rounded_lock_open_right_24
-                        lockDescId = R.string.unlocked
+                    val lockIconId = when (device.isUnlocked) {
+                        true -> R.drawable.rounded_lock_open_right_24
+                        false -> R.drawable.rounded_lock_24
+                    }
+                    val lockDescId = when (device.isUnlocked) {
+                        true -> R.string.unlocked
+                        false -> R.string.locked
                     }
 
                     Icon(
@@ -173,9 +186,11 @@ fun DevicesSettingScreen(
                     overflow = TextOverflow.Ellipsis
                 )
 
-                Icon(painter = painterResource(id = R.drawable.rounded_edit_24),
+                Icon(
+                    painter = painterResource(id = R.drawable.rounded_edit_24),
                     contentDescription = stringResource(R.string.edite),
-                    Modifier.clickable { /*TODO*/ })
+                    Modifier.clickable { onEditNameClick() }
+                )
             }
             Text(
                 text = device.address, style = MaterialTheme.typography.bodyMedium
@@ -189,9 +204,9 @@ fun DevicesSettingScreen(
             .fillMaxWidth(),
             isUnlock = device.isUnlocked,
             isDoorOpen = device.isOpened,
-            onUnlock = { /*TODO*/ },
-            onOpenDoor = { /*TODO*/ },
-            onDisconnect = {/*TODO*/ })
+            onUnlock = { onUnlock() },
+            onOpenDoor = { onOpenDoor() },
+            onDisconnect = { onDisconnect() })
 
         // Night Brightness Card
         NightBrightnessCard(
@@ -200,7 +215,7 @@ fun DevicesSettingScreen(
                 .fillMaxWidth(),
             currentBrightnessValue = device.currentBrightness,
             thresholdValue = device.thresholdNight,
-            onThresholdChange = { /*TODO*/ },
+            onThresholdChange = { onThresholdChange(it) }
         )
 
         // Auto Unlock Card
@@ -215,8 +230,8 @@ fun DevicesSettingScreen(
             autoUnlock = device.autoUnlockEnable,
             unlockDistanceValue = device.autoUnlockDistance,
             currentDistanceValue = currentDistanceValue,
-            onAutoUnlockChange = { /*TODO*/ },
-            onUnlockDistanceValue = { /*TODO*/ })
+            onAutoUnlockChange = { onAutoUnlockChange(it) },
+            onUnlockDistanceValue = { onUnlockDistanceValue(it) })
 
     }
 }
@@ -479,7 +494,15 @@ private fun DevicesSettingScreenPreview() {
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(dimensionResource(id = R.dimen.padding_small)),
-                device = device
+                device = device,
+                onDissociateClick = {},
+                onEditNameClick = {},
+                onUnlock = {},
+                onOpenDoor = {},
+                onDisconnect = {},
+                onThresholdChange = {},
+                onAutoUnlockChange = {},
+                onUnlockDistanceValue = {}
             )
         }
     }
