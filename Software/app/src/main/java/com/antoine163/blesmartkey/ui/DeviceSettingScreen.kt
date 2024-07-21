@@ -422,16 +422,16 @@ fun calculateDistanceFromRssi(txPower: Int, rssi: Int): Float {
 }
 
 @Preview(
-    name = "Light Mode",
-    showBackground = true,
-    device = "id:S21 FE"
-)
-@Preview(
     uiMode = Configuration.UI_MODE_NIGHT_YES,
     name = "Dark Mode",
     showBackground = true,
     device = "id:S21 FE"
 )
+//@Preview(
+//    name = "Light Mode",
+//    showBackground = true,
+//    device = "id:S21 FE"
+//)
 @Composable
 private fun DevicesSettingScreenPreview() {
 

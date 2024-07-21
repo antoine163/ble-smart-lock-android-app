@@ -31,7 +31,7 @@ fun DevicesListScreen(
                 deviceName = device.name,
                 isDoorOpen = device.isOpened,
                 rssi = device.rssi,
-                onOpenDoorClick = {})
+                onOpenDoorClick = { /* TODO */ })
         }
     }
 }
@@ -41,10 +41,10 @@ fun DevicesListScreen(
     name = "Dark Mode",
     device = "id:S21 FE"
 )
-@Preview(
-    name = "Light Mode",
-    device = "id:S21 FE"
-)
+//@Preview(
+//    name = "Light Mode",
+//    device = "id:S21 FE"
+//)
 @Composable
 private fun DevicesListScreenPreview() {
     // Create a dummy list of devices for previewing

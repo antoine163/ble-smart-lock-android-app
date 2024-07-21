@@ -2,6 +2,7 @@ package com.antoine163.blesmartkey
 
 
 import android.content.res.Configuration
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -35,7 +36,7 @@ import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
 fun BleSmartKeyApp() {
     //val scrollBehavior = TopAppBarScrollBehavior()
 
-    var addingDevice by remember { mutableStateOf( false ) }
+    var addingDevice by remember { mutableStateOf( true ) }
 
     Scaffold(
         //modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -87,7 +88,9 @@ fun BleSmartKeyApp() {
         }
         else {
             DevicesScanScreen(
-                modifier = Modifier.padding(dimensionResource(R.dimen.padding_medium)),
+                modifier = Modifier
+                    .padding(dimensionResource(R.dimen.padding_medium))
+                    .fillMaxSize(1f),
                 contentPadding = innerPadding,
                 devices = createDemoDeviceScan()
             )
@@ -103,12 +106,12 @@ fun BleSmartKeyApp() {
     showSystemUi = false,
     showBackground = false
 )
-@Preview(
-    name = "Light Mode",
-    device = "id:S21 FE",
-    showSystemUi = false,
-    showBackground = false
-)
+//@Preview(
+//    name = "Light Mode",
+//    device = "id:S21 FE",
+//    showSystemUi = false,
+//    showBackground = false
+//)
 @Composable
 private fun BleSmartKeyAppPreview () {
     BleSmartKeyTheme {

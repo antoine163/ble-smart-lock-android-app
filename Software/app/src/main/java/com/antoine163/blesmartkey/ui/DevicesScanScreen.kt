@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -32,16 +33,16 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.antoine163.blesmartkey.R
-import com.antoine163.blesmartkey.model.DeviceListItem
 import com.antoine163.blesmartkey.model.DeviceScanItem
 import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
-import kotlin.text.substring
+
 
 /**
- * Composable function to display the device scan screen.
+ * Composable function that displays the device scan screen.
  *
- * @param modifier The modifier to be applied to the root element.
- * @param devices The list of scanned devices.
+ * @param modifier Modifier to be applied to the layout.
+ * @param contentPadding Padding values to be applied to the content.
+ * @param devices List of devices discovered during the scan.
  */
 @Composable
 fun DevicesScanScreen(
@@ -50,46 +51,80 @@ fun DevicesScanScreen(
     devices: List<DeviceScanItem>,
 ) {
     if (devices.isEmpty()) {
-        EmptyScanResultsCard(modifier)
+        EmptyScanResults(
+            modifier = modifier,
+            contentPadding = contentPadding)
     } else {
-        DeviceList(modifier, devices) {}
+        DeviceList(
+            modifier = modifier,
+            contentPadding = contentPadding,
+            devices = devices,
+            onConnectClick = { /* TODO */ },
+        )
     }
-
-    // Voir: https://developer.android.com/quick-guides/content/create-progress-indicator
-    // pour ajouter une animation de chargemnt ....
 }
+
 
 /**
- * Composable function for displaying an empty scan results card.
+ * Composable function that displays an empty scan results screen with instructions and an image.
  *
- * @param modifier The modifier to be applied to the card.
+ * @param modifier Modifier to be applied to the layout.
+ * @param contentPadding Padding values to be applied to the content.
  */
 @Composable
-fun EmptyScanResultsCard(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+fun EmptyScanResults(
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(0.dp)
+) {
+    Box(
+        modifier = modifier
     ) {
-        Text(
-            text = stringResource(id = R.string.scanning),
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
-        )
+        Column(
+            modifier = Modifier.padding(contentPadding),
+            verticalArrangement = Arrangement.Center
+        ) {
+            Spacer(modifier = Modifier.weight(1f))
 
-        Spacer(modifier = Modifier.height(dimensionResource(id = R.dimen.padding_medium)))
-        InstructionsText()
+            Text(
+                text = "Pair your smart lock",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+            )
 
-        Spacer(modifier = Modifier.height(dimensionResource(id = R.dimen.padding_small)))
-        PairingImage()
+            Spacer(modifier = Modifier.height(dimensionResource(id = R.dimen.padding_medium)))
+            InstructionsText()
 
-        Spacer(modifier = Modifier.height(dimensionResource(id = R.dimen.padding_small)))
-        Text(
-            text = stringResource(id = R.string.pair_device_information),
-            style = MaterialTheme.typography.bodyMedium
-        )
+            Spacer(modifier = Modifier.height(dimensionResource(id = R.dimen.padding_medium)))
+            PairingImage(modifier = Modifier.align(Alignment.CenterHorizontally))
+
+            Spacer(modifier = Modifier.height(dimensionResource(id = R.dimen.padding_medium)))
+            Text(
+                text = stringResource(id = R.string.pair_device_information),
+                style = MaterialTheme.typography.bodyMedium
+            )
+
+            Spacer(modifier = Modifier.weight(2f))
+            Text(
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+                text = stringResource(id = R.string.scanning),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(dimensionResource(id = R.dimen.padding_medium)))
+            CircularProgressIndicator(
+                modifier = Modifier
+                    .size(64.dp)
+                    .align(Alignment.CenterHorizontally),
+                color = MaterialTheme.colorScheme.secondary,
+                trackColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+
+            Spacer(modifier = Modifier.weight(4f))
+        }
     }
 }
+
+
 
 
 /**
@@ -133,8 +168,8 @@ fun InstructionsText() {
  * @see Box
  */
 @Composable
-fun PairingImage() {
-    Box {
+fun PairingImage(modifier: Modifier = Modifier) {
+    Box(modifier = modifier) {
         Image(
             painter = painterResource(id = R.drawable.bsl_pairing_image),
             contentDescription = stringResource(id = R.string.pair_device_image_description),
@@ -164,14 +199,18 @@ fun PairingImage() {
 @Composable
 fun DeviceList(
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(0.dp),
     devices: List<DeviceScanItem>,
-    onConnectClick: () -> Unit
+    onConnectClick: () -> Unit,
 ) {
-    LazyColumn(modifier = modifier) {
+    LazyColumn(
+        modifier = modifier,
+        contentPadding = contentPadding
+    ) {
         itemsIndexed(devices) { index, device ->
             DeviceScanItemScreen(
                 modifier = if (index == 0) Modifier else Modifier.padding(
-                    top = dimensionResource(id = R.dimen.padding_small)
+                    top = dimensionResource(id = R.dimen.padding_medium)
                 ),
                 deviceName = device.name,
                 deviceAddress = device.address,
@@ -182,11 +221,11 @@ fun DeviceList(
     }
 }
 
-@Preview(
-    name = "Light Mode",
-    showBackground = true,
-    device = "id:S21 FE"
-)
+//@Preview(
+//    name = "Light Mode",
+//    showBackground = true,
+//    device = "id:S21 FE"
+//)
 @Preview(
     uiMode = Configuration.UI_MODE_NIGHT_YES,
     name = "Dark Mode",
@@ -203,10 +242,10 @@ private fun DevicesScanScreenPreview() {
     }
 }
 
-@Preview(
-    name = "Light Mode",
-    device = "id:S21 FE"
-)
+//@Preview(
+//    name = "Light Mode",
+//    device = "id:S21 FE"
+//)
 @Preview(
     uiMode = Configuration.UI_MODE_NIGHT_YES,
     name = "Dark Mode",
@@ -226,26 +265,26 @@ private fun DevicesScanScreenEmptyPreview() {
 
 fun createDemoDeviceScan(): List<DeviceScanItem> {
     // Create a dummy list of devices for previewing
-    val devices = listOf(
-        DeviceScanItem(
-            name = "Device 1",
-            address = "12:34:56:78:90:AB",
-            rssi = -55
-        ),
-        DeviceScanItem(
-            name = "Device 2",
-            address = "CD:EF:GH:IJ:KL:MN",
-            rssi = -60
-        ),
-        DeviceScanItem(
-            name = "Device 3",
-            address = "OP:QR:ST:UV:WX:YZ",
-            rssi = -70
-        ),
-        DeviceScanItem(
-            name = "Device 4",
-            address = "12:34:56:78:90:AB",
-            rssi = null)
+    val devices = listOf<DeviceScanItem>(
+//        DeviceScanItem(
+//            name = "Device 1",
+//            address = "12:34:56:78:90:AB",
+//            rssi = -55
+//        ),
+//        DeviceScanItem(
+//            name = "Device 2",
+//            address = "CD:EF:GH:IJ:KL:MN",
+//            rssi = -60
+//        ),
+//        DeviceScanItem(
+//            name = "Device 3",
+//            address = "OP:QR:ST:UV:WX:YZ",
+//            rssi = -70
+//        ),
+//        DeviceScanItem(
+//            name = "Device 4",
+//            address = "12:34:56:78:90:AB",
+//            rssi = null)
     )
 
     return devices
