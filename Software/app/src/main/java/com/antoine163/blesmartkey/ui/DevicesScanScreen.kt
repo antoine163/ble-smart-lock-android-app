@@ -86,7 +86,7 @@ fun EmptyScanResults(
             Spacer(modifier = Modifier.weight(1f))
 
             Text(
-                text = "Pair your smart lock",
+                text = stringResource(id = R.string.pair_smart_lock),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
             )

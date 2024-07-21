@@ -23,6 +23,7 @@
 
     <string name="pair_device_image_description">Illustration
         showing how to press the BOND button on the smart lock.</string>
+    <string name="pair_smart_lock">"Pair your smart lock"</string>
     <string name="touch_app_icon_description">Touch to initiate pairing</string>
     <string name="pair_device_instructions">To pair your smart lock, press the
         BOND
