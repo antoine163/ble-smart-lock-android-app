@@ -14,6 +14,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
@@ -21,13 +25,17 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import com.antoine163.blesmartkey.ui.DevicesListScreen
+import com.antoine163.blesmartkey.ui.DevicesScanScreen
 import com.antoine163.blesmartkey.ui.createDemoDeviceList
+import com.antoine163.blesmartkey.ui.createDemoDeviceScan
 import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BleSmartKeyApp() {
     //val scrollBehavior = TopAppBarScrollBehavior()
+
+    var addingDevice by remember { mutableStateOf( false ) }
 
     Scaffold(
         //modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -56,24 +64,34 @@ fun BleSmartKeyApp() {
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { /* do something */ },
-                containerColor = MaterialTheme.colorScheme.primary,
-                elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation()
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.rounded_add_24),
-                    contentDescription = stringResource(R.string.add_device)
-                )
+            if ( !addingDevice ) {
+                FloatingActionButton(
+                    onClick = { addingDevice = true },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation()
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.rounded_add_24),
+                        contentDescription = stringResource(R.string.add_device)
+                    )
+                }
             }
         }
     ) { innerPadding ->
-//        val uiState by viewModel.uiState.collectAsState()
-        DevicesListScreen(
-            modifier = Modifier.padding(dimensionResource(R.dimen.padding_medium)),
-            contentPadding = innerPadding,
-            devices = createDemoDeviceList()
-        )
+        if ( !addingDevice ) {
+            DevicesListScreen(
+                modifier = Modifier.padding(dimensionResource(R.dimen.padding_medium)),
+                contentPadding = innerPadding,
+                devices = createDemoDeviceList()
+            )
+        }
+        else {
+            DevicesScanScreen(
+                modifier = Modifier.padding(dimensionResource(R.dimen.padding_medium)),
+                contentPadding = innerPadding,
+                devices = createDemoDeviceScan()
+            )
+        }
     }
 }
 

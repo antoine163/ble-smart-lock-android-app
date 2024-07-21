@@ -5,6 +5,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -31,6 +32,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.antoine163.blesmartkey.R
+import com.antoine163.blesmartkey.model.DeviceListItem
 import com.antoine163.blesmartkey.model.DeviceScanItem
 import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
 import kotlin.text.substring
@@ -42,8 +44,11 @@ import kotlin.text.substring
  * @param devices The list of scanned devices.
  */
 @Composable
-fun DevicesScanScreen(modifier: Modifier = Modifier,
-                      devices: List<DeviceScanItem>) {
+fun DevicesScanScreen(
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+    devices: List<DeviceScanItem>,
+) {
     if (devices.isEmpty()) {
         EmptyScanResultsCard(modifier)
     } else {
@@ -190,29 +195,7 @@ fun DeviceList(
 )
 @Composable
 private fun DevicesScanScreenPreview() {
-    // Create a dummy list of devices for previewing
-    val devices = listOf(
-        DeviceScanItem(
-            name = "Device 1",
-            address = "12:34:56:78:90:AB",
-            rssi = -55
-        ),
-        DeviceScanItem(
-            name = "Device 2",
-            address = "CD:EF:GH:IJ:KL:MN",
-            rssi = -60
-        ),
-        DeviceScanItem(
-            name = "Device 3",
-            address = "OP:QR:ST:UV:WX:YZ",
-            rssi = -70
-        ),
-        DeviceScanItem(
-            name = "Device 4",
-            address = "12:34:56:78:90:AB",
-            rssi = null)
-    )
-
+    val devices = createDemoDeviceScan()
     BleSmartKeyTheme {
         Surface {
             DevicesScanScreen(devices = devices)
@@ -237,4 +220,33 @@ private fun DevicesScanScreenEmptyPreview() {
             DevicesScanScreen(devices = devices)
         }
     }
+}
+
+
+
+fun createDemoDeviceScan(): List<DeviceScanItem> {
+    // Create a dummy list of devices for previewing
+    val devices = listOf(
+        DeviceScanItem(
+            name = "Device 1",
+            address = "12:34:56:78:90:AB",
+            rssi = -55
+        ),
+        DeviceScanItem(
+            name = "Device 2",
+            address = "CD:EF:GH:IJ:KL:MN",
+            rssi = -60
+        ),
+        DeviceScanItem(
+            name = "Device 3",
+            address = "OP:QR:ST:UV:WX:YZ",
+            rssi = -70
+        ),
+        DeviceScanItem(
+            name = "Device 4",
+            address = "12:34:56:78:90:AB",
+            rssi = null)
+    )
+
+    return devices
 }
