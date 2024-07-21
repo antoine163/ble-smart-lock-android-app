@@ -39,6 +39,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.antoine163.blesmartkey.R
+import com.antoine163.blesmartkey.model.DeviceListItem
 import com.antoine163.blesmartkey.model.DeviceSetting
 import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
 import kotlin.math.pow
@@ -46,15 +47,7 @@ import kotlin.math.pow
 @Composable
 fun DevicesSettingScreen(
     modifier: Modifier = Modifier,
-    device: DeviceSetting,
-    onDissociateClick: () -> Unit,
-    onEditNameClick: () -> Unit,
-    onUnlock: () -> Unit,
-    onOpenDoor: () -> Unit,
-    onDisconnect: () -> Unit,
-    onThresholdChange: (Float) -> Unit,
-    onAutoUnlockChange: (Boolean) -> Unit,
-    onUnlockDistanceValue: (Float) -> Unit
+    deviceSetting: DeviceSetting
 ) {
     Column(modifier = modifier) {
         Row(
@@ -64,7 +57,7 @@ fun DevicesSettingScreen(
 
             // Dissociate Button
             Column(
-                modifier = Modifier.clickable { onDissociateClick() },
+                modifier = Modifier.clickable { /* TODO */ },
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Icon(
@@ -81,20 +74,20 @@ fun DevicesSettingScreen(
                 Spacer(modifier = Modifier.padding(top = 50.dp))
 
                 Box {
-                    val doorStateIconId = when (device.isOpened) {
+                    val doorStateIconId = when (deviceSetting.isOpened) {
                         true -> R.drawable.rounded_door_open_24
                         false -> R.drawable.rounded_door_front_24
                     }
-                    val doorStateDescId = when (device.isOpened) {
+                    val doorStateDescId = when (deviceSetting.isOpened) {
                         true -> R.string.state_open
                         false -> R.string.state_close
                     }
 
-                    val lockIconId = when (device.isUnlocked) {
+                    val lockIconId = when (deviceSetting.isUnlocked) {
                         true -> R.drawable.rounded_lock_open_right_24
                         false -> R.drawable.rounded_lock_24
                     }
-                    val lockDescId = when (device.isUnlocked) {
+                    val lockDescId = when (deviceSetting.isUnlocked) {
                         true -> R.string.unlocked
                         false -> R.string.locked
                     }
@@ -126,7 +119,7 @@ fun DevicesSettingScreen(
 
             // Signal Strength
             Column {
-                SignalStrengthIcon(rssi = device.rssi)
+                SignalStrengthIcon(rssi = deviceSetting.rssi)
             }
         }
 
@@ -139,7 +132,7 @@ fun DevicesSettingScreen(
         ) {
             Row {
                 Text(
-                    text = device.name,
+                    text = deviceSetting.name,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
@@ -149,11 +142,11 @@ fun DevicesSettingScreen(
                 Icon(
                     painter = painterResource(id = R.drawable.rounded_edit_24),
                     contentDescription = stringResource(R.string.edite),
-                    Modifier.clickable { onEditNameClick() }
+                    Modifier.clickable { /* TODO */ }
                 )
             }
             Text(
-                text = device.address, style = MaterialTheme.typography.bodyMedium
+                text = deviceSetting.address, style = MaterialTheme.typography.bodyMedium
             )
         }
 
@@ -162,36 +155,36 @@ fun DevicesSettingScreen(
         ActionsCard(modifier = Modifier
             .padding(vertical = dimensionResource(id = R.dimen.padding_small))
             .fillMaxWidth(),
-            isUnlock = device.isUnlocked,
-            isDoorOpen = device.isOpened,
-            onUnlock = { onUnlock() },
-            onOpenDoor = { onOpenDoor() },
-            onDisconnect = { onDisconnect() })
+            isUnlock = deviceSetting.isUnlocked,
+            isDoorOpen = deviceSetting.isOpened,
+            onUnlock = { /* TODO */ },
+            onOpenDoor = { /* TODO */ },
+            onDisconnect = { /* TODO */ })
 
         // Night Brightness Card
         NightBrightnessCard(
             modifier = Modifier
                 .padding(vertical = dimensionResource(id = R.dimen.padding_tiny))
                 .fillMaxWidth(),
-            currentBrightnessValue = device.currentBrightness,
-            thresholdValue = device.thresholdNight,
-            onThresholdChange = { onThresholdChange(it) }
+            currentBrightnessValue = deviceSetting.currentBrightness,
+            thresholdValue = deviceSetting.thresholdNight,
+            onThresholdChange = { /* TODO */ }
         )
 
         // Auto Unlock Card
         val currentDistanceValue = when {
-            device.rssi == null -> null
-            else -> calculateDistanceFromRssi(device.txPower, device.rssi)
+            deviceSetting.rssi == null -> null
+            else -> calculateDistanceFromRssi(deviceSetting.txPower, deviceSetting.rssi)
         }
 
         AutoUnlockCard(modifier = Modifier
             .padding(vertical = dimensionResource(id = R.dimen.padding_small))
             .fillMaxWidth(),
-            autoUnlock = device.autoUnlockEnable,
-            unlockDistanceValue = device.autoUnlockDistance,
+            autoUnlock = deviceSetting.autoUnlockEnable,
+            unlockDistanceValue = deviceSetting.autoUnlockDistance,
             currentDistanceValue = currentDistanceValue,
-            onAutoUnlockChange = { onAutoUnlockChange(it) },
-            onUnlockDistanceValue = { onUnlockDistanceValue(it) })
+            onAutoUnlockChange = { /* TODO */ },
+            onUnlockDistanceValue = { /* TODO */ })
 
     }
 }
@@ -434,8 +427,20 @@ fun calculateDistanceFromRssi(txPower: Int, rssi: Int): Float {
 //)
 @Composable
 private fun DevicesSettingScreenPreview() {
+    BleSmartKeyTheme {
+        Surface {
+            DevicesSettingScreen(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(dimensionResource(id = R.dimen.padding_small)),
+                deviceSetting = createDemoDeviceSetting()
+            )
+        }
+    }
+}
 
-    val device = DeviceSetting(
+fun createDemoDeviceSetting(): DeviceSetting {
+    return DeviceSetting(
         name = "Device 1",
         address = "12:34:56:78:90:AB",
         rssi = -20,
@@ -447,25 +452,6 @@ private fun DevicesSettingScreenPreview() {
         autoUnlockDistance = 1.5f,
         txPower = -14
     )
-
-    BleSmartKeyTheme {
-        Surface {
-            DevicesSettingScreen(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(dimensionResource(id = R.dimen.padding_small)),
-                device = device,
-                onDissociateClick = {},
-                onEditNameClick = {},
-                onUnlock = {},
-                onOpenDoor = {},
-                onDisconnect = {},
-                onThresholdChange = {},
-                onAutoUnlockChange = {},
-                onUnlockDistanceValue = {}
-            )
-        }
-    }
 }
 
 

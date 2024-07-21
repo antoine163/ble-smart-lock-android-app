@@ -2,6 +2,7 @@ package com.antoine163.blesmartkey
 
 
 import android.content.res.Configuration
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -25,49 +26,49 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import com.antoine163.blesmartkey.ui.DevicesListScreen
 import com.antoine163.blesmartkey.ui.DevicesScanScreen
+import com.antoine163.blesmartkey.ui.DevicesSettingScreen
 import com.antoine163.blesmartkey.ui.createDemoDeviceList
 import com.antoine163.blesmartkey.ui.createDemoDeviceScan
+import com.antoine163.blesmartkey.ui.createDemoDeviceSetting
 import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun BleSmartKeyApp() {
-    //val scrollBehavior = TopAppBarScrollBehavior()
 
-    var addingDevice by remember { mutableStateOf( true ) }
+enum class SmartKeyScreen(
+    val id: Int
+) {
+    Main(id = R.string.app_name),
+    Scanning(id = R.string.app_name),
+    Setting(id = R.string.app_name);
+}
+
+@Composable
+fun BleSmartKeyApp(
+    navController: NavHostController = rememberNavController()
+) {
+    val backStackEntry by navController.currentBackStackEntryAsState()
+    val currentScreen = SmartKeyScreen.valueOf(
+        backStackEntry?.destination?.route ?: SmartKeyScreen.Main.name
+    )
 
     Scaffold(
-        //modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            CenterAlignedTopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.primary,
-                ),
-                title = {
-                    Text(
-                        stringResource(R.string.app_name),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = { /* do something */ }) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.rounded_menu_24),
-                            contentDescription = stringResource(R.string.open_menu)
-                        )
-                    }
-                },
-                //scrollBehavior = scrollBehavior,
+            BleSmartKeyAppBar(
+                currentScreenName = stringResource(id = currentScreen.id),
+                canNavigateBack = navController.previousBackStackEntry != null,
+                navigateUp = { navController.navigateUp() }
             )
         },
         floatingActionButton = {
-            if ( !addingDevice ) {
+            if (currentScreen == SmartKeyScreen.Main) {
                 FloatingActionButton(
-                    onClick = { addingDevice = true },
+                    onClick = { navController.navigate(SmartKeyScreen.Scanning.name) },
                     containerColor = MaterialTheme.colorScheme.primary,
                     elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation()
                 ) {
@@ -79,23 +80,79 @@ fun BleSmartKeyApp() {
             }
         }
     ) { innerPadding ->
-        if ( !addingDevice ) {
-            DevicesListScreen(
-                modifier = Modifier.padding(dimensionResource(R.dimen.padding_medium)),
-                contentPadding = innerPadding,
-                devices = createDemoDeviceList()
-            )
-        }
-        else {
-            DevicesScanScreen(
-                modifier = Modifier
-                    .padding(dimensionResource(R.dimen.padding_medium))
-                    .fillMaxSize(1f),
-                contentPadding = innerPadding,
-                devices = createDemoDeviceScan()
-            )
+        NavHost(
+            navController = navController,
+            startDestination = SmartKeyScreen.Main.name,
+            modifier = Modifier.padding(innerPadding)
+        ) {
+            composable(route = SmartKeyScreen.Main.name) {
+                DevicesListScreen(
+                    modifier = Modifier.padding(dimensionResource(R.dimen.padding_medium)),
+                    onSettingClick = { navController.navigate(SmartKeyScreen.Setting.name) },
+                    devices = createDemoDeviceList()
+                )
+            }
+
+            composable(route = SmartKeyScreen.Scanning.name) {
+                DevicesScanScreen(
+                    modifier = Modifier
+                        .padding(dimensionResource(R.dimen.padding_medium))
+                        .fillMaxSize(1f),
+                    devices = createDemoDeviceScan()
+                )
+            }
+
+            composable(route = SmartKeyScreen.Setting.name) {
+                DevicesSettingScreen(
+                    modifier = Modifier
+                        .padding(dimensionResource(R.dimen.padding_medium))
+                        .fillMaxSize(1f),
+                    deviceSetting = createDemoDeviceSetting()
+                )
+            }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BleSmartKeyAppBar(
+    currentScreenName: String,
+    canNavigateBack: Boolean,
+    navigateUp: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    CenterAlignedTopAppBar(
+        modifier = modifier,
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            titleContentColor = MaterialTheme.colorScheme.primary
+        ),
+        title = {
+            Text(
+                text = currentScreenName,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        },
+        navigationIcon = {
+            if (!canNavigateBack) {
+                IconButton(onClick = { /* TODO */ }) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.rounded_menu_24),
+                        contentDescription = stringResource(R.string.open_menu)
+                    )
+                }
+            } else {
+                IconButton(onClick = navigateUp) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.rounded_arrow_back_24),
+                        contentDescription = stringResource(R.string.back)
+                    )
+                }
+            }
+        },
+    )
 }
 
 
@@ -113,7 +170,7 @@ fun BleSmartKeyApp() {
 //    showBackground = false
 //)
 @Composable
-private fun BleSmartKeyAppPreview () {
+private fun BleSmartKeyAppPreview() {
     BleSmartKeyTheme {
         BleSmartKeyApp()
     }

@@ -47,17 +47,14 @@ import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
 @Composable
 fun DevicesScanScreen(
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(0.dp),
     devices: List<DeviceScanItem>,
 ) {
     if (devices.isEmpty()) {
         EmptyScanResults(
-            modifier = modifier,
-            contentPadding = contentPadding)
+            modifier = modifier)
     } else {
         DeviceList(
             modifier = modifier,
-            contentPadding = contentPadding,
             devices = devices,
             onConnectClick = { /* TODO */ },
         )
@@ -73,14 +70,12 @@ fun DevicesScanScreen(
  */
 @Composable
 fun EmptyScanResults(
-    modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(0.dp)
+    modifier: Modifier = Modifier
 ) {
     Box(
         modifier = modifier
     ) {
         Column(
-            modifier = Modifier.padding(contentPadding),
             verticalArrangement = Arrangement.Center
         ) {
             Spacer(modifier = Modifier.weight(1f))
@@ -199,13 +194,11 @@ fun PairingImage(modifier: Modifier = Modifier) {
 @Composable
 fun DeviceList(
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(0.dp),
     devices: List<DeviceScanItem>,
     onConnectClick: () -> Unit,
 ) {
     LazyColumn(
-        modifier = modifier,
-        contentPadding = contentPadding
+        modifier = modifier
     ) {
         itemsIndexed(devices) { index, device ->
             DeviceScanItemScreen(

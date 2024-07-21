@@ -157,10 +157,10 @@ fun SignalStrengthIcon(
     }
 }
 
-@Preview(
-    name = "Light Mode",
-    device = "id:S21 FE"
-)
+//@Preview(
+//    name = "Light Mode",
+//    device = "id:S21 FE"
+//)
 @Preview(
     uiMode = Configuration.UI_MODE_NIGHT_YES,
     name = "Dark Mode",
@@ -178,10 +178,10 @@ private fun DeviceItemScreenPreview() {
     }
 }
 
-@Preview(
-    name = "Light Mode",
-    device = "id:S21 FE"
-)
+//@Preview(
+//    name = "Light Mode",
+//    device = "id:S21 FE"
+//)
 @Preview(
     uiMode = Configuration.UI_MODE_NIGHT_YES,
     name = "Dark Mode",

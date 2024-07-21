@@ -1,7 +1,7 @@
 package com.antoine163.blesmartkey.ui
 
 import android.content.res.Configuration
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -18,16 +18,18 @@ import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
 @Composable
 fun DevicesListScreen(
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(0.dp),
-    devices: List<DeviceListItem>
+    devices: List<DeviceListItem>,
+    onSettingClick: () -> Unit
 ) {
     LazyColumn(
         modifier = modifier,
-        contentPadding = contentPadding
     ) {
         itemsIndexed(devices) { index, device ->
+            val topPadding = if (index != 0) dimensionResource(id = R.dimen.padding_medium) else 0.dp
             DeviceListItemScreen(
-                modifier = if (index == 0) Modifier else Modifier.padding(top = dimensionResource(id = R.dimen.padding_medium)),
+                modifier = Modifier
+                    .padding(top = topPadding)
+                    .clickable(onClick = onSettingClick),
                 deviceName = device.name,
                 isDoorOpen = device.isOpened,
                 rssi = device.rssi,
@@ -51,7 +53,9 @@ private fun DevicesListScreenPreview() {
     val devices = createDemoDeviceList()
     BleSmartKeyTheme {
         Surface {
-            DevicesListScreen(devices = devices)
+            DevicesListScreen(
+                devices = devices,
+                onSettingClick = {})
         }
     }
 }
