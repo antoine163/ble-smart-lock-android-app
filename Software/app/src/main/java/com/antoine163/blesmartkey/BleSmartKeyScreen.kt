@@ -42,8 +42,8 @@ enum class SmartKeyScreen(
     val id: Int
 ) {
     Main(id = R.string.app_name),
-    Scanning(id = R.string.app_name),
-    Setting(id = R.string.app_name);
+    Scanning(id = R.string.screen_scanning_name),
+    Setting(id = R.string.screen_setting_name);
 }
 
 @Composable

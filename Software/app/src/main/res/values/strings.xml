@@ -1,5 +1,7 @@
 <resources>
     <string name="app_name">Ble Smart Key</string>
+    <string name="screen_scanning_name">Scanning</string>
+    <string name="screen_setting_name">Setting</string>
     <string name="signal_strength">Signal Strength</string>
     <string name="open_door">Open</string>
     <string name="state_open">Opened</string>
