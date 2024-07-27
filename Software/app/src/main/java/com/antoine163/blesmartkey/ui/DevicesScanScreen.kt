@@ -5,7 +5,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -41,7 +40,6 @@ import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
  * Composable function that displays the device scan screen.
  *
  * @param modifier Modifier to be applied to the layout.
- * @param contentPadding Padding values to be applied to the content.
  * @param devices List of devices discovered during the scan.
  */
 @Composable
@@ -66,7 +64,6 @@ fun DevicesScanScreen(
  * Composable function that displays an empty scan results screen with instructions and an image.
  *
  * @param modifier Modifier to be applied to the layout.
- * @param contentPadding Padding values to be applied to the content.
  */
 @Composable
 fun EmptyScanResults(
@@ -201,9 +198,12 @@ fun DeviceList(
         modifier = modifier
     ) {
         itemsIndexed(devices) { index, device ->
+            val topPadding =
+                if (index == 0) dimensionResource(id = R.dimen.padding_small) else 0.dp
             DeviceScanItemScreen(
-                modifier = if (index == 0) Modifier else Modifier.padding(
-                    top = dimensionResource(id = R.dimen.padding_medium)
+                modifier = Modifier.padding(
+                    top = topPadding,
+                    bottom = dimensionResource(id = R.dimen.padding_small)
                 ),
                 deviceName = device.name,
                 deviceAddress = device.address,
@@ -259,25 +259,44 @@ private fun DevicesScanScreenEmptyPreview() {
 fun createDemoDeviceScan(): List<DeviceScanItem> {
     // Create a dummy list of devices for previewing
     val devices = listOf<DeviceScanItem>(
-//        DeviceScanItem(
-//            name = "Device 1",
-//            address = "12:34:56:78:90:AB",
-//            rssi = -55
-//        ),
-//        DeviceScanItem(
-//            name = "Device 2",
-//            address = "CD:EF:GH:IJ:KL:MN",
-//            rssi = -60
-//        ),
-//        DeviceScanItem(
-//            name = "Device 3",
-//            address = "OP:QR:ST:UV:WX:YZ",
-//            rssi = -70
-//        ),
-//        DeviceScanItem(
-//            name = "Device 4",
-//            address = "12:34:56:78:90:AB",
-//            rssi = null)
+        DeviceScanItem(
+            name = "Device 1",
+            address = "12:34:56:78:90:AB",
+            rssi = -55
+        ),
+        DeviceScanItem(
+            name = "Device 2",
+            address = "CD:EF:GH:IJ:KL:MN",
+            rssi = -60
+        ),
+        DeviceScanItem(
+            name = "Device 3",
+            address = "OP:QR:ST:UV:WX:YZ",
+            rssi = -70
+        ),
+        DeviceScanItem(
+            name = "Device 4",
+            address = "12:34:56:78:90:AB",
+            rssi = null),
+        DeviceScanItem(
+            name = "Device 5",
+            address = "12:34:56:78:90:AB",
+            rssi = -55
+        ),
+        DeviceScanItem(
+            name = "Device 6",
+            address = "CD:EF:GH:IJ:KL:MN",
+            rssi = -60
+        ),
+        DeviceScanItem(
+            name = "Device 7",
+            address = "OP:QR:ST:UV:WX:YZ",
+            rssi = -70
+        ),
+        DeviceScanItem(
+            name = "Device 8",
+            address = "12:34:56:78:90:AB",
+            rssi = null)
     )
 
     return devices

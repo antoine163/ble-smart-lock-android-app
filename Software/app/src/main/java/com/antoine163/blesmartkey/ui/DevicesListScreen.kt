@@ -25,10 +25,12 @@ fun DevicesListScreen(
         modifier = modifier,
     ) {
         itemsIndexed(devices) { index, device ->
-            val topPadding = if (index != 0) dimensionResource(id = R.dimen.padding_medium) else 0.dp
+            val topPadding = if (index == 0) dimensionResource(id = R.dimen.padding_small) else 0.dp
             DeviceListItemScreen(
                 modifier = Modifier
-                    .padding(top = topPadding)
+                    .padding(
+                        top = topPadding,
+                        bottom = dimensionResource(id = R.dimen.padding_small))
                     .clickable(onClick = onSettingClick),
                 deviceName = device.name,
                 isDoorOpen = device.isOpened,
@@ -79,10 +81,34 @@ fun createDemoDeviceList(): List<DeviceListItem> {
             name = "Device 3",
             address = "OP:QR:ST:UV:WX:YZ",
             rssi = -70,
-            isOpened = true
+            isOpened = false
         ),
         DeviceListItem(
             name = "Device 4",
+            address = "12:34:56:78:90:AB",
+            rssi = null,
+            isOpened = true
+        ),
+        DeviceListItem(
+            name = "Device 5",
+            address = "12:34:56:78:90:AB",
+            rssi = null,
+            isOpened = true
+        ),
+        DeviceListItem(
+            name = "Device 6",
+            address = "CD:EF:GH:IJ:KL:MN",
+            rssi = null,
+            isOpened = true
+        ),
+        DeviceListItem(
+            name = "Device 7",
+            address = "OP:QR:ST:UV:WX:YZ",
+            rssi = null,
+            isOpened = false
+        ),
+        DeviceListItem(
+            name = "Device 8",
             address = "12:34:56:78:90:AB",
             rssi = null,
             isOpened = true
