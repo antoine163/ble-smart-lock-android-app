@@ -52,15 +52,17 @@ class DevicesScanViewModel(application: Application) : AndroidViewModel(applicat
      * Scan callback object that handles the results of Bluetooth LE scans.
      */
     private val scanCallback = object : ScanCallback() {
+        @SuppressLint("MissingPermission")
         override fun onScanResult(callbackType: Int, result: ScanResult) {
             super.onScanResult(callbackType, result)
 
             // Add or update the device in the list
             scannedDevices[result.device.address] =
                 DeviceScanItem(
-                    result.device.name ?: "Unknown",
-                    result.device.address,
-                    result.rssi)
+                    name = result.device.name ?: "Unknown",
+                    address = result.device.address,
+                    rssi = result.rssi
+                )
 
             _uiState.update { currentState ->
                 currentState.copy(devices = scannedDevices.values.sortedByDescending { it.rssi })
@@ -101,7 +103,7 @@ class DevicesScanViewModel(application: Application) : AndroidViewModel(applicat
 
     init {
         // Launch the refresh function to start the first scanning
-        refresh();
+        refresh()
     }
 
     /**
