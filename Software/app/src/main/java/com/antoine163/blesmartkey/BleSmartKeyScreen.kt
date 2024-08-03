@@ -17,6 +17,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
@@ -24,6 +25,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -31,9 +33,9 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.antoine163.blesmartkey.ui.DevicesListScreen
 import com.antoine163.blesmartkey.ui.DevicesScanScreen
+import com.antoine163.blesmartkey.ui.DevicesScanViewModel
 import com.antoine163.blesmartkey.ui.DevicesSettingScreen
 import com.antoine163.blesmartkey.ui.createDemoDeviceList
-import com.antoine163.blesmartkey.ui.createDemoDeviceScan
 import com.antoine163.blesmartkey.ui.createDemoDeviceSetting
 import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
 
@@ -92,11 +94,14 @@ fun BleSmartKeyApp(
             }
 
             composable(route = SmartKeyScreen.Scanning.name) {
+                val viewModel: DevicesScanViewModel = viewModel()
+                val uiState by viewModel.uiState.collectAsState()
+
                 DevicesScanScreen(
                     modifier = Modifier
                         .padding(horizontal = dimensionResource(R.dimen.padding_medium))
                         .fillMaxSize(1f),
-                    devices = createDemoDeviceScan()
+                    devices = uiState.devices
                 )
             }
 
@@ -159,7 +164,7 @@ fun BleSmartKeyAppBar(
 @Preview(
     uiMode = Configuration.UI_MODE_NIGHT_YES,
     name = "Dark Mode",
-    device = "id:Nexus S",
+    device = "id:S21 FE",
     showSystemUi = false,
     showBackground = false
 )

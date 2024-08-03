@@ -4,7 +4,6 @@ import android.content.res.Configuration
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -82,20 +81,22 @@ fun DeviceItemScreen(
     ) {
         Row(
             modifier = Modifier
-                .padding(dimensionResource(id = R.dimen.padding_small)),
+                .padding(horizontal = dimensionResource(id = R.dimen.padding_small))
+                .padding(vertical = dimensionResource(id = R.dimen.padding_tiny)),
             verticalAlignment = Alignment.CenterVertically
         ) {
             SignalStrengthIcon(
-                modifier = Modifier.width(50.dp),
-                rssi = rssi)
+                modifier = Modifier.width(55.dp),
+                rssi = rssi
+            )
 
-            Spacer(modifier = Modifier.width(dimensionResource(id = R.dimen.padding_medium)))
+            Spacer(modifier = Modifier.width(dimensionResource(id = R.dimen.padding_small)))
 
             // Use a Column to structure the device name and status text
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = deviceName,
-                    style = MaterialTheme.typography.titleLarge,
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -106,7 +107,7 @@ fun DeviceItemScreen(
                     color = if (infoWarnings) Color.Red else LocalContentColor.current,
                     fontWeight = if (infoWarnings) FontWeight.Bold else FontWeight.Normal,
                     text = infoText,
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodySmall
                 )
             }
 
@@ -116,10 +117,11 @@ fun DeviceItemScreen(
                 enabled = onButtonClick != null,
                 modifier = Modifier
                     .padding(start = dimensionResource(id = R.dimen.padding_medium))
+                    .size(width = 110.dp, height = 40.dp)
             ) {
                 Text(
                     text = buttonText,
-                    style = MaterialTheme.typography.bodyLarge
+                    style = MaterialTheme.typography.bodyMedium
                 )
             }
         }
@@ -148,12 +150,13 @@ fun SignalStrengthIcon(
         Icon(
             painter = painterResource(id = signalStrengthIcon),
             contentDescription = stringResource(id = R.string.signal_strength),
-            modifier = Modifier.size(dimensionResource(id = R.dimen.icon_medium_height))
+            modifier = Modifier.size(dimensionResource(id = R.dimen.icon_small_height))
         )
-        Spacer(Modifier.height(dimensionResource(id = R.dimen.padding_tiny)))
         Text(
             text = if (rssi != null) "$rssi dBm" else stringResource(id = R.string.offline),
-            style = MaterialTheme.typography.bodySmall)
+            style = MaterialTheme.typography.bodySmall,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis)
     }
 }
 
@@ -164,13 +167,13 @@ fun SignalStrengthIcon(
 @Preview(
     uiMode = Configuration.UI_MODE_NIGHT_YES,
     name = "Dark Mode",
-    device = "id:S21 FE"
+    device = "spec:width=1000px,height=2000px,dpi=480"
 )
 @Composable
 private fun DeviceItemScreenPreview() {
     BleSmartKeyTheme {
         DeviceListItemScreen(
-            deviceName = "My Device",
+            deviceName = "Ble Smart Lock",
             isDoorOpen = false,
             rssi = null,
             onOpenDoorClick = {}
@@ -185,15 +188,15 @@ private fun DeviceItemScreenPreview() {
 @Preview(
     uiMode = Configuration.UI_MODE_NIGHT_YES,
     name = "Dark Mode",
-    device = "id:S21 FE"
+    device = "spec:width=1000px,height=2000px,dpi=480"
 )
 @Composable
 private fun DeviceScanItemScreenPreview() {
     BleSmartKeyTheme {
         DeviceScanItemScreen(
-            deviceName = "My Device",
+            deviceName = "Ble Smart Lock",
             deviceAddress = "46:AF:B8:A6:76:10",
-            rssi = -54,
+            rssi = -154,
             onConnectClick = {}
         )
     }

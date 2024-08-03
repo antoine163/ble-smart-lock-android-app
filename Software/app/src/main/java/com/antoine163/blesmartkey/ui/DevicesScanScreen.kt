@@ -61,7 +61,8 @@ fun DevicesScanScreen(
 
 
 /**
- * Composable function that displays an empty scan results screen with instructions and an image.
+ * Composable function that displays an empty scan results screen
+ * with instructions and an image.
  *
  * @param modifier Modifier to be applied to the layout.
  */
