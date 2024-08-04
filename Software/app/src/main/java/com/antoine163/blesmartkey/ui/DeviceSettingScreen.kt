@@ -63,8 +63,12 @@ fun DevicesSettingScreen(
                     painter = painterResource(id = R.drawable.rounded_link_off_24),
                     contentDescription = stringResource(R.string.dissociate)
                 )
-                Spacer(Modifier.height(dimensionResource(id = R.dimen.padding_tiny)))
-                Text(text = stringResource(R.string.dissociate))
+                Text(
+                    text = stringResource(R.string.dissociate),
+                    style = MaterialTheme.typography.bodySmall,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
 
             // Door Icon
