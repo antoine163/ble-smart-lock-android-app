@@ -29,6 +29,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -47,12 +48,13 @@ fun DevicesSettingScreen(
     modifier: Modifier = Modifier,
     deviceSetting: DeviceSetting
 ) {
+    val isConnected: Boolean = deviceSetting.rssi != null
+
     Column(modifier = modifier) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-
             // Dissociate Button
             Column(
                 modifier = Modifier.clickable { /* TODO */ },
@@ -141,11 +143,13 @@ fun DevicesSettingScreen(
                     overflow = TextOverflow.Ellipsis
                 )
 
-                Icon(
-                    painter = painterResource(id = R.drawable.rounded_edit_24),
-                    contentDescription = stringResource(R.string.edite),
-                    Modifier.clickable { /* TODO */ }
-                )
+                if (isConnected) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.rounded_edit_24),
+                        contentDescription = stringResource(R.string.edite),
+                        Modifier.clickable { /* TODO */ }
+                    )
+                }
             }
             Text(
                 text = deviceSetting.address, style = MaterialTheme.typography.bodyMedium
@@ -157,6 +161,7 @@ fun DevicesSettingScreen(
         ActionsCard(modifier = Modifier
             .padding(vertical = dimensionResource(id = R.dimen.padding_small))
             .fillMaxWidth(),
+            enabled = isConnected,
             isUnlock = deviceSetting.isUnlocked,
             isDoorOpen = deviceSetting.isOpened,
             onUnlock = { /* TODO */ },
@@ -168,6 +173,7 @@ fun DevicesSettingScreen(
             modifier = Modifier
                 .padding(vertical = dimensionResource(id = R.dimen.padding_tiny))
                 .fillMaxWidth(),
+            enabled = isConnected,
             currentBrightnessValue = deviceSetting.currentBrightness,
             thresholdValue = deviceSetting.thresholdNight,
             onThresholdChange = { /* TODO */ }
@@ -194,6 +200,7 @@ fun DevicesSettingScreen(
 @Composable
 fun ActionsCard(
     modifier: Modifier,
+    enabled: Boolean,
     isUnlock: Boolean,
     isDoorOpen: Boolean,
     onUnlock: () -> Unit = {},
@@ -214,7 +221,7 @@ fun ActionsCard(
         )
 
         Button(
-            enabled = !isUnlock,
+            enabled = !isUnlock && enabled,
             onClick = onUnlock,
             modifier = Modifier
                 .fillMaxWidth()
@@ -232,7 +239,7 @@ fun ActionsCard(
         }
 
         Button(
-            enabled = !isDoorOpen,
+            enabled = !isDoorOpen && enabled,
             onClick = onOpenDoor,
             modifier = Modifier
                 .fillMaxWidth()
@@ -250,6 +257,7 @@ fun ActionsCard(
         }
 
         Button(
+            enabled = enabled,
             onClick = onDisconnect,
             modifier = Modifier
                 .fillMaxWidth()
@@ -271,6 +279,7 @@ fun ActionsCard(
 @Composable
 fun NightBrightnessCard(
     modifier: Modifier,
+    enabled: Boolean,
     currentBrightnessValue: Float,
     thresholdValue: Float,
     onThresholdChange: (Float) -> Unit = {},
@@ -299,6 +308,7 @@ fun NightBrightnessCard(
         )
 
         TextField(
+            enabled = enabled,
             value = "${"%.1f".format(thresholdValue)}%",
             onValueChange = { newValue ->
                 onThresholdChange(newValue.toFloatOrNull() ?: 50f)
@@ -312,15 +322,18 @@ fun NightBrightnessCard(
                         text = stringResource(R.string.threshold),
                         style = MaterialTheme.typography.titleSmall
                     )
-                    Text(
-                        text = stringResource(R.string.current_brightness) + ": ${
-                            "%.1f".format(
-                                currentBrightnessValue
-                            )
-                        }%",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = LocalContentColor.current.copy(alpha = 0.5f)
-                    )
+
+                    if (enabled) {
+                        Text(
+                            text = stringResource(R.string.current_brightness) + ": ${
+                                "%.1f".format(
+                                    currentBrightnessValue
+                                )
+                            }%",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = LocalContentColor.current.copy(alpha = 0.5f)
+                        )
+                    }
                 }
             },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -442,7 +455,7 @@ fun createDemoDeviceSetting(): DeviceSetting {
     return DeviceSetting(
         name = "Device 1",
         address = "12:34:56:78:90:AB",
-        rssi = -20,
+        rssi = -70,
         isOpened = true,
         isUnlocked = true,
         thresholdNight = 42.8f,
