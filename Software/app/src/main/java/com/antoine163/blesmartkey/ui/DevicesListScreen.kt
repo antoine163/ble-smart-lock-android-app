@@ -19,7 +19,7 @@ import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
 fun DevicesListScreen(
     modifier: Modifier = Modifier,
     devices: List<DeviceListItem>,
-    onSettingClick: () -> Unit
+    onSettingClick: (String) -> Unit
 ) {
     LazyColumn(
         modifier = modifier,
@@ -31,7 +31,7 @@ fun DevicesListScreen(
                     .padding(
                         top = topPadding,
                         bottom = dimensionResource(id = R.dimen.padding_small))
-                    .clickable(onClick = onSettingClick),
+                    .clickable(onClick = { onSettingClick(device.address) }),
                 deviceName = device.name,
                 isDoorOpen = device.isOpened,
                 rssi = device.rssi,

@@ -46,6 +46,7 @@ import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
 fun DevicesScanScreen(
     modifier: Modifier = Modifier,
     devices: List<DeviceScanItem>,
+    onConnectClick: (String) -> Unit,
 ) {
     if (devices.isEmpty()) {
         EmptyScanResults(
@@ -54,7 +55,7 @@ fun DevicesScanScreen(
         DeviceList(
             modifier = modifier,
             devices = devices,
-            onConnectClick = { /* TODO */ },
+            onConnectClick = onConnectClick,
         )
     }
 }
@@ -193,7 +194,7 @@ fun PairingImage(modifier: Modifier = Modifier) {
 fun DeviceList(
     modifier: Modifier = Modifier,
     devices: List<DeviceScanItem>,
-    onConnectClick: () -> Unit,
+    onConnectClick: (String) -> Unit,
 ) {
     LazyColumn(
         modifier = modifier
@@ -209,7 +210,7 @@ fun DeviceList(
                 deviceName = device.name,
                 deviceAddress = device.address,
                 rssi = device.rssi,
-                onConnectClick = { onConnectClick() }
+                onConnectClick = { onConnectClick( device.address ) }
             )
         }
     }
@@ -231,7 +232,7 @@ private fun DevicesScanScreenPreview() {
     val devices = createDemoDeviceScan()
     BleSmartKeyTheme {
         Surface {
-            DevicesScanScreen(devices = devices)
+            DevicesScanScreen(devices = devices){}
         }
     }
 }
@@ -250,7 +251,7 @@ private fun DevicesScanScreenEmptyPreview() {
     val devices: List<DeviceScanItem> = emptyList()
     BleSmartKeyTheme {
         Surface {
-            DevicesScanScreen(devices = devices)
+            DevicesScanScreen(devices = devices){}
         }
     }
 }

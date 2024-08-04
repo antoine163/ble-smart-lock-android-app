@@ -2,6 +2,7 @@ package com.antoine163.blesmartkey
 
 
 import android.content.res.Configuration
+import android.util.Log
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -27,10 +28,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.antoine163.blesmartkey.ui.DevicesListScreen
 import com.antoine163.blesmartkey.ui.DevicesScanScreen
 import com.antoine163.blesmartkey.ui.DevicesScanViewModel
@@ -54,7 +57,7 @@ fun BleSmartKeyApp(
 ) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentScreen = SmartKeyScreen.valueOf(
-        backStackEntry?.destination?.route ?: SmartKeyScreen.Main.name
+        backStackEntry?.destination?.route?.substringBefore("/") ?: SmartKeyScreen.Main.name
     )
 
     Scaffold(
@@ -88,7 +91,9 @@ fun BleSmartKeyApp(
             composable(route = SmartKeyScreen.Main.name) {
                 DevicesListScreen(
                     modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.padding_medium)),
-                    onSettingClick = { navController.navigate(SmartKeyScreen.Setting.name) },
+                    onSettingClick = { deviceAdd ->
+                        navController.navigate(SmartKeyScreen.Setting.name + "/$deviceAdd")
+                    },
                     devices = createDemoDeviceList()
                 )
             }
@@ -101,11 +106,23 @@ fun BleSmartKeyApp(
                     modifier = Modifier
                         .padding(horizontal = dimensionResource(R.dimen.padding_medium))
                         .fillMaxSize(1f),
-                    devices = uiState.devices
+                    devices = uiState.devices,
+                    onConnectClick = { deviceAdd ->
+                        navController.popBackStack(SmartKeyScreen.Main.name, inclusive = false)
+                        navController.navigate(SmartKeyScreen.Setting.name + "/$deviceAdd")
+                    }
                 )
             }
 
-            composable(route = SmartKeyScreen.Setting.name) {
+            composable(
+                route = SmartKeyScreen.Setting.name +"/{deviceAdd}",
+                arguments = listOf(navArgument("deviceAdd") { type = NavType.StringType })
+            ) { navBackStackEntry ->
+
+                val deviceAdd = navBackStackEntry.arguments?.getString("deviceAdd")
+                Log.d("BSK", "Device Add: $deviceAdd")
+
+
                 val scrollState = rememberScrollState()
                 DevicesSettingScreen(
                     modifier = Modifier
