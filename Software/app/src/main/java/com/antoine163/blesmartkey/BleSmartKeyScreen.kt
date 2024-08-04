@@ -1,6 +1,7 @@
 package com.antoine163.blesmartkey
 
 
+import android.app.Application
 import android.content.res.Configuration
 import android.util.Log
 import androidx.compose.foundation.layout.fillMaxSize
@@ -26,6 +27,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.get
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -35,12 +38,12 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.antoine163.blesmartkey.ui.DeviceSettingViewModel
+import com.antoine163.blesmartkey.ui.DeviceSettingViewModelFactory
 import com.antoine163.blesmartkey.ui.DevicesListScreen
 import com.antoine163.blesmartkey.ui.DevicesScanScreen
 import com.antoine163.blesmartkey.ui.DevicesScanViewModel
 import com.antoine163.blesmartkey.ui.DevicesSettingScreen
 import com.antoine163.blesmartkey.ui.createDemoDeviceList
-import com.antoine163.blesmartkey.ui.createDemoDeviceSetting
 import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
 
 
@@ -120,12 +123,14 @@ fun BleSmartKeyApp(
                 arguments = listOf(navArgument("deviceAdd") { type = NavType.StringType })
             ) { navBackStackEntry ->
 
-                val deviceAdd = navBackStackEntry.arguments?.getString("deviceAdd")
+                val deviceAdd = navBackStackEntry.arguments?.getString("deviceAdd") ?: ""
                 Log.d("BSK", "Device Add: $deviceAdd")
 
 
 
-                val viewModel: DeviceSettingViewModel = viewModel()
+                val viewModel: DeviceSettingViewModel = viewModel(
+                    factory = DeviceSettingViewModelFactory(Application(), deviceAdd)
+                )
                 val uiState by viewModel.uiState.collectAsState()
 
 
