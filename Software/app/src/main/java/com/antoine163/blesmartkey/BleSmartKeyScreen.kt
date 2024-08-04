@@ -34,6 +34,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.antoine163.blesmartkey.ui.DeviceSettingViewModel
 import com.antoine163.blesmartkey.ui.DevicesListScreen
 import com.antoine163.blesmartkey.ui.DevicesScanScreen
 import com.antoine163.blesmartkey.ui.DevicesScanViewModel
@@ -123,13 +124,20 @@ fun BleSmartKeyApp(
                 Log.d("BSK", "Device Add: $deviceAdd")
 
 
+
+                val viewModel: DeviceSettingViewModel = viewModel()
+                val uiState by viewModel.uiState.collectAsState()
+
+
+
+
                 val scrollState = rememberScrollState()
                 DevicesSettingScreen(
                     modifier = Modifier
                         .padding(horizontal = dimensionResource(R.dimen.padding_medium))
                         .fillMaxSize(1f)
                         .verticalScroll(scrollState),
-                    deviceSetting = createDemoDeviceSetting()
+                    deviceSetting = uiState.setting
                 )
             }
         }
