@@ -12,20 +12,35 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
+/**
+ * UI state for representing the state of a device setting.
+ * @property setting The device setting data. Defaults to an empty [DeviceSetting].
+ */
 data class DeviceSettingUiState(
     val setting: DeviceSetting = DeviceSetting()
 )
 
+/**
+ * ViewModel for the Device Setting screen.
+ *
+ * This ViewModel is responsible for managing the UI state of the Device Setting screen
+ * and interacting with the BleDevice class.
+ *
+ * @param application The application context.
+ * @param deviceAdd The MAC address of the Bluetooth device.
+ */
 class DeviceSettingViewModel(
     application: Application,
     deviceAdd: String
 ) : AndroidViewModel(application) {
 
+    // MutableStateFlow to hold the UI state of the device setting
     private val _uiState = MutableStateFlow(
         DeviceSettingUiState(setting = DeviceSetting(address = deviceAdd)))
     val uiState: StateFlow<DeviceSettingUiState> = _uiState.asStateFlow()
 
-    private val bleDevice = BleDevice(application, deviceAdd)
+    // BleDevice instance to interact with the Bluetooth device
+    val bleDevice = BleDevice(application, deviceAdd)
 
     init {
         Log.d("BSK", "DeviceSettingViewModel init: ${uiState.value.setting.address}")
@@ -40,8 +55,16 @@ class DeviceSettingViewModel(
 
         Log.d("BSK", "DeviceSettingViewModel onCleared")
     }
+
+
 }
 
+/**
+ * Factory for creating a [DeviceSettingViewModel].
+ * This factory takes an [Application] and a device address as parameters, which are then used to create the ViewModel.
+ * @param application The application context.
+ * @param deviceAdd The Bluetooth device address.
+ */
 class DeviceSettingViewModelFactory(
     private val application: Application,
     private val deviceAdd: String
