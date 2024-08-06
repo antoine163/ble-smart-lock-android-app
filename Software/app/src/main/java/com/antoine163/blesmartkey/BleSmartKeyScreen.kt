@@ -90,7 +90,9 @@ fun BleSmartKeyApp(
             startDestination = SmartKeyScreen.Main.name,
             modifier = Modifier.padding(innerPadding)
         ) {
+            // Define a composable function for the SmartKey main screen
             composable(route = SmartKeyScreen.Main.name) {
+                // Display the DevicesListScreen
                 DevicesListScreen(
                     modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.padding_medium)),
                     onSettingClick = { deviceAdd ->
@@ -100,10 +102,13 @@ fun BleSmartKeyApp(
                 )
             }
 
+            // Define a composable function for the SmartKey scanning screen
             composable(route = SmartKeyScreen.Scanning.name) {
+                // Create and manage the DevicesScanViewModel
                 val viewModel: DevicesScanViewModel = viewModel()
                 val uiState by viewModel.uiState.collectAsState()
 
+                // Display the DevicesScanScreen
                 DevicesScanScreen(
                     modifier = Modifier
                         .padding(horizontal = dimensionResource(R.dimen.padding_medium))
@@ -116,18 +121,21 @@ fun BleSmartKeyApp(
                 )
             }
 
+            // Define a composable function for the SmartKey setting screen
             composable(
                 route = SmartKeyScreen.Setting.name +"/{deviceAdd}",
                 arguments = listOf(navArgument("deviceAdd") { type = NavType.StringType })
             ) { navBackStackEntry ->
+                // Retrieve the device address from the navigation arguments
                 val deviceAdd = navBackStackEntry.arguments?.getString("deviceAdd") ?: ""
 
+                // Create and manage the DeviceSettingViewModel
                 val application = LocalContext.current.applicationContext as Application
                 val viewModel: DeviceSettingViewModel = viewModel(
                     factory = DeviceSettingViewModelFactory(application, deviceAdd)
                 )
-                val uiState by viewModel.uiState.collectAsState()
 
+                // Display the DeviceSettingScreen
                 val scrollState = rememberScrollState()
                 DevicesSettingScreen(
                     modifier = Modifier
