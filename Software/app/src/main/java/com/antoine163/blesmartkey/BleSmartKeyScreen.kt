@@ -3,7 +3,6 @@ package com.antoine163.blesmartkey
 
 import android.app.Application
 import android.content.res.Configuration
-import android.util.Log
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -22,13 +21,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.get
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -122,19 +120,13 @@ fun BleSmartKeyApp(
                 route = SmartKeyScreen.Setting.name +"/{deviceAdd}",
                 arguments = listOf(navArgument("deviceAdd") { type = NavType.StringType })
             ) { navBackStackEntry ->
-
                 val deviceAdd = navBackStackEntry.arguments?.getString("deviceAdd") ?: ""
-                Log.d("BSK", "Device Add: $deviceAdd")
 
-
-
+                val application = LocalContext.current.applicationContext as Application
                 val viewModel: DeviceSettingViewModel = viewModel(
-                    factory = DeviceSettingViewModelFactory(Application(), deviceAdd)
+                    factory = DeviceSettingViewModelFactory(application, deviceAdd)
                 )
                 val uiState by viewModel.uiState.collectAsState()
-
-
-
 
                 val scrollState = rememberScrollState()
                 DevicesSettingScreen(
