@@ -40,8 +40,6 @@ class DeviceSettingViewModel(
         DeviceSettingUiState(setting = DeviceSetting(address = deviceAdd)))
     val uiState: StateFlow<DeviceSettingUiState> = _uiState.asStateFlow()
 
-
-
     // BleDeviceCallback instance to handle callbacks from the BleDevice
     private val bleDeviceCallback = object : BleDeviceCallback() {
         override fun onDoorStateChanged(isOpened: Boolean) {
@@ -56,17 +54,13 @@ class DeviceSettingViewModel(
 
     init {
         Log.d("BSK", "DeviceSettingViewModel init: ${uiState.value.setting.address}")
-
-        _uiState.update { currentState ->
-            /* todo à supprimer */
-            currentState.copy(setting = DeviceSetting(rssi = -70))
-        }
     }
 
     override fun onCleared() {
         super.onCleared()
 
         Log.d("BSK", "DeviceSettingViewModel onCleared")
+        bleDevice.disconnect()
     }
 }
 

@@ -15,9 +15,9 @@ import java.util.UUID
 @SuppressLint("MissingPermission")
 /* todo deconter le device quand BleDevice est détruit */
 class BleDevice(
-    private val application: Application,
-    private val address: String,
-    private val callback: BleDeviceCallback
+    application: Application,
+    address: String,
+    callback: BleDeviceCallback
 ) {
     private val bluetoothManager = application.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
     private val bluetoothDevice = bluetoothManager.adapter.getRemoteDevice(address)
@@ -38,11 +38,13 @@ class BleDevice(
 
             if (newState == BluetoothGatt.STATE_CONNECTED) {
                 // successfully connected to the GATT Server
+                callback.onConnectionStateChanged(true)
                 // Attempts to discover services after successful connection.
                 gatt?.discoverServices()
             } else if (newState == BluetoothGatt.STATE_DISCONNECTED) {
                 // disconnected from the GATT Server
-                /* todo manage disconnection */
+                callback.onConnectionStateChanged(false)
+                disconnect()
             }
         }
 
@@ -133,6 +135,18 @@ class BleDevice(
         gattCharDoorState?.let {
             gattDevice?.readCharacteristic(gattCharDoorState)
         }
+    }
+
+    fun disconnect() {
+        gattDevice?.disconnect()
+
+        gattDevice = null
+        gattCharDeviceName = null
+        gattCharLockState = null
+        gattCharDoorState = null
+        gattCharOpenDoor = null
+        gattCharBrightness = null
+        gattCharBrightnessTh  = null
     }
 
 
