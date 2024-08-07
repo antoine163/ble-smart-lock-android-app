@@ -6,6 +6,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.antoine163.blesmartkey.ble.BleDevice
+import com.antoine163.blesmartkey.ble.BleDeviceCallback
 import com.antoine163.blesmartkey.model.DeviceSetting
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -39,13 +40,25 @@ class DeviceSettingViewModel(
         DeviceSettingUiState(setting = DeviceSetting(address = deviceAdd)))
     val uiState: StateFlow<DeviceSettingUiState> = _uiState.asStateFlow()
 
-    // BleDevice instance to interact with the Bluetooth device
-    val bleDevice = BleDevice(application, deviceAdd)
+
+
+    // BleDeviceCallback instance to handle callbacks from the BleDevice
+    private val bleDeviceCallback = object : BleDeviceCallback() {
+        override fun onDoorStateChanged(isOpened: Boolean) {
+            _uiState.update { currentState ->
+                currentState.copy(setting = currentState.setting.copy(isOpened = isOpened))
+            }
+        }
+    }
+
+    // bleDevice instance to interact with the Bluetooth device
+    val bleDevice: BleDevice = BleDevice(application, deviceAdd, bleDeviceCallback)
 
     init {
         Log.d("BSK", "DeviceSettingViewModel init: ${uiState.value.setting.address}")
 
         _uiState.update { currentState ->
+            /* todo à supprimer */
             currentState.copy(setting = DeviceSetting(rssi = -70))
         }
     }
@@ -55,8 +68,6 @@ class DeviceSettingViewModel(
 
         Log.d("BSK", "DeviceSettingViewModel onCleared")
     }
-
-
 }
 
 /**

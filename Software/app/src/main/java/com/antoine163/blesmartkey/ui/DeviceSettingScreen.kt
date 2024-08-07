@@ -26,6 +26,8 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
@@ -44,7 +46,22 @@ import kotlin.math.pow
 @Composable
 fun DevicesSettingScreen(
     modifier: Modifier = Modifier,
-    deviceSetting: DeviceSetting
+    viewModel: DeviceSettingViewModel
+) {
+    val uiState by viewModel.uiState.collectAsState()
+
+    DevicesSettingScreen(
+        modifier,
+        uiState.setting,
+        onUnlock = { viewModel.bleDevice.unlock() }
+    )
+}
+
+@Composable
+fun DevicesSettingScreen(
+    modifier: Modifier = Modifier,
+    deviceSetting: DeviceSetting,
+    onUnlock: () -> Unit
 ) {
     val isConnected: Boolean = deviceSetting.rssi != null
 
@@ -162,7 +179,7 @@ fun DevicesSettingScreen(
             enabled = isConnected,
             isUnlock = deviceSetting.isUnlocked,
             isDoorOpen = deviceSetting.isOpened,
-            onUnlock = { /* TODO */ },
+            onUnlock = onUnlock,
             onOpenDoor = { /* TODO */ },
             onDisconnect = { /* TODO */ })
 
@@ -443,7 +460,8 @@ private fun DevicesSettingScreenPreview() {
     BleSmartKeyTheme {
         Surface {
             DevicesSettingScreen(
-                deviceSetting = createDemoDeviceSetting()
+                deviceSetting = createDemoDeviceSetting(),
+                onUnlock = {}
             )
         }
     }
@@ -451,7 +469,7 @@ private fun DevicesSettingScreenPreview() {
 
 fun createDemoDeviceSetting(): DeviceSetting {
     return DeviceSetting(
-        name = "Device 1",
+        name = "BLE Smart Key",
         address = "12:34:56:78:90:AB",
         rssi = -70,
         isOpened = true,

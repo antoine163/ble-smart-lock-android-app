@@ -11,86 +11,139 @@ import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
 import java.util.UUID
-import kotlin.coroutines.resume
 
+@SuppressLint("MissingPermission")
+/* todo deconter le device quand BleDevice est détruit */
 class BleDevice(
     private val application: Application,
-    private val address: String
+    private val address: String,
+    private val callback: BleDeviceCallback
 ) {
-
     private val bluetoothManager = application.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-    private val device = bluetoothManager.adapter.getRemoteDevice(address)
+    private val bluetoothDevice = bluetoothManager.adapter.getRemoteDevice(address)
 
-    private var deviceGatt: BluetoothGatt? = null
-    private val SERV_UUID = UUID.fromString("44707b20-3459-11ee-aea4-0800200c9a66")
-    private val CHAR_UUID_LOCK_STATE = UUID.fromString("44707b21-3459-11ee-aea4-0800200c9a66")
-    private val CHAR_UUID_DOOR_STATE = UUID.fromString("44707b22-3459-11ee-aea4-0800200c9a66")
-    private val CHAR_UUID_OPEN_DOOR = UUID.fromString("44707b23-3459-11ee-aea4-0800200c9a66")
-    private val CHAR_UUID_BRIGHTNESS = UUID.fromString("44707b24-3459-11ee-aea4-0800200c9a66")
-    private val CHAR_UUID_BRIGHTNESS_TH = UUID.fromString("44707b25-3459-11ee-aea4-0800200c9a66")
+    private var gattDevice: BluetoothGatt? = null
+    private var gattCharDeviceName: BluetoothGattCharacteristic? = null
+    private var gattCharLockState: BluetoothGattCharacteristic? = null
+    private var gattCharDoorState: BluetoothGattCharacteristic? = null
+    private var gattCharOpenDoor: BluetoothGattCharacteristic? = null
+    private var gattCharBrightness: BluetoothGattCharacteristic? = null
+    private var gattCharBrightnessTh: BluetoothGattCharacteristic? = null
 
 
     private val gattCallback = object : BluetoothGattCallback() {
-        @SuppressLint("MissingPermission")
         override fun onConnectionStateChange(gatt: BluetoothGatt?, status: Int, newState: Int) {
+            Log.d("BSK", "onConnectionStateChange: $status : $newState")
             super.onConnectionStateChange(gatt, status, newState)
 
-            deviceGatt = gatt
+            if (newState == BluetoothGatt.STATE_CONNECTED) {
+                // successfully connected to the GATT Server
+                // Attempts to discover services after successful connection.
+                gatt?.discoverServices()
+            } else if (newState == BluetoothGatt.STATE_DISCONNECTED) {
+                // disconnected from the GATT Server
+                /* todo manage disconnection */
+            }
+        }
+
+        override fun onServicesDiscovered(gatt: BluetoothGatt?, status: Int) {
+            super.onServicesDiscovered(gatt, status)
 
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                if (newState == BluetoothGatt.STATE_CONNECTED) {
-                    Log.d("BSK", "Connected to device $address")
-                    if (gatt?.discoverServices() == true) {
-                        Log.d("BSK", "Discover services for device $address")
-                    } else {
-                        Log.e("BSK", "Discover services failed for device $address!")
-                        /* todo manage error */
-                    }
-                } else {
-                    Log.d("BSK", "Disconnected from device $address!")
+                Log.d("BSK", "Services discovered for device $address")
+
+                gatt?.let {
+                    // Save the gatt device
+                    gattDevice = gatt
+
+                    // Get the generic access service and characteristic
+                    val gattServiceGenericAccess = gatt.getService(Companion.SERV_UUID_GENERIC_ACCESS)
+                    gattCharDeviceName = gattServiceGenericAccess?.getCharacteristic(CHAR_UUID_DEVICE_NAME)
+
+                    // Get the application service and characteristics
+                    val gattServiceApp = gatt.getService(SERV_UUID_APP)
+                    gattCharLockState = gattServiceApp?.getCharacteristic(CHAR_UUID_LOCK_STATE)
+                    gattCharDoorState = gattServiceApp?.getCharacteristic(CHAR_UUID_DOOR_STATE)
+                    gattCharOpenDoor = gattServiceApp?.getCharacteristic(CHAR_UUID_OPEN_DOOR)
+                    gattCharBrightness = gattServiceApp?.getCharacteristic(CHAR_UUID_BRIGHTNESS)
+                    gattCharBrightnessTh = gattServiceApp?.getCharacteristic(CHAR_UUID_BRIGHTNESS_TH)
+
+                    /* Todo manage error if service and characteristic not found */
+
+                    // Enable notifications for the door state characteristic
+                    gatt.setCharacteristicNotification(gattCharDoorState, true)
                 }
             } else {
-                if (newState == BluetoothGatt.STATE_CONNECTED) {
-                    Log.e("BSK", "Connection failed for device $address!")
-                } else {
-                    Log.e("BSK", "Disconnection failed for device $address!")
-                }
-                /* todo manage error */
-            }
-        }
-//
-//        override fun onServicesDiscovered(gatt: BluetoothGatt?, status: Int) {
-//            super.onServicesDiscovered(gatt, status)
-//
-//            if (status == BluetoothGatt.GATT_SUCCESS) {
-//                Log.d("BSK", "Services discovered for device $address")
-//                // Process discovered services
-//            } else {
-//                Log.e("BSK", "Service discovery failed for device $address! Status: $status")
-//                // Handle the error
-//            }
-//        }
-
-        @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-        @SuppressLint("MissingPermission")
-        fun unlock() {
-            if (deviceGatt != null) {
-                val service = deviceGatt!!.getService(SERV_UUID)
-                val charUnlock = service?.getCharacteristic(CHAR_UUID_LOCK_STATE)
-
-                if (charUnlock != null) {
-                    val value = byteArrayOf(0x01)
-                    deviceGatt?.writeCharacteristic(
-                        charUnlock, value,
-                        BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
-                    )
-                }
+                Log.e("BSK", "Service discovery failed for device $address! Status: $status")
+                // Handle the error
             }
         }
 
+        override fun onCharacteristicRead(
+            gatt: BluetoothGatt,
+            characteristic: BluetoothGattCharacteristic,
+            value: ByteArray,
+            status: Int
+        ) {
+            super.onCharacteristicRead(gatt, characteristic, value, status)
+            Log.d("BSK", "onCharacteristicRead: ${characteristic.uuid} : ${value.joinToString()}")
+        }
 
+        override fun onCharacteristicWrite(
+            gatt: BluetoothGatt?,
+            characteristic: BluetoothGattCharacteristic?,
+            status: Int
+        ) {
+            super.onCharacteristicWrite(gatt, characteristic, status)
+            Log.d("BSK", "onCharacteristicWrite: ${characteristic?.uuid} : $status")
+        }
+
+        override fun onCharacteristicChanged(
+            gatt: BluetoothGatt,
+            characteristic: BluetoothGattCharacteristic,
+            value: ByteArray
+        ) {
+            super.onCharacteristicChanged(gatt, characteristic, value)
+            Log.d("BSK", "onCharacteristicChanged: ${characteristic.uuid} : ${value.joinToString()}")
+
+            // Handle the door state change
+            when (characteristic.uuid) {
+                CHAR_UUID_DOOR_STATE -> {
+                    val isOpened = value[0] == 0x01.toByte()
+                    callback.onDoorStateChanged(isOpened)
+                }
+            }
+        }
     }
 
-    @SuppressLint("MissingPermission")
-    private val gatt = device.connectGatt(application, false, gattCallback)
+    init {
+        bluetoothDevice.connectGatt(application, false, gattCallback)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    fun unlock() {
+//        gattCharLockState?.let { charLockState ->
+//            gattDevice?.writeCharacteristic(
+//                charLockState, byteArrayOf(0x01),
+//                BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+//            )
+//        }
+
+
+        gattCharDoorState?.let {
+            gattDevice?.readCharacteristic(gattCharDoorState)
+        }
+    }
+
+
+    companion object {
+        private val SERV_UUID_GENERIC_ACCESS = UUID.fromString("00001800-0000-1000-8000-00805f9b34fb")
+        private val CHAR_UUID_DEVICE_NAME = UUID.fromString("00002a00-0000-1000-8000-00805f9b34fb")
+        private val SERV_UUID_APP = UUID.fromString("44707b20-3459-11ee-aea4-0800200c9a66")
+        private val CHAR_UUID_LOCK_STATE = UUID.fromString("44707b21-3459-11ee-aea4-0800200c9a66")
+        private val CHAR_UUID_DOOR_STATE = UUID.fromString("44707b22-3459-11ee-aea4-0800200c9a66")
+        private val CHAR_UUID_OPEN_DOOR = UUID.fromString("44707b23-3459-11ee-aea4-0800200c9a66")
+        private val CHAR_UUID_BRIGHTNESS = UUID.fromString("44707b24-3459-11ee-aea4-0800200c9a66")
+        private val CHAR_UUID_BRIGHTNESS_TH = UUID.fromString("44707b25-3459-11ee-aea4-0800200c9a66")
+    }
 }

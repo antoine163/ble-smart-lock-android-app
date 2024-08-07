@@ -67,7 +67,7 @@ fun createDemoDeviceList(): List<DeviceListItem> {
     return listOf(
         DeviceListItem(
             name = "Device 1",
-            address = "12:34:56:78:90:AB",
+            address = "4D:74:99:36:BB:74",
             rssi = -55,
             isOpened = true
         ),
