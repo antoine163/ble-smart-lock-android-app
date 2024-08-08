@@ -7,9 +7,7 @@ import android.bluetooth.BluetoothGattCallback
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothManager
 import android.content.Context
-import android.os.Build
 import android.util.Log
-import androidx.annotation.RequiresApi
 import java.util.UUID
 
 @SuppressLint("MissingPermission")
@@ -59,7 +57,7 @@ class BleDevice(
                     gattDevice = gatt
 
                     // Get the generic access service and characteristic
-                    val gattServiceGenericAccess = gatt.getService(Companion.SERV_UUID_GENERIC_ACCESS)
+                    val gattServiceGenericAccess = gatt.getService(SERV_UUID_GENERIC_ACCESS)
                     gattCharDeviceName = gattServiceGenericAccess?.getCharacteristic(CHAR_UUID_DEVICE_NAME)
 
                     // Get the application service and characteristics
