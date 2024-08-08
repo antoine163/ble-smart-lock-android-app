@@ -51,7 +51,7 @@ class DeviceSettingViewModel(
 
             if (!isConnected) {
                 _uiState.update { currentState ->
-                    currentState.copy(setting = currentState.setting.copy(rssi = null))
+                    currentState.copy(setting = currentState.setting.copy(currentRssi = null))
                 }
             }
         }
@@ -94,7 +94,11 @@ class DeviceSettingViewModel(
         // Handle rssi changes
         override fun onRssiRead(rssi: Int) {
             _uiState.update { currentState ->
-                currentState.copy(setting = currentState.setting.copy(rssi = rssi))
+                currentState.copy(
+                    setting = currentState.setting.copy(
+                        currentRssi = rssi
+                    )
+                )
             }
         }
     }
@@ -105,7 +109,8 @@ class DeviceSettingViewModel(
     init {
         viewModelScope.launch {
             while (true) {
-                delay(800) // Wait for 800ms
+                // Read Rssi and brightness every 0.8s
+                delay(800)
                 bleDevice.readRssi()
                 bleDevice.readBrightness()
             }

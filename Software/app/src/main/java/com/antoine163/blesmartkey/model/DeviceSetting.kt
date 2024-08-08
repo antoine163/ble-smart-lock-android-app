@@ -1,31 +1,27 @@
 package com.antoine163.blesmartkey.model
 
 
-
-
 /**
- * Represents a device setting.
+ * Data class representing the settings of a device.
  *
  * @property name The name of the device.
- * @property address The address of the device.
- * @property rssi The received signal strength indicator (RSSI) of the device, or `null` if not available.
- * @property isOpened Whether the device is currently open.
- * @property isUnlocked Whether the device is currently unlocked.
- * @property thresholdNight The light threshold for night mode.
- * @property currentBrightness The current brightness of the device.
- * @property autoUnlockEnable Whether auto unlock is enabled.
- * @property autoUnlockDistance The distance for auto unlock.
- * @property txPower The transmission power of the device.
+ * @property address The MAC address of the device.
+ * @property currentRssi The current RSSI value of the device.
+ * @property isOpened Indicates whether the device is currently opened.
+ * @property isUnlocked Indicates whether the device is currently unlocked.
+ * @property thresholdNight The brightness threshold for night mode.
+ * @property currentBrightness The current brightness level.
+ * @property autoUnlockEnable Indicates whether auto-unlock is enabled.
+ * @property autoUnlockRssiTh The RSSI threshold for auto-unlock.
  */
 data class DeviceSetting(
     val name: String = "",
     val address: String = "",
-    val rssi: Int? = null,
+    val currentRssi: Int? = null,
     val isOpened: Boolean = false,
     val isUnlocked: Boolean = false,
     val thresholdNight: Float = 0f,
     val currentBrightness: Float = 0f,
-    val autoUnlockEnable: Boolean= false,
-    val autoUnlockDistance: Float = 0f,
-    val txPower: Int = 0,
+    val autoUnlockEnable: Boolean = true,
+    val autoUnlockRssiTh: Int = 0
 )

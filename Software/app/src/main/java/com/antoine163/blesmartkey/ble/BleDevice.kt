@@ -2,13 +2,13 @@ package com.antoine163.blesmartkey.ble
 
 import android.annotation.SuppressLint
 import android.app.Application
+import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCallback
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.util.Log
-import com.antoine163.blesmartkey.model.DeviceScanItem
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.UUID
@@ -19,8 +19,8 @@ class BleDevice(
     address: String,
     callback: BleDeviceCallback
 ) {
-    private val bluetoothManager = application.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-    private val bluetoothDevice = bluetoothManager.adapter.getRemoteDevice(address)
+    private val bluetoothManager: BluetoothManager = application.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+    private val bluetoothDevice: BluetoothDevice = bluetoothManager.adapter.getRemoteDevice(address)
 
     private var gattDevice: BluetoothGatt? = null
     private var gattCharDeviceName: BluetoothGattCharacteristic? = null
@@ -229,7 +229,7 @@ class BleDevice(
 
     fun connect() {
         if (gattDevice == null) {
-            bluetoothDevice.connectGatt(application, true, gattCallback)
+            bluetoothDevice.connectGatt(application, false, gattCallback)
         }
     }
 
@@ -246,7 +246,6 @@ class BleDevice(
 
         readCharMap.clear()
     }
-
 
     companion object {
         private val SERV_UUID_GENERIC_ACCESS = UUID.fromString("00001800-0000-1000-8000-00805f9b34fb")

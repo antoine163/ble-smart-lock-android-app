@@ -50,7 +50,6 @@ import androidx.navigation.NavHostController
 import com.antoine163.blesmartkey.R
 import com.antoine163.blesmartkey.model.DeviceSetting
 import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
-import kotlin.math.pow
 
 @Composable
 fun DevicesSettingScreen(
@@ -85,7 +84,7 @@ fun DevicesSettingScreen(
     onDisconnect: () -> Unit,
     onDeviceNameChange: (String) -> Unit
 ) {
-    val isConnected: Boolean = deviceSetting.rssi != null
+    val isConnected: Boolean = deviceSetting.currentRssi != null
 
     Column(modifier = modifier) {
         Row(
@@ -160,7 +159,7 @@ fun DevicesSettingScreen(
 
             // Signal Strength
             Column {
-                SignalStrengthIcon(rssi = deviceSetting.rssi)
+                SignalStrengthIcon(rssi = deviceSetting.currentRssi)
             }
         }
 
@@ -236,19 +235,14 @@ fun DevicesSettingScreen(
         )
 
         // Auto Unlock Card
-        val currentDistanceValue = when {
-            deviceSetting.rssi == null -> null
-            else -> calculateDistanceFromRssi(deviceSetting.txPower, deviceSetting.rssi)
-        }
-
         AutoUnlockCard(modifier = Modifier
             .padding(vertical = dimensionResource(id = R.dimen.padding_small))
             .fillMaxWidth(),
             autoUnlock = deviceSetting.autoUnlockEnable,
-            unlockDistanceValue = deviceSetting.autoUnlockDistance,
-            currentDistanceValue = currentDistanceValue,
+            unlockRssiTh = deviceSetting.autoUnlockRssiTh,
+            currentRssi = deviceSetting.currentRssi,
             onAutoUnlockChange = { /* TODO */ },
-            onUnlockDistanceValue = { /* TODO */ })
+            onUnlockRssiTh = { /* TODO */ })
 
     }
 }
@@ -463,10 +457,10 @@ fun NightBrightnessCard(
 fun AutoUnlockCard(
     modifier: Modifier,
     autoUnlock: Boolean,
-    unlockDistanceValue: Float,
-    currentDistanceValue: Float?,
+    unlockRssiTh: Int,
+    currentRssi: Int?,
     onAutoUnlockChange: (Boolean) -> Unit,
-    onUnlockDistanceValue: (Float) -> Unit
+    onUnlockRssiTh: (Int) -> Unit
 ) {
 
     ElevatedCard(
@@ -502,9 +496,12 @@ fun AutoUnlockCard(
         )
 
         TextField(
-            value = "${"%.1f".format(unlockDistanceValue)}m",
+            value = "${unlockRssiTh}dBm",
             onValueChange = { newValue ->
-                onUnlockDistanceValue(newValue.toFloatOrNull() ?: 1.5f)
+                val rssiTh = newValue.toIntOrNull()
+                if (rssiTh != null) {
+                    onUnlockRssiTh(rssiTh)
+                }
             },
             enabled = autoUnlock,
             label = {
@@ -513,17 +510,14 @@ fun AutoUnlockCard(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = stringResource(R.string.distance),
+                        text = stringResource(R.string.rssi_threshold),
                         style = MaterialTheme.typography.titleSmall
                     )
 
-                    if (currentDistanceValue != null && autoUnlock) {
+                    if (currentRssi != null && autoUnlock) {
                         Text(
-                            text = stringResource(R.string.current_distance) + ": ${
-                                "%.1f".format(
-                                    currentDistanceValue
-                                )
-                            }m",
+                            text = stringResource(R.string.current_rssi)
+                                    + ": ${currentRssi}dBm",
                             style = MaterialTheme.typography.bodySmall,
                             color = LocalContentColor.current.copy(alpha = 0.5f)
                         )
@@ -536,12 +530,6 @@ fun AutoUnlockCard(
                 .fillMaxWidth()
         )
     }
-}
-
-fun calculateDistanceFromRssi(txPower: Int, rssi: Int): Float {
-    // n is set to 2, but depends on the environment
-    val n = 2.0
-    return 10.0.pow((txPower - rssi) / (10 * n)).toFloat()
 }
 
 @Preview(
@@ -588,14 +576,13 @@ fun createDemoDeviceSetting(): DeviceSetting {
     return DeviceSetting(
         name = "BLE Smart Lock",
         address = "12:34:56:78:90:AB",
-        rssi = -70,
+        currentRssi = -70,
         isOpened = true,
         isUnlocked = true,
         thresholdNight = 42.8f,
         currentBrightness = 68.7f,
         autoUnlockEnable = true,
-        autoUnlockDistance = 1.5f,
-        txPower = -14
+        autoUnlockRssiTh = -80
     )
 }
 

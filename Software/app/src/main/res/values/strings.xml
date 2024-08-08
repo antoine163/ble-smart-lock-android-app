@@ -17,9 +17,8 @@
     <string name="scanning">Scanning …</string>
     <string name="actions">Actions</string>
     <string name="threshold">Threshold</string>
-    <string name="distance">Distance</string>
     <string name="current_brightness">Current brightness</string>
-    <string name="current_distance">Current distance</string>
+    <string name="current_rssi">Current rssi</string>
     <string name="open_menu">Open menu</string>
     <string name="add_device">Add device</string>
     <string name="back">Back</string>
@@ -37,10 +36,11 @@
     <string name="night_brightness">Night brightness</string>
     <string name="night_brightness_info">Activate the lighting upon door opening if the ambient brightness is under the specified level.</string>
     <string name="auto_unlock">Auto unlock</string>
-    <string name="auto_unlock_info">Unlock automatically when the lock is closer than the set distance.</string>
+    <string name="auto_unlock_info">"Unlock automatically when the lock is closer than the set rssi value."</string>
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
     <string name="enter_new_lock_name">Enter new name</string>
     <string name="edit_lock_name">Edit lock name</string>
     <string name="device_name_cannot_exceed_characters">Device name cannot exceed %1$s characters.</string>
+    <string name="rssi_threshold">Rssi threshold</string>
 </resources>
