@@ -18,8 +18,10 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -171,14 +173,6 @@ fun DevicesSettingScreen(
                 .padding(bottom = dimensionResource(id = R.dimen.padding_small))
         ) {
             Row {
-                Text(
-                    text = deviceSetting.name,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-
                 if (isConnected) {
                     var showDialog by remember { mutableStateOf(false) }
                     if (showDialog) {
@@ -192,10 +186,23 @@ fun DevicesSettingScreen(
                         )
                     }
 
+                    Text(
+                        text = deviceSetting.name,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                     Icon(
                         painter = painterResource(id = R.drawable.rounded_edit_24),
                         contentDescription = stringResource(R.string.edite),
                         Modifier.clickable { showDialog = true }
+                    )
+                } else {
+                    LinearProgressIndicator(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = MaterialTheme.colorScheme.secondary,
+                        trackColor = MaterialTheme.colorScheme.surfaceVariant,
                     )
                 }
             }
