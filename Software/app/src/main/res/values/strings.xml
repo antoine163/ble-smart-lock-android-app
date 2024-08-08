@@ -38,4 +38,9 @@
     <string name="night_brightness_info">Activate the lighting upon door opening if the ambient brightness is under the specified level.</string>
     <string name="auto_unlock">Auto unlock</string>
     <string name="auto_unlock_info">Unlock automatically when the lock is closer than the set distance.</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="enter_new_lock_name">Enter new name</string>
+    <string name="edit_lock_name">Edit lock name</string>
+    <string name="device_name_cannot_exceed_characters">Device name cannot exceed %1$s characters.</string>
 </resources>

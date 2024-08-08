@@ -74,6 +74,9 @@ class BleDevice(
 
                     // Enable notifications for the door state characteristic
                     gatt.setCharacteristicNotification(gattCharDoorState, true)
+
+                    // Read the device name characteristic
+                    gatt.readCharacteristic(gattCharDeviceName)
                 }
             } else {
                 Log.e("BSK", "Service discovery failed for device $address! Status: $status")
@@ -88,6 +91,13 @@ class BleDevice(
             status: Int
         ) {
             super.onCharacteristicRead(gatt, characteristic, value, status)
+
+            when (characteristic.uuid) {
+                CHAR_UUID_DEVICE_NAME -> {
+                    val deviceName = String(value)
+                    callback.onDeviceNameChanged(deviceName)
+                }
+            }
         }
 
         override fun onCharacteristicWrite(
@@ -101,6 +111,12 @@ class BleDevice(
                 CHAR_UUID_LOCK_STATE -> {
                     if (status == BluetoothGatt.GATT_SUCCESS) {
                         callback.onUnlock()
+                    }
+                }
+                CHAR_UUID_DEVICE_NAME -> {
+                    if (status == BluetoothGatt.GATT_SUCCESS) {
+                        // Read the device name characteristic
+                        gatt?.readCharacteristic(gattCharDeviceName)
                     }
                 }
             }
@@ -131,6 +147,16 @@ class BleDevice(
 
     init {
         connect()
+    }
+
+    @SuppressLint("NewApi")
+    fun setDeviceName(deviceName: String) {
+        gattCharDeviceName?.let { charDeviceName ->
+            gattDevice?.writeCharacteristic(
+                charDeviceName, deviceName.toByteArray(),
+                BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+            )
+        }
     }
 
     @SuppressLint("NewApi")
@@ -174,6 +200,7 @@ class BleDevice(
         gattCharBrightness = null
         gattCharBrightnessTh  = null
     }
+
 
     companion object {
         private val SERV_UUID_GENERIC_ACCESS = UUID.fromString("00001800-0000-1000-8000-00805f9b34fb")

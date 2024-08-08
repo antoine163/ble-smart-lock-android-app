@@ -76,6 +76,13 @@ class DeviceSettingViewModel(
                 currentState.copy(setting = currentState.setting.copy(rssi = rssi))
             }
         }
+
+        // Handle device name changes
+        override fun onDeviceNameChanged(deviceName: String) {
+            _uiState.update { currentState ->
+                currentState.copy(setting = currentState.setting.copy(name = deviceName))
+            }
+        }
     }
 
     // bleDevice instance to interact with the Bluetooth device

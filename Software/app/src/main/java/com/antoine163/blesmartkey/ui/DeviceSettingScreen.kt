@@ -15,19 +15,26 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
@@ -63,7 +70,8 @@ fun DevicesSettingScreen(
         onDisconnect = {
             viewModel.bleDevice.disconnect()
             navController.navigateUp()
-        }
+        },
+        onDeviceNameChange = { deviceName -> viewModel.bleDevice.setDeviceName(deviceName) }
     )
 }
 
@@ -73,7 +81,8 @@ fun DevicesSettingScreen(
     deviceSetting: DeviceSetting,
     onUnlock: () -> Unit,
     onOpenDoor: () -> Unit,
-    onDisconnect: () -> Unit
+    onDisconnect: () -> Unit,
+    onDeviceNameChange: (String) -> Unit
 ) {
     val isConnected: Boolean = deviceSetting.rssi != null
 
@@ -171,10 +180,22 @@ fun DevicesSettingScreen(
                 )
 
                 if (isConnected) {
+                    var showDialog by remember { mutableStateOf(false) }
+                    if (showDialog) {
+                        DialogEditDeviceName(
+                            initialDeviceName = deviceSetting.name,
+                            onCancel = { showDialog = false },
+                            onConfirm = { newName ->
+                                onDeviceNameChange(newName)
+                                showDialog = false
+                            }
+                        )
+                    }
+
                     Icon(
                         painter = painterResource(id = R.drawable.rounded_edit_24),
                         contentDescription = stringResource(R.string.edite),
-                        Modifier.clickable { /* TODO */ }
+                        Modifier.clickable { showDialog = true }
                     )
                 }
             }
@@ -222,6 +243,65 @@ fun DevicesSettingScreen(
             onUnlockDistanceValue = { /* TODO */ })
 
     }
+}
+
+@Composable
+fun DialogEditDeviceName(
+    initialDeviceName: String,
+    onCancel: () -> Unit,
+    onConfirm: (String) -> Unit
+) {
+    var deviceName by remember { mutableStateOf(initialDeviceName) }
+    var showSnackbar by remember { mutableStateOf(false) }
+    val maxDeviceNameLength = 16
+
+    AlertDialog(
+        onDismissRequest = onCancel,
+        title = { Text(text = stringResource(R.string.edit_lock_name)) },
+        text = {
+            OutlinedTextField(
+                value = deviceName,
+                onValueChange = { newText ->
+                    if (newText.length <= maxDeviceNameLength) {
+                        deviceName = newText
+                    } else {
+                        showSnackbar = true
+                    }
+                },
+                label = { Text(stringResource(R.string.enter_new_lock_name)) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            // Snackbar for visual feedback
+            if (showSnackbar) {
+                Snackbar(
+                    action = {
+                        TextButton(onClick = { showSnackbar = false }) {
+                            Text(stringResource(R.string.ok))
+                        }
+                    },
+                    modifier = Modifier.padding(8.dp)
+                ) {
+                    Text(
+                        stringResource(
+                            R.string.device_name_cannot_exceed_characters,
+                            maxDeviceNameLength
+                        ))
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(deviceName) }) {
+                Text(stringResource(R.string.ok))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onCancel) {
+                Text(stringResource(R.string.cancel))
+            }
+        }
+    )
 }
 
 @Composable
@@ -462,11 +542,25 @@ fun calculateDistanceFromRssi(txPower: Int, rssi: Int): Float {
     showBackground = true,
     device = "id:S21 FE"
 )
-//@Preview(
-//    name = "Light Mode",
-//    showBackground = true,
-//    device = "id:S21 FE"
-//)
+@Composable
+private fun DialogEditDeviceNamePreview() {
+    BleSmartKeyTheme {
+        Surface {
+            DialogEditDeviceName(
+                initialDeviceName = "BLE Smart Lock",
+                onCancel = {},
+                onConfirm = {}
+            )
+        }
+    }
+}
+
+@Preview(
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    name = "Dark Mode",
+    showBackground = true,
+    device = "id:S21 FE"
+)
 @Composable
 private fun DevicesSettingScreenPreview() {
     BleSmartKeyTheme {
@@ -476,6 +570,7 @@ private fun DevicesSettingScreenPreview() {
                 onUnlock = {},
                 onOpenDoor = {},
                 onDisconnect = {},
+                onDeviceNameChange = {}
             )
         }
     }
@@ -483,7 +578,7 @@ private fun DevicesSettingScreenPreview() {
 
 fun createDemoDeviceSetting(): DeviceSetting {
     return DeviceSetting(
-        name = "BLE Smart Key",
+        name = "BLE Smart Lock",
         address = "12:34:56:78:90:AB",
         rssi = -70,
         isOpened = true,

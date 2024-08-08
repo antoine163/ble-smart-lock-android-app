@@ -5,4 +5,5 @@ open class BleDeviceCallback {
     open fun onUnlock() {}
     open fun onDoorStateChanged(isOpened: Boolean) {}
     open fun onRssiChanged(rssi: Int) {}
+    open fun onDeviceNameChanged(deviceName: String) {}
 }
