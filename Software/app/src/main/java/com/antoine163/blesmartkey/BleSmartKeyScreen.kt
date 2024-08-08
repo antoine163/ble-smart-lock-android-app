@@ -142,7 +142,8 @@ fun BleSmartKeyApp(
                         .padding(horizontal = dimensionResource(R.dimen.padding_medium))
                         .fillMaxSize(1f)
                         .verticalScroll(scrollState),
-                    viewModel = viewModel
+                    viewModel = viewModel,
+                    navController = navController
                 )
             }
         }

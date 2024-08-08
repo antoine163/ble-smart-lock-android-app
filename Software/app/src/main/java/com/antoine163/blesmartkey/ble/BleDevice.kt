@@ -15,7 +15,7 @@ import java.util.UUID
 @SuppressLint("MissingPermission")
 /* todo deconter le device quand BleDevice est détruit */
 class BleDevice(
-    application: Application,
+    private val application: Application,
     address: String,
     callback: BleDeviceCallback
 ) {
@@ -88,7 +88,6 @@ class BleDevice(
             status: Int
         ) {
             super.onCharacteristicRead(gatt, characteristic, value, status)
-            Log.d("BSK", "onCharacteristicRead: ${characteristic.uuid} : ${value.joinToString()}")
         }
 
         override fun onCharacteristicWrite(
@@ -97,7 +96,14 @@ class BleDevice(
             status: Int
         ) {
             super.onCharacteristicWrite(gatt, characteristic, status)
-            Log.d("BSK", "onCharacteristicWrite: ${characteristic?.uuid} : $status")
+
+            when (characteristic?.uuid) {
+                CHAR_UUID_LOCK_STATE -> {
+                    if (status == BluetoothGatt.GATT_SUCCESS) {
+                        callback.onUnlock()
+                    }
+                }
+            }
         }
 
         override fun onCharacteristicChanged(
@@ -106,7 +112,6 @@ class BleDevice(
             value: ByteArray
         ) {
             super.onCharacteristicChanged(gatt, characteristic, value)
-            Log.d("BSK", "onCharacteristicChanged: ${characteristic.uuid} : ${value.joinToString()}")
 
             // Handle the door state change
             when (characteristic.uuid) {
@@ -116,24 +121,45 @@ class BleDevice(
                 }
             }
         }
+
+        override fun onReadRemoteRssi(gatt: BluetoothGatt?, rssi: Int, status: Int) {
+            super.onReadRemoteRssi(gatt, rssi, status)
+            // Handle the RSSI value
+            callback.onRssiChanged(rssi)
+        }
     }
 
     init {
-        bluetoothDevice.connectGatt(application, false, gattCallback)
+        connect()
     }
 
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    @SuppressLint("NewApi")
     fun unlock() {
-//        gattCharLockState?.let { charLockState ->
-//            gattDevice?.writeCharacteristic(
-//                charLockState, byteArrayOf(0x01),
-//                BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
-//            )
-//        }
+        gattCharLockState?.let { charLockState ->
+            gattDevice?.writeCharacteristic(
+                charLockState, byteArrayOf(0x01),
+                BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+            )
+        }
+    }
 
+    @SuppressLint("NewApi")
+    fun openDoor() {
+        gattCharOpenDoor?.let { charOpenDoor ->
+            gattDevice?.writeCharacteristic(
+                charOpenDoor, byteArrayOf(0x01),
+                BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+            )
+        }
+    }
 
-        gattCharDoorState?.let {
-            gattDevice?.readCharacteristic(gattCharDoorState)
+    fun readRssi() {
+        gattDevice?.readRemoteRssi()
+    }
+
+    fun connect() {
+        if (gattDevice == null) {
+            bluetoothDevice.connectGatt(application, true, gattCallback)
         }
     }
 
@@ -148,7 +174,6 @@ class BleDevice(
         gattCharBrightness = null
         gattCharBrightnessTh  = null
     }
-
 
     companion object {
         private val SERV_UUID_GENERIC_ACCESS = UUID.fromString("00001800-0000-1000-8000-00805f9b34fb")

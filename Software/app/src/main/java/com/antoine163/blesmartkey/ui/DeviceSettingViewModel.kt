@@ -5,13 +5,16 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
 import com.antoine163.blesmartkey.ble.BleDevice
 import com.antoine163.blesmartkey.ble.BleDeviceCallback
 import com.antoine163.blesmartkey.model.DeviceSetting
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 /**
  * UI state for representing the state of a device setting.
@@ -42,9 +45,35 @@ class DeviceSettingViewModel(
 
     // BleDeviceCallback instance to handle callbacks from the BleDevice
     private val bleDeviceCallback = object : BleDeviceCallback() {
+
+        // Handle connection state changes
+        override fun onConnectionStateChanged(isConnected: Boolean) {
+            super.onConnectionStateChanged(isConnected)
+
+            if (!isConnected) {
+                _uiState.update { currentState ->
+                    currentState.copy(setting = currentState.setting.copy(rssi = null))
+                }
+            }
+        }
+
+        override fun onUnlock() {
+            _uiState.update { currentState ->
+                currentState.copy(setting = currentState.setting.copy(isUnlocked = true))
+            }
+        }
+
+        // Handle door state changes
         override fun onDoorStateChanged(isOpened: Boolean) {
             _uiState.update { currentState ->
                 currentState.copy(setting = currentState.setting.copy(isOpened = isOpened))
+            }
+        }
+
+        // Handle rssi changes
+        override fun onRssiChanged(rssi: Int) {
+            _uiState.update { currentState ->
+                currentState.copy(setting = currentState.setting.copy(rssi = rssi))
             }
         }
     }
@@ -53,13 +82,16 @@ class DeviceSettingViewModel(
     val bleDevice: BleDevice = BleDevice(application, deviceAdd, bleDeviceCallback)
 
     init {
-        Log.d("BSK", "DeviceSettingViewModel init: ${uiState.value.setting.address}")
+        viewModelScope.launch {
+            while (true) {
+                delay(800) // Wait for 800ms
+                bleDevice.readRssi()
+            }
+        }
     }
 
     override fun onCleared() {
         super.onCleared()
-
-        Log.d("BSK", "DeviceSettingViewModel onCleared")
         bleDevice.disconnect()
     }
 }

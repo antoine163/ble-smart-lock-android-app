@@ -38,6 +38,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
 import com.antoine163.blesmartkey.R
 import com.antoine163.blesmartkey.model.DeviceSetting
 import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
@@ -46,14 +47,23 @@ import kotlin.math.pow
 @Composable
 fun DevicesSettingScreen(
     modifier: Modifier = Modifier,
-    viewModel: DeviceSettingViewModel
+    viewModel: DeviceSettingViewModel,
+    navController: NavHostController
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
     DevicesSettingScreen(
         modifier,
         uiState.setting,
-        onUnlock = { viewModel.bleDevice.unlock() }
+        onUnlock = { viewModel.bleDevice.unlock() },
+        onOpenDoor = {
+            viewModel.bleDevice.unlock()
+            viewModel.bleDevice.openDoor()
+        },
+        onDisconnect = {
+            viewModel.bleDevice.disconnect()
+            navController.navigateUp()
+        }
     )
 }
 
@@ -61,7 +71,9 @@ fun DevicesSettingScreen(
 fun DevicesSettingScreen(
     modifier: Modifier = Modifier,
     deviceSetting: DeviceSetting,
-    onUnlock: () -> Unit
+    onUnlock: () -> Unit,
+    onOpenDoor: () -> Unit,
+    onDisconnect: () -> Unit
 ) {
     val isConnected: Boolean = deviceSetting.rssi != null
 
@@ -76,7 +88,7 @@ fun DevicesSettingScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Icon(
-                    modifier = Modifier.size(dimensionResource(id = R.dimen.icon_medium_height)),
+                    modifier = Modifier.size(dimensionResource(id = R.dimen.icon_small_height)),
                     painter = painterResource(id = R.drawable.rounded_link_off_24),
                     contentDescription = stringResource(R.string.dissociate)
                 )
@@ -180,8 +192,8 @@ fun DevicesSettingScreen(
             isUnlock = deviceSetting.isUnlocked,
             isDoorOpen = deviceSetting.isOpened,
             onUnlock = onUnlock,
-            onOpenDoor = { /* TODO */ },
-            onDisconnect = { /* TODO */ })
+            onOpenDoor = onOpenDoor,
+            onDisconnect = onDisconnect)
 
         // Night Brightness Card
         NightBrightnessCard(
@@ -461,7 +473,9 @@ private fun DevicesSettingScreenPreview() {
         Surface {
             DevicesSettingScreen(
                 deviceSetting = createDemoDeviceSetting(),
-                onUnlock = {}
+                onUnlock = {},
+                onOpenDoor = {},
+                onDisconnect = {},
             )
         }
     }
