@@ -78,7 +78,7 @@ class DeviceSettingViewModel(
         }
 
         // Handle brightness threshold read
-        override fun onBrightnessThRead(brightness: Float) {
+        override fun onBrightnessThChanged(brightness: Float) {
             _uiState.update { currentState ->
                 currentState.copy(setting = currentState.setting.copy(thresholdNight = brightness))
             }
@@ -107,6 +107,7 @@ class DeviceSettingViewModel(
             while (true) {
                 delay(800) // Wait for 800ms
                 bleDevice.readRssi()
+                bleDevice.readBrightness()
             }
         }
     }

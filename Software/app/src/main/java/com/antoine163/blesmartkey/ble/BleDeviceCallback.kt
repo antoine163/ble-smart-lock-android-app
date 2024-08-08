@@ -7,7 +7,7 @@ open class BleDeviceCallback {
     open fun onDoorStateChanged(isOpened: Boolean) {}
 
     open fun onBrightnessRead(brightness: Float) {}
-    open fun onBrightnessThRead(brightness: Float) {}
+    open fun onBrightnessThChanged(brightness: Float) {}
 
     open fun onDeviceNameChanged(deviceName: String) {}
     open fun onRssiRead(rssi: Int) {}

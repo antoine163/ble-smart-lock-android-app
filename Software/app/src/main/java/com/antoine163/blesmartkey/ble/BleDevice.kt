@@ -9,6 +9,8 @@ import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.util.Log
 import com.antoine163.blesmartkey.model.DeviceScanItem
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.util.UUID
 
 @SuppressLint("MissingPermission")
@@ -83,6 +85,9 @@ class BleDevice(
 
                     // Read the door state characteristic
                     readCharacteristics(gattCharDoorState)
+
+                    // Read the brightness threshold characteristic
+                    readCharacteristics(gattCharBrightnessTh)
                 }
             } else {
                 Log.e("BSK", "Service discovery failed for device $address! Status: $status")
@@ -122,6 +127,16 @@ class BleDevice(
                 CHAR_UUID_DOOR_STATE -> {
                     val isOpened = value[0] == 0x01.toByte()
                     callback.onDoorStateChanged(isOpened)
+                }
+                CHAR_UUID_BRIGHTNESS -> {
+                    val brightness =
+                        ByteBuffer.wrap(value).order(ByteOrder.LITTLE_ENDIAN).getFloat()
+                    callback.onBrightnessRead(brightness)
+                }
+                CHAR_UUID_BRIGHTNESS_TH -> {
+                    val brightness =
+                        ByteBuffer.wrap(value).order(ByteOrder.LITTLE_ENDIAN).getFloat()
+                    callback.onBrightnessThChanged(brightness)
                 }
             }
 
@@ -206,6 +221,10 @@ class BleDevice(
 
     fun readRssi() {
         gattDevice?.readRemoteRssi()
+    }
+
+    fun readBrightness() {
+        readCharacteristics(gattCharBrightness)
     }
 
     fun connect() {
