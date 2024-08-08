@@ -199,7 +199,9 @@ fun DevicesSettingScreen(
                     )
                 } else {
                     LinearProgressIndicator(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = dimensionResource(R.dimen.padding_small)),
                         color = MaterialTheme.colorScheme.secondary,
                         trackColor = MaterialTheme.colorScheme.surfaceVariant,
                     )
