@@ -2,8 +2,13 @@ package com.antoine163.blesmartkey.ble
 
 open class BleDeviceCallback {
     open fun onConnectionStateChanged(isConnected: Boolean) {}
-    open fun onUnlock() {}
+
+    open fun onLockStateChanged(isLocked: Boolean) {}
     open fun onDoorStateChanged(isOpened: Boolean) {}
-    open fun onRssiChanged(rssi: Int) {}
+
+    open fun onBrightnessRead(brightness: Float) {}
+    open fun onBrightnessThRead(brightness: Float) {}
+
     open fun onDeviceNameChanged(deviceName: String) {}
+    open fun onRssiRead(rssi: Int) {}
 }

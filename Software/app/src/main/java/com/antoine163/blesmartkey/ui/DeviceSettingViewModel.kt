@@ -56,9 +56,10 @@ class DeviceSettingViewModel(
             }
         }
 
-        override fun onUnlock() {
+        // Handle lock state changes
+        override fun onLockStateChanged(isLocked: Boolean) {
             _uiState.update { currentState ->
-                currentState.copy(setting = currentState.setting.copy(isUnlocked = true))
+                currentState.copy(setting = currentState.setting.copy(isUnlocked = !isLocked))
             }
         }
 
@@ -69,10 +70,17 @@ class DeviceSettingViewModel(
             }
         }
 
-        // Handle rssi changes
-        override fun onRssiChanged(rssi: Int) {
+        // Handle current brightness read
+        override fun onBrightnessRead(brightness: Float) {
             _uiState.update { currentState ->
-                currentState.copy(setting = currentState.setting.copy(rssi = rssi))
+                currentState.copy(setting = currentState.setting.copy(currentBrightness = brightness))
+            }
+        }
+
+        // Handle brightness threshold read
+        override fun onBrightnessThRead(brightness: Float) {
+            _uiState.update { currentState ->
+                currentState.copy(setting = currentState.setting.copy(thresholdNight = brightness))
             }
         }
 
@@ -80,6 +88,13 @@ class DeviceSettingViewModel(
         override fun onDeviceNameChanged(deviceName: String) {
             _uiState.update { currentState ->
                 currentState.copy(setting = currentState.setting.copy(name = deviceName))
+            }
+        }
+
+        // Handle rssi changes
+        override fun onRssiRead(rssi: Int) {
+            _uiState.update { currentState ->
+                currentState.copy(setting = currentState.setting.copy(rssi = rssi))
             }
         }
     }

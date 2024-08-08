@@ -8,10 +8,10 @@ import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.util.Log
+import com.antoine163.blesmartkey.model.DeviceScanItem
 import java.util.UUID
 
 @SuppressLint("MissingPermission")
-/* todo deconter le device quand BleDevice est détruit */
 class BleDevice(
     private val application: Application,
     address: String,
@@ -28,6 +28,8 @@ class BleDevice(
     private var gattCharBrightness: BluetoothGattCharacteristic? = null
     private var gattCharBrightnessTh: BluetoothGattCharacteristic? = null
 
+    private var readCharMap = mutableMapOf<UUID, BluetoothGattCharacteristic>()
+
 
     private val gattCallback = object : BluetoothGattCallback() {
         override fun onConnectionStateChange(gatt: BluetoothGatt?, status: Int, newState: Int) {
@@ -40,7 +42,7 @@ class BleDevice(
                 // Attempts to discover services after successful connection.
                 gatt?.discoverServices()
             } else if (newState == BluetoothGatt.STATE_DISCONNECTED) {
-                // disconnected from the GATT Server
+                // Disconnected from the GATT Server
                 callback.onConnectionStateChanged(false)
                 disconnect()
             }
@@ -73,12 +75,34 @@ class BleDevice(
                     // Enable notifications for the door state characteristic
                     gatt.setCharacteristicNotification(gattCharDoorState, true)
 
+                    // Handle the door state change, before a connection the lock is locked
+                    callback.onLockStateChanged( true )
+
                     // Read the device name characteristic
-                    gatt.readCharacteristic(gattCharDeviceName)
+                    readCharacteristics(gattCharDeviceName)
+
+                    // Read the door state characteristic
+                    readCharacteristics(gattCharDoorState)
                 }
             } else {
                 Log.e("BSK", "Service discovery failed for device $address! Status: $status")
                 // Handle the error
+            }
+        }
+
+        override fun onCharacteristicWrite(
+            gatt: BluetoothGatt?,
+            characteristic: BluetoothGattCharacteristic?,
+            status: Int
+        ) {
+            super.onCharacteristicWrite(gatt, characteristic, status)
+
+            when (characteristic?.uuid) {
+                CHAR_UUID_LOCK_STATE -> {
+                    if (status == BluetoothGatt.GATT_SUCCESS) {
+                        callback.onLockStateChanged( false )
+                    }
+                }
             }
         }
 
@@ -95,29 +119,14 @@ class BleDevice(
                     val deviceName = String(value)
                     callback.onDeviceNameChanged(deviceName)
                 }
-            }
-        }
-
-        override fun onCharacteristicWrite(
-            gatt: BluetoothGatt?,
-            characteristic: BluetoothGattCharacteristic?,
-            status: Int
-        ) {
-            super.onCharacteristicWrite(gatt, characteristic, status)
-
-            when (characteristic?.uuid) {
-                CHAR_UUID_LOCK_STATE -> {
-                    if (status == BluetoothGatt.GATT_SUCCESS) {
-                        callback.onUnlock()
-                    }
-                }
-                CHAR_UUID_DEVICE_NAME -> {
-                    if (status == BluetoothGatt.GATT_SUCCESS) {
-                        // Read the device name characteristic
-                        gatt?.readCharacteristic(gattCharDeviceName)
-                    }
+                CHAR_UUID_DOOR_STATE -> {
+                    val isOpened = value[0] == 0x01.toByte()
+                    callback.onDoorStateChanged(isOpened)
                 }
             }
+
+            readCharMap.remove(characteristic.uuid)
+            readNextCharacteristic()
         }
 
         override fun onCharacteristicChanged(
@@ -139,7 +148,25 @@ class BleDevice(
         override fun onReadRemoteRssi(gatt: BluetoothGatt?, rssi: Int, status: Int) {
             super.onReadRemoteRssi(gatt, rssi, status)
             // Handle the RSSI value
-            callback.onRssiChanged(rssi)
+            callback.onRssiRead(rssi)
+        }
+    }
+
+    private fun readCharacteristics(gattChar: BluetoothGattCharacteristic?) {
+        if (gattChar != null) {
+            if (readCharMap.isEmpty()) {
+                readCharMap[gattChar.uuid] = gattChar
+                readNextCharacteristic()
+            } else {
+                readCharMap.putIfAbsent(gattChar.uuid, gattChar)
+            }
+        }
+    }
+
+    private fun readNextCharacteristic() {
+        if (!readCharMap.isEmpty()) {
+            val char = readCharMap.values.first()
+            gattDevice?.readCharacteristic(char)
         }
     }
 
@@ -197,6 +224,8 @@ class BleDevice(
         gattCharOpenDoor = null
         gattCharBrightness = null
         gattCharBrightnessTh  = null
+
+        readCharMap.clear()
     }
 
 
