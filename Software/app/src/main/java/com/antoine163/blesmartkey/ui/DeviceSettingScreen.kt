@@ -51,6 +51,13 @@ import com.antoine163.blesmartkey.R
 import com.antoine163.blesmartkey.model.DeviceSetting
 import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
 
+/**
+ * Composable function representing the Devices Setting Screen.
+ *
+ * @param modifier Modifier for styling the screen.
+ * @param viewModel The ViewModel associated with this screen.
+ * @param navController Navigation controller for navigating between screens.
+ */
 @Composable
 fun DevicesSettingScreen(
     modifier: Modifier = Modifier,
@@ -75,6 +82,16 @@ fun DevicesSettingScreen(
     )
 }
 
+/**
+ * Composable function that displays the device settings screen.
+ *
+ * @param modifier Modifier used to adjust the layout of the screen.
+ * @param deviceSetting The device setting object containing the device information.
+ * @param onUnlock Callback function to be invoked when the unlock button is clicked.
+ * @param onOpenDoor Callback function to be invoked when the open door button is clicked.
+ * @param onDisconnect Callback function to be invoked when the disconnect button is clicked.
+ * @param onDeviceNameChange Callback function to be invoked when the device name is changed.
+ */
 @Composable
 fun DevicesSettingScreen(
     modifier: Modifier = Modifier,
@@ -84,8 +101,6 @@ fun DevicesSettingScreen(
     onDisconnect: () -> Unit,
     onDeviceNameChange: (String) -> Unit
 ) {
-    val isConnected: Boolean = deviceSetting.currentRssi != null
-
     Column(modifier = modifier) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -171,7 +186,7 @@ fun DevicesSettingScreen(
                 .padding(bottom = dimensionResource(id = R.dimen.padding_small))
         ) {
             Row {
-                if (isConnected) {
+                if (deviceSetting.currentRssi != null) {
                     var showDialog by remember { mutableStateOf(false) }
                     if (showDialog) {
                         DialogEditDeviceName(
@@ -216,7 +231,7 @@ fun DevicesSettingScreen(
         ActionsCard(modifier = Modifier
             .padding(vertical = dimensionResource(id = R.dimen.padding_small))
             .fillMaxWidth(),
-            enabled = isConnected,
+            enabled = deviceSetting.currentRssi != null,
             isUnlock = deviceSetting.isUnlocked,
             isDoorOpen = deviceSetting.isOpened,
             onUnlock = onUnlock,
@@ -228,10 +243,9 @@ fun DevicesSettingScreen(
             modifier = Modifier
                 .padding(vertical = dimensionResource(id = R.dimen.padding_tiny))
                 .fillMaxWidth(),
-            enabled = isConnected,
-            currentBrightnessValue = deviceSetting.currentBrightness,
-            thresholdValue = deviceSetting.thresholdNight,
-            onThresholdChange = { /* TODO */ }
+            currentBrightness = if (deviceSetting.currentRssi == null) null else deviceSetting.currentBrightness,
+            brightnessTh = deviceSetting.thresholdNight,
+            onBrightnessThChange = { /* TODO */ }
         )
 
         // Auto Unlock Card
@@ -247,6 +261,13 @@ fun DevicesSettingScreen(
     }
 }
 
+/**
+ * A composable dialog for editing the name of a device.
+ *
+ * @param initialDeviceName The initial name of the device.
+ * @param onCancel Callback to be invoked when the user cancels the dialog.
+ * @param onConfirm Callback to be invoked when the user confirms the changes, with the new device name as a parameter.
+ */
 @Composable
 fun DialogEditDeviceName(
     initialDeviceName: String,
@@ -306,6 +327,17 @@ fun DialogEditDeviceName(
     )
 }
 
+/**
+ * A card displaying actions that can be performed.
+ *
+ * @param modifier Modifier to be applied to the card.
+ * @param enabled Whether the actions are enabled.
+ * @param isUnlock Whether the unlock action has been performed.
+ * @param isDoorOpen Whether the open door action has been performed.
+ * @param onUnlock Callback to be invoked when the unlock button is clicked.
+ * @param onOpenDoor Callback to be invoked when the open door button is clicked.
+ * @param onDisconnect Callback to be invoked when the disconnect button is clicked.
+ */
 @Composable
 fun ActionsCard(
     modifier: Modifier,
@@ -385,13 +417,20 @@ fun ActionsCard(
     }
 }
 
+/**
+ * A composable card that displays information about night brightness and allows the user to set a threshold.
+ *
+ * @param modifier Modifier for styling the card.
+ * @param currentBrightness The current brightness level, or null if unavailable.
+ * @param brightnessTh The current brightness threshold.
+ * @param onBrightnessThChange Callback function to be invoked when the threshold value changes.
+ */
 @Composable
 fun NightBrightnessCard(
     modifier: Modifier,
-    enabled: Boolean,
-    currentBrightnessValue: Float,
-    thresholdValue: Float,
-    onThresholdChange: (Float) -> Unit = {},
+    currentBrightness: Float?,
+    brightnessTh: Float,
+    onBrightnessThChange: (Float) -> Unit,
 ) {
     ElevatedCard(
         elevation = CardDefaults.cardElevation(
@@ -417,10 +456,13 @@ fun NightBrightnessCard(
         )
 
         TextField(
-            enabled = enabled,
-            value = "${"%.1f".format(thresholdValue)}%",
+            enabled = currentBrightness != null,
+            value = "${"%.1f".format(brightnessTh)}%",
             onValueChange = { newValue ->
-                onThresholdChange(newValue.toFloatOrNull() ?: 50f)
+                val th = newValue.toFloatOrNull()
+                if (th != null) {
+                    onBrightnessThChange(th)
+                }
             },
             label = {
                 Row(
@@ -432,13 +474,10 @@ fun NightBrightnessCard(
                         style = MaterialTheme.typography.titleSmall
                     )
 
-                    if (enabled) {
+                    if (currentBrightness != null) {
                         Text(
                             text = stringResource(R.string.current_brightness) + ": ${
-                                "%.1f".format(
-                                    currentBrightnessValue
-                                )
-                            }%",
+                                "%.1f".format(currentBrightness)}%",
                             style = MaterialTheme.typography.labelSmall,
                             color = LocalContentColor.current.copy(alpha = 0.5f)
                         )
@@ -453,6 +492,16 @@ fun NightBrightnessCard(
     }
 }
 
+/**
+ * A Composable function that displays a card for configuring auto-unlock settings.
+ *
+ * @param modifier Modifier for styling the card.
+ * @param autoUnlock Current state of auto-unlock feature.
+ * @param unlockRssiTh The RSSI threshold for auto-unlocking.
+ * @param currentRssi The current RSSI value (optional).
+ * @param onAutoUnlockChange Callback when the auto-unlock switch is toggled.
+ * @param onUnlockRssiTh Callback when the RSSI threshold is changed.
+ */
 @Composable
 fun AutoUnlockCard(
     modifier: Modifier,
