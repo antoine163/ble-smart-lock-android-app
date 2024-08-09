@@ -15,11 +15,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -38,6 +41,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -67,8 +71,8 @@ fun DevicesSettingScreen(
     val uiState by viewModel.uiState.collectAsState()
 
     DevicesSettingScreen(
-        modifier,
-        uiState.setting,
+        modifier = modifier,
+        deviceSetting = uiState.setting,
         onUnlock = { viewModel.bleDevice.unlock() },
         onOpenDoor = {
             viewModel.bleDevice.unlock()
@@ -78,19 +82,26 @@ fun DevicesSettingScreen(
             viewModel.bleDevice.disconnect()
             navController.navigateUp()
         },
-        onDeviceNameChange = { deviceName -> viewModel.bleDevice.setDeviceName(deviceName) }
+        onDeviceNameChange = { deviceName -> viewModel.bleDevice.setDeviceName(deviceName) },
+        onBrightnessThChange = { brightnessTh -> viewModel.bleDevice.setBrightnessTh(brightnessTh) },
+        onAutoUnlockChange = { autoUnlock -> /* todo */ },
+        onUnlockRssiThChange = { unlockRssiTh -> /* todo */ }
     )
 }
 
+
 /**
- * Composable function that displays the device settings screen.
+ * Screen for device settings.
  *
- * @param modifier Modifier used to adjust the layout of the screen.
- * @param deviceSetting The device setting object containing the device information.
- * @param onUnlock Callback function to be invoked when the unlock button is clicked.
- * @param onOpenDoor Callback function to be invoked when the open door button is clicked.
- * @param onDisconnect Callback function to be invoked when the disconnect button is clicked.
- * @param onDeviceNameChange Callback function to be invoked when the device name is changed.
+ * @param modifier Modifier for the root composable.
+ * @param deviceSetting The device setting data.
+ * @param onUnlock Callback when the unlock button is clicked.
+ * @param onOpenDoor Callback when the open door button is clicked.
+ * @param onDisconnect Callback when the disconnect button is clicked.
+ * @param onDeviceNameChange Callback when the device name is changed.
+ * @param onBrightnessThChange Callback when the brightness threshold is changed.
+ * @param onAutoUnlockChange Callback when the auto unlock setting is changed.
+ * @param onUnlockRssiThChange Callback when the unlock RSSI threshold is changed.
  */
 @Composable
 fun DevicesSettingScreen(
@@ -99,7 +110,10 @@ fun DevicesSettingScreen(
     onUnlock: () -> Unit,
     onOpenDoor: () -> Unit,
     onDisconnect: () -> Unit,
-    onDeviceNameChange: (String) -> Unit
+    onDeviceNameChange: (String) -> Unit,
+    onBrightnessThChange: (Float) -> Unit,
+    onAutoUnlockChange: (Boolean) -> Unit,
+    onUnlockRssiThChange: (Int) -> Unit,
 ) {
     Column(modifier = modifier) {
         Row(
@@ -112,8 +126,8 @@ fun DevicesSettingScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Icon(
-                    modifier = Modifier.size(dimensionResource(id = R.dimen.icon_small_height)),
-                    painter = painterResource(id = R.drawable.rounded_link_off_24),
+                    modifier = Modifier.size(dimensionResource(R.dimen.icon_small_height)),
+                    painter = painterResource(R.drawable.rounded_link_off_24),
                     contentDescription = stringResource(R.string.dissociate)
                 )
                 Text(
@@ -245,7 +259,7 @@ fun DevicesSettingScreen(
                 .fillMaxWidth(),
             currentBrightness = if (deviceSetting.currentRssi == null) null else deviceSetting.currentBrightness,
             brightnessTh = deviceSetting.thresholdNight,
-            onBrightnessThChange = { /* TODO */ }
+            onBrightnessThChange = onBrightnessThChange
         )
 
         // Auto Unlock Card
@@ -255,18 +269,18 @@ fun DevicesSettingScreen(
             autoUnlock = deviceSetting.autoUnlockEnable,
             unlockRssiTh = deviceSetting.autoUnlockRssiTh,
             currentRssi = deviceSetting.currentRssi,
-            onAutoUnlockChange = { /* TODO */ },
-            onUnlockRssiTh = { /* TODO */ })
-
+            onAutoUnlockChange = onAutoUnlockChange,
+            onUnlockRssiThChange = onUnlockRssiThChange)
     }
 }
 
+
 /**
- * A composable dialog for editing the name of a device.
+ * Dialog to edit the name of a device.
  *
  * @param initialDeviceName The initial name of the device.
- * @param onCancel Callback to be invoked when the user cancels the dialog.
- * @param onConfirm Callback to be invoked when the user confirms the changes, with the new device name as a parameter.
+ * @param onCancel Callback when the user cancels the dialog.
+ * @param onConfirm Callback when the user confirms the changes with the new device name.
  */
 @Composable
 fun DialogEditDeviceName(
@@ -327,16 +341,17 @@ fun DialogEditDeviceName(
     )
 }
 
+
 /**
- * A card displaying actions that can be performed.
+ * A card that displays a set of actions that can be performed.
  *
  * @param modifier Modifier to be applied to the card.
  * @param enabled Whether the actions are enabled.
  * @param isUnlock Whether the unlock action has been performed.
  * @param isDoorOpen Whether the open door action has been performed.
- * @param onUnlock Callback to be invoked when the unlock button is clicked.
- * @param onOpenDoor Callback to be invoked when the open door button is clicked.
- * @param onDisconnect Callback to be invoked when the disconnect button is clicked.
+ * @param onUnlock Callback to be invoked when the unlock action is clicked.
+ * @param onOpenDoor Callback to be invoked when the open door action is clicked.
+ * @param onDisconnect Callback to be invoked when the disconnect action is clicked.
  */
 @Composable
 fun ActionsCard(
@@ -417,13 +432,14 @@ fun ActionsCard(
     }
 }
 
+
 /**
- * A composable card that displays information about night brightness and allows the user to set a threshold.
+ * A card that displays the current brightness and allows the user to set a brightness threshold.
  *
- * @param modifier Modifier for styling the card.
- * @param currentBrightness The current brightness level, or null if unavailable.
- * @param brightnessTh The current brightness threshold.
- * @param onBrightnessThChange Callback function to be invoked when the threshold value changes.
+ * @param modifier Modifier to be applied to the card.
+ * @param currentBrightness The current brightness, or null if unknown.
+ * @param brightnessTh The brightness threshold.
+ * @param onBrightnessThChange Callback to be invoked when the brightness threshold changes.
  */
 @Composable
 fun NightBrightnessCard(
@@ -467,20 +483,36 @@ fun NightBrightnessCard(
             label = {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
+                        modifier = Modifier.weight(1f),
                         text = stringResource(R.string.threshold),
                         style = MaterialTheme.typography.titleSmall
                     )
 
                     if (currentBrightness != null) {
                         Text(
-                            text = stringResource(R.string.current_brightness) + ": ${
-                                "%.1f".format(currentBrightness)}%",
+                            text = stringResource(R.string.current_brightness)
+                                    + ": ${"%.1f".format(currentBrightness)}%",
                             style = MaterialTheme.typography.labelSmall,
                             color = LocalContentColor.current.copy(alpha = 0.5f)
                         )
+
+                        IconButton(
+                            onClick = { onBrightnessThChange(currentBrightness) },
+                            modifier = Modifier
+                                .size(dimensionResource(id = R.dimen.icon_tiny_height))
+                                .padding(start = dimensionResource(id = R.dimen.padding_tiny))
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.rounded_arrow_back_24),
+                                contentDescription = stringResource(R.string.set_current_value),
+                                tint = LocalContentColor.current.copy(alpha = 0.5f),
+                                modifier = Modifier.rotate(-90f)
+                            )
+                        }
                     }
                 }
             },
@@ -492,15 +524,16 @@ fun NightBrightnessCard(
     }
 }
 
+
 /**
  * A Composable function that displays a card for configuring auto-unlock settings.
  *
  * @param modifier Modifier for styling the card.
  * @param autoUnlock Current state of auto-unlock feature.
  * @param unlockRssiTh The RSSI threshold for auto-unlocking.
- * @param currentRssi The current RSSI value (optional).
- * @param onAutoUnlockChange Callback when the auto-unlock switch is toggled.
- * @param onUnlockRssiTh Callback when the RSSI threshold is changed.
+ * @param currentRssi The current RSSI value.
+ * @param onAutoUnlockChange Callback to be invoked when the auto-unlock switch is toggled.
+ * @param onUnlockRssiThChange Callback to be invoked when the RSSI threshold is changed.
  */
 @Composable
 fun AutoUnlockCard(
@@ -509,7 +542,7 @@ fun AutoUnlockCard(
     unlockRssiTh: Int,
     currentRssi: Int?,
     onAutoUnlockChange: (Boolean) -> Unit,
-    onUnlockRssiTh: (Int) -> Unit
+    onUnlockRssiThChange: (Int) -> Unit
 ) {
 
     ElevatedCard(
@@ -549,7 +582,7 @@ fun AutoUnlockCard(
             onValueChange = { newValue ->
                 val rssiTh = newValue.toIntOrNull()
                 if (rssiTh != null) {
-                    onUnlockRssiTh(rssiTh)
+                    onUnlockRssiThChange(rssiTh)
                 }
             },
             enabled = autoUnlock,
@@ -559,6 +592,7 @@ fun AutoUnlockCard(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
+                        modifier = Modifier.weight(1f),
                         text = stringResource(R.string.rssi_threshold),
                         style = MaterialTheme.typography.titleSmall
                     )
@@ -570,6 +604,20 @@ fun AutoUnlockCard(
                             style = MaterialTheme.typography.bodySmall,
                             color = LocalContentColor.current.copy(alpha = 0.5f)
                         )
+
+                        IconButton(
+                            onClick = { onUnlockRssiThChange(currentRssi) },
+                            modifier = Modifier
+                                .size(dimensionResource(id = R.dimen.icon_tiny_height))
+                                .padding(start = dimensionResource(id = R.dimen.padding_tiny))
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.rounded_arrow_back_24),
+                                contentDescription = stringResource(R.string.set_current_value),
+                                tint = LocalContentColor.current.copy(alpha = 0.5f),
+                                modifier = Modifier.rotate(-90f)
+                            )
+                        }
                     }
                 }
             },
@@ -615,7 +663,10 @@ private fun DevicesSettingScreenPreview() {
                 onUnlock = {},
                 onOpenDoor = {},
                 onDisconnect = {},
-                onDeviceNameChange = {}
+                onDeviceNameChange = {},
+                onBrightnessThChange = {},
+                onAutoUnlockChange = {},
+                onUnlockRssiThChange = {}
             )
         }
     }

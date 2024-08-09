@@ -108,6 +108,12 @@ class BleDevice(
                         callback.onLockStateChanged( false )
                     }
                 }
+                CHAR_UUID_DEVICE_NAME -> {
+                    readCharacteristics(gattCharDeviceName)
+                }
+                CHAR_UUID_BRIGHTNESS_TH -> {
+                    readCharacteristics(gattCharBrightnessTh)
+                }
             }
         }
 
@@ -194,6 +200,22 @@ class BleDevice(
         gattCharDeviceName?.let { charDeviceName ->
             gattDevice?.writeCharacteristic(
                 charDeviceName, deviceName.toByteArray(),
+                BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+            )
+        }
+    }
+
+    @SuppressLint("NewApi")
+    fun setBrightnessTh(brightnessTh: Float) {
+        gattCharBrightnessTh?.let { charBrightnessTh ->
+
+            val byteArray = ByteBuffer.allocate(4)
+                .order(ByteOrder.LITTLE_ENDIAN)
+                .putFloat(brightnessTh)
+                .array()
+
+            gattDevice?.writeCharacteristic(
+                charBrightnessTh, byteArray,
                 BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
             )
         }

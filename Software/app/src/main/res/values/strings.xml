@@ -43,4 +43,5 @@
     <string name="edit_lock_name">Edit lock name</string>
     <string name="device_name_cannot_exceed_characters">Device name cannot exceed %1$s characters.</string>
     <string name="rssi_threshold">Rssi threshold</string>
+    <string name="set_current_value">Set current value</string>
 </resources>
