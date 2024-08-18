@@ -14,11 +14,9 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
@@ -32,7 +30,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -46,7 +43,6 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -252,12 +248,12 @@ fun DevicesSettingScreen(
             onOpenDoor = onOpenDoor,
             onDisconnect = onDisconnect)
 
-        // Night Brightness Card
-        NightBrightnessCard(
+        // Night Lighting Card
+        NightLightingCard(
             modifier = Modifier
                 .padding(vertical = dimensionResource(id = R.dimen.padding_tiny))
                 .fillMaxWidth(),
-            currentBrightness = if (deviceSetting.currentRssi == null) null else deviceSetting.currentBrightness,
+            currentBrightness = deviceSetting.currentRssi ?.let { deviceSetting.currentBrightness },
             brightnessTh = deviceSetting.thresholdNight,
             onBrightnessThChange = onBrightnessThChange
         )
@@ -433,16 +429,17 @@ fun ActionsCard(
 }
 
 
+
 /**
- * A card that displays the current brightness and allows the user to set a brightness threshold.
+ * A card displaying the night lighting settings.
  *
  * @param modifier Modifier to be applied to the card.
- * @param currentBrightness The current brightness, or null if unknown.
- * @param brightnessTh The brightness threshold.
+ * @param currentBrightness The current brightness level, or null if unknown.
+ * @param brightnessTh The brightness threshold for night lighting.
  * @param onBrightnessThChange Callback to be invoked when the brightness threshold changes.
  */
 @Composable
-fun NightBrightnessCard(
+fun NightLightingCard(
     modifier: Modifier,
     currentBrightness: Float?,
     brightnessTh: Float,
@@ -453,73 +450,16 @@ fun NightBrightnessCard(
             defaultElevation = dimensionResource(R.dimen.card_elevation)
         ), modifier = modifier
     ) {
-        Text(
-            text = stringResource(R.string.night_brightness),
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier
-                .padding(horizontal = dimensionResource(id = R.dimen.padding_small))
-                .padding(top = dimensionResource(id = R.dimen.padding_small))
-        )
-
-        Text(
-            text = stringResource(R.string.night_brightness_info),
-            style = MaterialTheme.typography.bodySmall,
-            color = LocalContentColor.current.copy(alpha = 0.5f),
-            modifier = Modifier.padding(
-                start = dimensionResource(id = R.dimen.padding_medium),
-                end = dimensionResource(id = R.dimen.padding_small)
-            )
-        )
-
-        TextField(
-            enabled = currentBrightness != null,
-            value = "${"%.1f".format(brightnessTh)}%",
-            onValueChange = { newValue ->
-                val th = newValue.toFloatOrNull()
-                if (th != null) {
-                    onBrightnessThChange(th)
-                }
-            },
-            label = {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        modifier = Modifier.weight(1f),
-                        text = stringResource(R.string.threshold),
-                        style = MaterialTheme.typography.titleSmall
-                    )
-
-                    if (currentBrightness != null) {
-                        Text(
-                            text = stringResource(R.string.current_brightness)
-                                    + ": ${"%.1f".format(currentBrightness)}%",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = LocalContentColor.current.copy(alpha = 0.5f)
-                        )
-
-                        IconButton(
-                            onClick = { onBrightnessThChange(currentBrightness) },
-                            modifier = Modifier
-                                .size(dimensionResource(id = R.dimen.icon_tiny_height))
-                                .padding(start = dimensionResource(id = R.dimen.padding_tiny))
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.rounded_arrow_back_24),
-                                contentDescription = stringResource(R.string.set_current_value),
-                                tint = LocalContentColor.current.copy(alpha = 0.5f),
-                                modifier = Modifier.rotate(-90f)
-                            )
-                        }
-                    }
-                }
-            },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier
-                .padding(dimensionResource(id = R.dimen.padding_small))
-                .fillMaxWidth()
+        ParamCard(
+            modifier = Modifier,
+            title = stringResource(R.string.night_lighting),
+            description = stringResource(R.string.night_lighting_info),
+            name = stringResource(R.string.brightness),
+            suffix = "%",
+            value = "%.1f".format(brightnessTh),
+            currentValue = currentBrightness?.let { "%.1f".format(it) },
+            onNewValue = { /* todo */ },
+            onSetCurrentValue = { currentBrightness ?.let { onBrightnessThChange(it) } },
         )
     }
 }
@@ -550,25 +490,68 @@ fun AutoUnlockCard(
             defaultElevation = dimensionResource(R.dimen.card_elevation)
         ), modifier = modifier
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .padding(horizontal = dimensionResource(id = R.dimen.padding_small))
-                .padding(top = dimensionResource(id = R.dimen.padding_small))
-        ) {
+        ParamCard(
+            modifier = Modifier,
+            title = stringResource(R.string.auto_unlock),
+            description = stringResource(R.string.auto_unlock_info),
+            name = stringResource(R.string.rssi),
+            suffix = "dBm",
+            value = unlockRssiTh.toString(),
+            currentValue = currentRssi?.toString(),
+            onNewValue = { /* todo */ },
+            onSetCurrentValue = { currentRssi ?.let { onUnlockRssiThChange(it) } },
+            enabled = autoUnlock,
+            onEnabledChange = { onAutoUnlockChange(it) }
+        )
+    }
+}
+
+@Composable
+fun ParamCard(
+    modifier: Modifier,
+    title: String,
+    description: String,
+    name: String,
+    suffix: String = "",
+    value: String,
+    currentValue: String?,
+    onNewValue: () -> Unit,
+    onSetCurrentValue: () -> Unit,
+    enabled: Boolean? = null,
+    onEnabledChange: ((Boolean) -> Unit)? = null
+) {
+    val isEnabled = enabled ?: true
+
+    Column (
+        modifier = modifier
+    ) {
+        // Title
+        Row (
+            verticalAlignment = Alignment.CenterVertically
+        ){
+            // Title
             Text(
-                text = stringResource(R.string.auto_unlock),
-                style = MaterialTheme.typography.titleMedium
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier
+                    .padding(horizontal = dimensionResource(id = R.dimen.padding_small))
+                    .padding(top = dimensionResource(id = R.dimen.padding_small))
+                    .weight(1f)
             )
-            Spacer(modifier = Modifier.weight(1f))
-            Switch(
-                checked = autoUnlock,
-                onCheckedChange = onAutoUnlockChange
-            )
+
+            // Enabled switch
+            onEnabledChange?.let {
+                Switch(
+                    modifier = Modifier.padding(end = dimensionResource(id = R.dimen.padding_small)),
+                    checked = isEnabled,
+                    onCheckedChange = onEnabledChange
+                )
+            }
         }
 
+        // Description
         Text(
-            text = stringResource(R.string.auto_unlock_info),
+            text = description,
             style = MaterialTheme.typography.bodySmall,
             color = LocalContentColor.current.copy(alpha = 0.5f),
             modifier = Modifier.padding(
@@ -577,36 +560,39 @@ fun AutoUnlockCard(
             )
         )
 
-        TextField(
-            value = "${unlockRssiTh}dBm",
-            onValueChange = { newValue ->
-                val rssiTh = newValue.toIntOrNull()
-                if (rssiTh != null) {
-                    onUnlockRssiThChange(rssiTh)
-                }
-            },
-            enabled = autoUnlock,
-            label = {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
+        // Value
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(dimensionResource(id = R.dimen.padding_small))
+                .clickable(enabled = isEnabled, onClick = onNewValue)
+        ) {
+            // Row with name, value, and current value
+            Column (
+                modifier = Modifier.padding(dimensionResource(id = R.dimen.padding_small)),
+            ){
+                // Row with name and value
+                Row (
+                    verticalAlignment = Alignment.CenterVertically
+                ){
+                    // Name
                     Text(
                         modifier = Modifier.weight(1f),
-                        text = stringResource(R.string.rssi_threshold),
+                        text = name,
                         style = MaterialTheme.typography.titleSmall
                     )
 
-                    if (currentRssi != null && autoUnlock) {
+                    // Current value
+                    if (currentValue != null && isEnabled) {
                         Text(
-                            text = stringResource(R.string.current_rssi)
-                                    + ": ${currentRssi}dBm",
+                            text = stringResource(R.string.current)
+                                    + ": ${currentValue}${suffix}",
                             style = MaterialTheme.typography.bodySmall,
                             color = LocalContentColor.current.copy(alpha = 0.5f)
                         )
 
                         IconButton(
-                            onClick = { onUnlockRssiThChange(currentRssi) },
+                            onClick = onSetCurrentValue,
                             modifier = Modifier
                                 .size(dimensionResource(id = R.dimen.icon_tiny_height))
                                 .padding(start = dimensionResource(id = R.dimen.padding_tiny))
@@ -620,13 +606,37 @@ fun AutoUnlockCard(
                         }
                     }
                 }
-            },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier
-                .padding(dimensionResource(id = R.dimen.padding_small))
-                .fillMaxWidth()
-        )
+
+                // Value
+                Text(
+                    text = "${value}${suffix}",
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
+        }
     }
+}
+
+fun isValidPercentageInput(input: String): Boolean {
+    // Accepter une chaîne vide
+    if (input.isEmpty()) return true
+
+    // Convertion de la virgule en point
+    val inputWithDots = input.replace(",", ".")
+
+    // Permettre un seul point décimal
+    if (inputWithDots.count { it == '.' } > 1) return false
+
+    // Limiter la longueur totale à 5 caractères (ex: "100.0")
+    if (inputWithDots.length > 5) return false
+
+    // Autoriser un chiffre après la virgule
+    val parts = inputWithDots.split(".")
+    if (parts.size > 2 || (parts.size == 2 && parts[1].length > 1)) return false
+
+    // Convertir en nombre et vérifier si la valeur est comprise entre 0 et 100
+    val value = inputWithDots.toFloatOrNull() ?: return false
+    return value in 0f..100f
 }
 
 @Preview(

@@ -35,7 +35,6 @@ class BleDevice(
 
     private val gattCallback = object : BluetoothGattCallback() {
         override fun onConnectionStateChange(gatt: BluetoothGatt?, status: Int, newState: Int) {
-            Log.d("BSK", "onConnectionStateChange: $status : $newState")
             super.onConnectionStateChange(gatt, status, newState)
 
             if (newState == BluetoothGatt.STATE_CONNECTED) {
@@ -54,8 +53,6 @@ class BleDevice(
             super.onServicesDiscovered(gatt, status)
 
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                Log.d("BSK", "Services discovered for device $address")
-
                 gatt?.let {
                     // Save the gatt device
                     gattDevice = gatt
