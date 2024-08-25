@@ -26,7 +26,6 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -53,9 +52,6 @@ import androidx.navigation.NavHostController
 import com.antoine163.blesmartkey.R
 import com.antoine163.blesmartkey.model.DeviceSetting
 import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
-import java.text.NumberFormat
-import kotlin.text.toFloat
-import kotlin.text.toFloatOrNull
 
 /**
  * Composable function representing the Devices Setting Screen.
@@ -461,7 +457,7 @@ fun AutoUnlockCard(
             EditValueDialog(
                 initialValue = unlockRssiTh,
                 onConfirm = {
-                    onUnlockRssiThChange( it.toInt() )
+                    onUnlockRssiThChange( it )
                     showEditDialog = false
                 },
                 onDismiss = { showEditDialog = false },
