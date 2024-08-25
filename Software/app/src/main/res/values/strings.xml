@@ -39,17 +39,26 @@
 
     <string name="night_lighting">Night lighting</string>
     <string name="night_lighting_info">Activate the lighting upon door opening if the ambient brightness is under the specified level.</string>
-    <string name="brightness">Brightness</string>
+    <string name="bright_th">Brightness threshold</string>
 
     <string name="auto_unlock">Auto unlock</string>
     <string name="auto_unlock_info">"Automatically unlock when the key's signal strength surpasses the set RSSI value, indicating close proximity."</string>
-    <string name="rssi">Rssi</string>
+    <string name="rssi_th">Rssi threshold</string>
 
 
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
-    <string name="enter_new_lock_name">Enter new name</string>
-    <string name="edit_lock_name">Edit lock name</string>
-    <string name="device_name_cannot_exceed_characters">Device name cannot exceed %1$s characters.</string>
+
+    <string name="dlg_dev_name_title">Enter a lock name</string>
+    <string name="dlg_dev_name_label">Name</string>
+    <string name="dlg_dev_name_invalid">Invalid input. Cannot exceed %1$s characters.</string>
+
+    <string name="dlg_bright_th_title">Enter a brightness threshold</string>
+    <string name="dlg_bright_th_label">Percentage</string>
+    <string name="dlg_bright_th_invalid">Invalid input. Please enter a value between 0 and 100.</string>
+
+    <string name="dlg_rssi_title">Enter a rssi threshold</string>
+    <string name="dlg_rssi_label">Rssi</string>
+    <string name="dlg_rssi_invalid">Invalid input. Please enter a value between %1$s and %2$s.</string>
 
 </resources>

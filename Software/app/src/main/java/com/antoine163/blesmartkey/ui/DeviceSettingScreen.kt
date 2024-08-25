@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -43,6 +44,8 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -50,6 +53,9 @@ import androidx.navigation.NavHostController
 import com.antoine163.blesmartkey.R
 import com.antoine163.blesmartkey.model.DeviceSetting
 import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
+import java.text.NumberFormat
+import kotlin.text.toFloat
+import kotlin.text.toFloatOrNull
 
 /**
  * Composable function representing the Devices Setting Screen.
@@ -197,15 +203,21 @@ fun DevicesSettingScreen(
         ) {
             Row {
                 if (deviceSetting.currentRssi != null) {
-                    var showDialog by remember { mutableStateOf(false) }
-                    if (showDialog) {
-                        DialogEditDeviceName(
-                            initialDeviceName = deviceSetting.name,
-                            onCancel = { showDialog = false },
+                    var showEditDialog by remember { mutableStateOf(false) }
+                    if (showEditDialog) {
+                        EditValueDialog(
+                            initialValue = deviceSetting.name,
                             onConfirm = { newName ->
                                 onDeviceNameChange(newName)
-                                showDialog = false
-                            }
+                                showEditDialog = false
+                            },
+                            onDismiss = { showEditDialog = false },
+                            title = stringResource(R.string.dlg_dev_name_title),
+                            label = stringResource(R.string.dlg_dev_name_label),
+                            invalidMessage = stringResource(R.string.dlg_dev_name_invalid).format(16),
+                            keyboardType = KeyboardType.Text,
+                            valueToString = { it },
+                            stringToValue = { if (it.length <= 16) it else null }
                         )
                     }
 
@@ -219,7 +231,7 @@ fun DevicesSettingScreen(
                     Icon(
                         painter = painterResource(id = R.drawable.rounded_edit_24),
                         contentDescription = stringResource(R.string.edite),
-                        Modifier.clickable { showDialog = true }
+                        Modifier.clickable { showEditDialog = true }
                     )
                 } else {
                     LinearProgressIndicator(
@@ -269,74 +281,6 @@ fun DevicesSettingScreen(
             onUnlockRssiThChange = onUnlockRssiThChange)
     }
 }
-
-
-/**
- * Dialog to edit the name of a device.
- *
- * @param initialDeviceName The initial name of the device.
- * @param onCancel Callback when the user cancels the dialog.
- * @param onConfirm Callback when the user confirms the changes with the new device name.
- */
-@Composable
-fun DialogEditDeviceName(
-    initialDeviceName: String,
-    onCancel: () -> Unit,
-    onConfirm: (String) -> Unit
-) {
-    var deviceName by remember { mutableStateOf(initialDeviceName) }
-    var showSnackbar by remember { mutableStateOf(false) }
-    val maxDeviceNameLength = 16
-
-    AlertDialog(
-        onDismissRequest = onCancel,
-        title = { Text(text = stringResource(R.string.edit_lock_name)) },
-        text = {
-            OutlinedTextField(
-                value = deviceName,
-                onValueChange = { newText ->
-                    if (newText.length <= maxDeviceNameLength) {
-                        deviceName = newText
-                    } else {
-                        showSnackbar = true
-                    }
-                },
-                label = { Text(stringResource(R.string.enter_new_lock_name)) },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            // Snackbar for visual feedback
-            if (showSnackbar) {
-                Snackbar(
-                    action = {
-                        TextButton(onClick = { showSnackbar = false }) {
-                            Text(stringResource(R.string.ok))
-                        }
-                    },
-                    modifier = Modifier.padding(8.dp)
-                ) {
-                    Text(
-                        stringResource(
-                            R.string.device_name_cannot_exceed_characters,
-                            maxDeviceNameLength
-                        ))
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = { onConfirm(deviceName) }) {
-                Text(stringResource(R.string.ok))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onCancel) {
-                Text(stringResource(R.string.cancel))
-            }
-        }
-    )
-}
-
 
 /**
  * A card that displays a set of actions that can be performed.
@@ -450,15 +394,37 @@ fun NightLightingCard(
             defaultElevation = dimensionResource(R.dimen.card_elevation)
         ), modifier = modifier
     ) {
+        var showEditDialog by remember { mutableStateOf(false) }
+        if (showEditDialog) {
+            EditValueDialog(
+                initialValue = brightnessTh,
+                onConfirm = {
+                    onBrightnessThChange(it)
+                    showEditDialog = false
+                },
+                onDismiss = { showEditDialog = false },
+                title = stringResource(R.string.dlg_bright_th_title),
+                label = stringResource(R.string.dlg_bright_th_label),
+                invalidMessage = stringResource(R.string.dlg_bright_th_invalid),
+                keyboardType = KeyboardType.Decimal,
+                valueToString = { "%.1f".format(it) },
+                stringToValue = {
+                    val newVal = it.replace(',', '.').toFloatOrNull()
+                    if (newVal != null && newVal in 0f..100f) newVal else null
+                },
+                suffix = "%"
+            )
+        }
+
         ParamCard(
             modifier = Modifier,
             title = stringResource(R.string.night_lighting),
             description = stringResource(R.string.night_lighting_info),
-            name = stringResource(R.string.brightness),
+            name = stringResource(R.string.bright_th),
             suffix = "%",
             value = "%.1f".format(brightnessTh),
             currentValue = currentBrightness?.let { "%.1f".format(it) },
-            onNewValue = { /* todo */ },
+            onNewValue = { showEditDialog = true },
             onSetCurrentValue = { currentBrightness ?.let { onBrightnessThChange(it) } },
         )
     }
@@ -490,15 +456,37 @@ fun AutoUnlockCard(
             defaultElevation = dimensionResource(R.dimen.card_elevation)
         ), modifier = modifier
     ) {
+        var showEditDialog by remember { mutableStateOf(false) }
+        if (showEditDialog) {
+            EditValueDialog(
+                initialValue = unlockRssiTh,
+                onConfirm = {
+                    onUnlockRssiThChange( it.toInt() )
+                    showEditDialog = false
+                },
+                onDismiss = { showEditDialog = false },
+                title = stringResource(R.string.dlg_rssi_title),
+                label = stringResource(R.string.dlg_rssi_label),
+                invalidMessage = stringResource(R.string.dlg_rssi_invalid).format(-130, 8),
+                keyboardType = KeyboardType.Number,
+                valueToString = { it.toString() },
+                stringToValue = {
+                    val newVal = it.toIntOrNull()
+                    if (newVal != null && newVal in -130..8) newVal else null
+                },
+                suffix = "dBm"
+            )
+        }
+
         ParamCard(
             modifier = Modifier,
             title = stringResource(R.string.auto_unlock),
             description = stringResource(R.string.auto_unlock_info),
-            name = stringResource(R.string.rssi),
+            name = stringResource(R.string.rssi_th),
             suffix = "dBm",
             value = unlockRssiTh.toString(),
             currentValue = currentRssi?.toString(),
-            onNewValue = { /* todo */ },
+            onNewValue = { showEditDialog = true },
             onSetCurrentValue = { currentRssi ?.let { onUnlockRssiThChange(it) } },
             enabled = autoUnlock,
             onEnabledChange = { onAutoUnlockChange(it) }
@@ -506,6 +494,21 @@ fun AutoUnlockCard(
     }
 }
 
+/**
+ * A composable card to display and modify a parameter.
+ *
+ * @param modifier Modifier to be applied to the layout.
+ * @param title The title of the parameter.
+ * @param description A brief description of the parameter.
+ * @param name The name of the parameter.
+ * @param suffix The suffix to append to the value (e.g., units).
+ * @param value The current value of the parameter.
+ * @param currentValue The currently active value (if any).
+ * @param onNewValue Callback invoked when the user requests to change the value.
+ * @param onSetCurrentValue Callback invoked when the user wants to set the current value.
+ * @param enabled Whether the parameter is enabled for modification.
+ * @param onEnabledChange Callback invoked when the enabled state changes.
+ */
 @Composable
 fun ParamCard(
     modifier: Modifier,
@@ -617,26 +620,81 @@ fun ParamCard(
     }
 }
 
-fun isValidPercentageInput(input: String): Boolean {
-    // Accepter une chaîne vide
-    if (input.isEmpty()) return true
+/**
+ * A composable dialog for editing a value of type [T].
+ *
+ * @param initialValue The initial value to display in the dialog.
+ * @param onConfirm A callback invoked when the user confirms the edited value.
+ * @param onDismiss A callback invoked when the dialog is dismissed.
+ * @param title The title of the dialog.
+ * @param label The label for the text field.
+ * @param invalidMessage The error message to display when the entered value is invalid.
+ * @param keyboardType The keyboard type to use for the text field.
+ * @param valueToString A function to convert a value of type [T] to a String.
+ * @param stringToValue A function to convert a String to a value of type [T], or null if the string is invalid.
+ * @param suffix An optional suffix to display after the text field.
+ */
+@Composable
+fun <T> EditValueDialog(
+    initialValue: T,
+    onConfirm: (T) -> Unit,
+    onDismiss: () -> Unit,
+    title: String,
+    label: String,
+    invalidMessage: String,
+    keyboardType: KeyboardType,
+    valueToString: (T) -> String,
+    stringToValue: (String) -> T?,
+    suffix: String = "",
+) {
+    var value by remember { mutableStateOf( TextFieldValue (valueToString( initialValue ) ) ) }
+    var isValid by remember { mutableStateOf( stringToValue( value.text ) != null ) }
 
-    // Convertion de la virgule en point
-    val inputWithDots = input.replace(",", ".")
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = value,
+                    onValueChange = { newValue ->
+                        value = newValue
+                        isValid = stringToValue( newValue.text ) != null
+                    },
+                    label = { Text(label) },
+                    keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+                    trailingIcon = { Text(suffix) },
+                    singleLine = true,
+                    isError = !isValid
+                )
 
-    // Permettre un seul point décimal
-    if (inputWithDots.count { it == '.' } > 1) return false
-
-    // Limiter la longueur totale à 5 caractères (ex: "100.0")
-    if (inputWithDots.length > 5) return false
-
-    // Autoriser un chiffre après la virgule
-    val parts = inputWithDots.split(".")
-    if (parts.size > 2 || (parts.size == 2 && parts[1].length > 1)) return false
-
-    // Convertir en nombre et vérifier si la valeur est comprise entre 0 et 100
-    val value = inputWithDots.toFloatOrNull() ?: return false
-    return value in 0f..100f
+                if (!isValid) {
+                    Text(
+                        text = invalidMessage,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(
+                            start = dimensionResource(R.dimen.padding_medium),
+                            top = dimensionResource(R.dimen.padding_small)
+                        )
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onConfirm( stringToValue( value.text )!! ) },
+                enabled = isValid
+            ) {
+                Text(stringResource(R.string.ok))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel))
+            }
+        }
+    )
 }
 
 @Preview(
@@ -646,13 +704,19 @@ fun isValidPercentageInput(input: String): Boolean {
     device = "id:S21 FE"
 )
 @Composable
-private fun DialogEditDeviceNamePreview() {
+private fun EditValueDialogPreview() {
     BleSmartKeyTheme {
         Surface {
-            DialogEditDeviceName(
-                initialDeviceName = "BLE Smart Lock",
-                onCancel = {},
-                onConfirm = {}
+            EditValueDialog(
+                initialValue = "test",
+                onConfirm = {},
+                onDismiss = {},
+                title = "Title",
+                label = "Label",
+                invalidMessage = "Invalid message",
+                keyboardType = KeyboardType.Text,
+                valueToString = { it },
+                stringToValue = { it }
             )
         }
     }
