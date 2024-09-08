@@ -7,6 +7,7 @@ import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCallback
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothManager
+import android.bluetooth.BluetoothStatusCodes
 import android.content.Context
 import android.util.Log
 import java.nio.ByteBuffer
@@ -30,8 +31,11 @@ class BleDevice(
     private var gattCharBrightness: BluetoothGattCharacteristic? = null
     private var gattCharBrightnessTh: BluetoothGattCharacteristic? = null
 
+    // Map of UUID to BluetoothGattCharacteristic for reading multiple characteristics
     private var readCharMap = mutableMapOf<UUID, BluetoothGattCharacteristic>()
 
+    // Flag to indicate if an open door request is pending
+    private var openDoorPending = false;
 
     private val gattCallback = object : BluetoothGattCallback() {
         override fun onConnectionStateChange(gatt: BluetoothGatt?, status: Int, newState: Int) {
@@ -103,6 +107,12 @@ class BleDevice(
                 CHAR_UUID_LOCK_STATE -> {
                     if (status == BluetoothGatt.GATT_SUCCESS) {
                         callback.onLockStateChanged( false )
+
+                        // If an open door request is pending, open the door
+                        if (openDoorPending == true) {
+                            openDoor()
+                            openDoorPending = false
+                        }
                     }
                 }
                 CHAR_UUID_DEVICE_NAME -> {
@@ -170,6 +180,12 @@ class BleDevice(
         }
     }
 
+    /**
+     * Adds a characteristic to the map of characteristics to be read.
+     * If the map is empty, it starts reading the characteristic immediately.
+     *
+     * @param gattChar The characteristic to read.
+     */
     private fun readCharacteristics(gattChar: BluetoothGattCharacteristic?) {
         if (gattChar != null) {
             if (readCharMap.isEmpty()) {
@@ -181,8 +197,14 @@ class BleDevice(
         }
     }
 
+    /**
+     * Reads the next characteristic from the `readCharMap`.
+     *
+     * If the `readCharMap` is not empty, it retrieves the first characteristic
+     * and initiates a read operation on the GATT device.
+     */
     private fun readNextCharacteristic() {
-        if (!readCharMap.isEmpty()) {
+        if (readCharMap.isNotEmpty()) {
             val char = readCharMap.values.first()
             gattDevice?.readCharacteristic(char)
         }
@@ -231,10 +253,14 @@ class BleDevice(
     @SuppressLint("NewApi")
     fun openDoor() {
         gattCharOpenDoor?.let { charOpenDoor ->
-            gattDevice?.writeCharacteristic(
+            val status = gattDevice?.writeCharacteristic(
                 charOpenDoor, byteArrayOf(0x01),
                 BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
             )
+
+            openDoorPending = status.let {
+                status == BluetoothStatusCodes.ERROR_GATT_WRITE_REQUEST_BUSY
+            }
         }
     }
 
@@ -266,6 +292,9 @@ class BleDevice(
         readCharMap.clear()
     }
 
+    /**
+     * Companion object containing UUIDs for the Bluetooth GATT services and characteristics.
+     */
     companion object {
         private val SERV_UUID_GENERIC_ACCESS = UUID.fromString("00001800-0000-1000-8000-00805f9b34fb")
         private val CHAR_UUID_DEVICE_NAME = UUID.fromString("00002a00-0000-1000-8000-00805f9b34fb")
