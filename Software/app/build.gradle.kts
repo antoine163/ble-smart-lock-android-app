@@ -66,10 +66,10 @@ dependencies {
     implementation(libs.androidx.navigation.runtime.ktx)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.lifecycle.process)
-    implementation(libs.androidx.datastore.core)
 
-    implementation("com.google.protobuf:protobuf-kotlin-lite:4.28.1")
-    implementation("com.google.protobuf:protobuf-javalite:4.28.1")
+    implementation(libs.androidx.datastore.core)
+    implementation(libs.protobuf.kotlin.lite)
+    implementation(libs.protobuf.javalite)
 
     debugImplementation(libs.androidx.ui.tooling)
 }
