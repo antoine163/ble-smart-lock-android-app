@@ -3,7 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.compose.compiler)
 
-    id("com.google.protobuf") version "0.9.4"
+    alias(libs.plugins.protobuf)
 }
 
 android {
