@@ -270,7 +270,7 @@ fun DevicesSettingScreen(
         AutoUnlockCard(modifier = Modifier
             .padding(vertical = dimensionResource(id = R.dimen.padding_small))
             .fillMaxWidth(),
-            autoUnlock = deviceSetting.autoUnlockEnable,
+            autoUnlock = deviceSetting.autoUnlockEnabled,
             unlockRssiTh = deviceSetting.autoUnlockRssiTh,
             currentRssi = deviceSetting.currentRssi,
             onAutoUnlockChange = onAutoUnlockChange,
@@ -751,7 +751,7 @@ fun createDemoDeviceSetting(): DeviceSetting {
         isUnlocked = true,
         thresholdNight = 42.8f,
         currentBrightness = 68.7f,
-        autoUnlockEnable = true,
+        autoUnlockEnabled = true,
         autoUnlockRssiTh = -80
     )
 }

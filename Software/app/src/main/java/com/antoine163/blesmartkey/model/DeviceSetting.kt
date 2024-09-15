@@ -11,7 +11,7 @@ package com.antoine163.blesmartkey.model
  * @property isUnlocked Indicates whether the device is currently unlocked.
  * @property thresholdNight The brightness threshold for night mode.
  * @property currentBrightness The current brightness level.
- * @property autoUnlockEnable Indicates whether auto-unlock is enabled.
+ * @property autoUnlockEnabled Indicates whether auto-unlock is enabled.
  * @property autoUnlockRssiTh The RSSI threshold for auto-unlock.
  */
 data class DeviceSetting(
@@ -22,6 +22,6 @@ data class DeviceSetting(
     val isUnlocked: Boolean = false,
     val thresholdNight: Float = 0f,
     val currentBrightness: Float = 0f,
-    val autoUnlockEnable: Boolean = true,
+    val autoUnlockEnabled: Boolean = true,
     val autoUnlockRssiTh: Int = 0
 )

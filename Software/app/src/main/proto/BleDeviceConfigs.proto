@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+message BleDeviceConfig {
+  string name = 1;
+  string address = 2;
+  bool wasOpened = 3;
+  bool autoUnlockEnabled = 4;
+  int32 autoUnlockRssiTh = 5;
+}
+message BleDeviceConfigs {
+  repeated BleDeviceConfig devices = 1;
+}
