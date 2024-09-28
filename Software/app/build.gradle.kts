@@ -67,6 +67,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.process)
 
     implementation(libs.androidx.datastore.core)
+    implementation(libs.androidx.datastore)
     implementation(libs.protobuf.kotlin.lite)
     implementation(libs.protobuf.javalite)
 
