@@ -1,4 +1,4 @@
-package com.antoine163.blesmartkey
+package com.antoine163.blesmartkey.ui
 
 
 import android.app.Application
@@ -35,13 +35,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.antoine163.blesmartkey.ui.DeviceSettingViewModel
-import com.antoine163.blesmartkey.ui.DeviceSettingViewModelFactory
-import com.antoine163.blesmartkey.ui.DevicesListScreen
-import com.antoine163.blesmartkey.ui.DevicesScanScreen
-import com.antoine163.blesmartkey.ui.DevicesScanViewModel
-import com.antoine163.blesmartkey.ui.DevicesSettingScreen
-import com.antoine163.blesmartkey.ui.createDemoDeviceList
+import com.antoine163.blesmartkey.R
 import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
 
 
@@ -54,7 +48,7 @@ enum class SmartKeyScreen(
 }
 
 @Composable
-fun BleSmartKeyApp(
+fun BleSmartKeyScreen(
     navController: NavHostController = rememberNavController()
 ) {
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -206,8 +200,8 @@ fun BleSmartKeyAppBar(
 //    showBackground = false
 //)
 @Composable
-private fun BleSmartKeyAppPreview() {
+private fun BleSmartKeyScreenPreview() {
     BleSmartKeyTheme {
-        BleSmartKeyApp()
+        BleSmartKeyScreen()
     }
 }

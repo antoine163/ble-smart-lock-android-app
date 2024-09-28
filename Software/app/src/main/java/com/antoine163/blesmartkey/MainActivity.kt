@@ -9,6 +9,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
+import com.antoine163.blesmartkey.ui.BleSmartKeyScreen
 import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
 
 class MainActivity : ComponentActivity() {
@@ -37,7 +38,7 @@ class MainActivity : ComponentActivity() {
         requestBluetoothPermissions.launch(bluetoothPermissions) // Request permissions
         setContent {
             BleSmartKeyTheme {
-                BleSmartKeyApp()
+                BleSmartKeyScreen()
             }
         }
     }
