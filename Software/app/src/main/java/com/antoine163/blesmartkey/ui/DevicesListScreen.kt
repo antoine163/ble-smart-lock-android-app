@@ -7,19 +7,40 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
 import com.antoine163.blesmartkey.R
 import com.antoine163.blesmartkey.model.DeviceListItem
 import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
+
+
+@Composable
+fun DevicesListScreen(
+    modifier: Modifier = Modifier,
+    viewModel: DevicesListViewModel,
+    onSettingClick: (String) -> Unit
+) {
+    val uiState by viewModel.uiState.collectAsState()
+
+    DevicesListScreen(
+        modifier = modifier,
+        devices = uiState.devices,
+        onSettingClick = onSettingClick,
+        onOpenDoorClick = { /* TODO */ }
+    )
+}
 
 @Composable
 fun DevicesListScreen(
     modifier: Modifier = Modifier,
     devices: List<DeviceListItem>,
-    onSettingClick: (String) -> Unit
+    onSettingClick: (String) -> Unit,
+    onOpenDoorClick: () -> Unit
 ) {
     LazyColumn(
         modifier = modifier,
@@ -35,7 +56,7 @@ fun DevicesListScreen(
                 deviceName = device.name,
                 isDoorOpen = device.isOpened,
                 rssi = device.rssi,
-                onOpenDoorClick = { /* TODO */ })
+                onOpenDoorClick = onOpenDoorClick)
         }
     }
 }
@@ -57,7 +78,8 @@ private fun DevicesListScreenPreview() {
         Surface {
             DevicesListScreen(
                 devices = devices,
-                onSettingClick = {})
+                onSettingClick = {},
+                onOpenDoorClick = {})
         }
     }
 }

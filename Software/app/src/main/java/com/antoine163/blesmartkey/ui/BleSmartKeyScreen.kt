@@ -1,6 +1,5 @@
 package com.antoine163.blesmartkey.ui
 
-
 import android.app.Application
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.fillMaxSize
@@ -35,8 +34,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.antoine163.blesmartkey.DeviceBleSettings
+import com.antoine163.blesmartkey.DevicesBleSettings
 import com.antoine163.blesmartkey.R
+import com.antoine163.blesmartkey.data.DevicesBleSettingsRepository
 import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 
 
 enum class SmartKeyScreen(
@@ -49,7 +53,8 @@ enum class SmartKeyScreen(
 
 @Composable
 fun BleSmartKeyScreen(
-    navController: NavHostController = rememberNavController()
+    navController: NavHostController = rememberNavController(),
+    devicesBleSettingsRepository: DevicesBleSettingsRepository
 ) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentScreen = SmartKeyScreen.valueOf(
@@ -86,13 +91,19 @@ fun BleSmartKeyScreen(
         ) {
             // Define a composable function for the SmartKey main screen
             composable(route = SmartKeyScreen.Main.name) {
+
+                // Create and manage the DevicesListViewModel
+                val viewModel: DevicesListViewModel = viewModel(
+                    factory = DevicesListViewModelFactory(devicesBleSettingsRepository)
+                )
+
                 // Display the DevicesListScreen
                 DevicesListScreen(
                     modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.padding_medium)),
+                    viewModel = viewModel,
                     onSettingClick = { deviceAdd ->
                         navController.navigate(SmartKeyScreen.Setting.name + "/$deviceAdd")
-                    },
-                    devices = createDemoDeviceList()
+                    }
                 )
             }
 
@@ -186,22 +197,35 @@ fun BleSmartKeyAppBar(
 }
 
 
-@Preview(
-    uiMode = Configuration.UI_MODE_NIGHT_YES,
-    name = "Dark Mode",
-    device = "id:S21 FE",
-    showSystemUi = false,
-    showBackground = false
-)
 //@Preview(
-//    name = "Light Mode",
+//    uiMode = Configuration.UI_MODE_NIGHT_YES,
+//    name = "Dark Mode",
 //    device = "id:S21 FE",
 //    showSystemUi = false,
 //    showBackground = false
 //)
-@Composable
-private fun BleSmartKeyScreenPreview() {
-    BleSmartKeyTheme {
-        BleSmartKeyScreen()
-    }
-}
+////@Preview(
+////    name = "Light Mode",
+////    device = "id:S21 FE",
+////    showSystemUi = false,
+////    showBackground = false
+////)
+//@Composable
+//private fun BleSmartKeyScreenPreview() {
+//    BleSmartKeyTheme {
+//        BleSmartKeyScreen(
+//            devicesBleSettingsRepository = DevicesBleSettingsRepositoryPreview() )
+//    }
+//}
+//
+//class DevicesBleSettingsRepositoryPreview() : DevicesBleSettingsRepository {
+//
+//    private val device1 = DeviceBleSettings.newBuilder().setAddress("12:34:56:78:90:AB").setName("MyDevice").build()
+//    private val device2 = DeviceBleSettings.newBuilder().setAddress("AA:BB:CC:DD:EE:FF").setName("AnotherDevice").build()
+//    private val devices = DevicesBleSettings.newBuilder().addDevices(device1).addDevices(device2).build()
+//
+//    private val devicesFlow = MutableStateFlow(devices)
+//    override val devicesBleSettingsFlow: Flow<DevicesBleSettings> = devicesFlow
+//
+//    override suspend fun updateDeviceBleSettings(device: DeviceBleSettings) {}
+//}
