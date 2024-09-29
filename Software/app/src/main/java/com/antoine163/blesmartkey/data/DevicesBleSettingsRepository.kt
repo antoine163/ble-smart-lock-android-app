@@ -1,13 +1,16 @@
 package com.antoine163.blesmartkey.data
 
 import android.content.Context
+import android.location.Address
 import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.dataStore
 import com.antoine163.blesmartkey.DeviceBleSettings
 import com.antoine163.blesmartkey.DevicesBleSettings
+import com.antoine163.blesmartkey.model.DeviceListItem
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.update
 import java.io.IOException
 
 private val Context.devicesBleSettingsStore: DataStore<DevicesBleSettings> by dataStore(
@@ -17,7 +20,8 @@ private val Context.devicesBleSettingsStore: DataStore<DevicesBleSettings> by da
 
 interface DevicesBleSettingsRepository {
     val devicesFlow: Flow<DevicesBleSettings>
-    suspend fun updateDevice(device: DeviceBleSettings)
+    suspend fun readDevice(address: String) : DeviceBleSettings?
+    suspend fun saveDevice(device: DeviceBleSettings)
 }
 
 class DevicesBleSettingsRepositoryApp(
@@ -34,7 +38,19 @@ class DevicesBleSettingsRepositoryApp(
             }
         }
 
-    override suspend fun updateDevice(device: DeviceBleSettings) {
+    override suspend fun readDevice(address: String): DeviceBleSettings? {
+        var device : DeviceBleSettings? = null
+
+        // Collect the devices from the repository and convert them to a list of DeviceListItem objects
+        devicesFlow.collect { devicesBleSettings ->
+            // Find the device with the given address
+            device = devicesBleSettings.devicesList.find {it.address == address}
+        }
+
+        return device;
+    }
+
+    override suspend fun saveDevice(device: DeviceBleSettings) {
         context.devicesBleSettingsStore.updateData { currentDevices ->
             val updatedDevices = currentDevices.devicesList
             val index = updatedDevices.indexOfFirst { it.address == device.address }

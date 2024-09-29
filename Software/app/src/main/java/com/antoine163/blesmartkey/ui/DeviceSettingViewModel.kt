@@ -57,7 +57,7 @@ class DeviceSettingViewModel(
      */
     private fun saveDeviceSetting(device: DeviceSetting) {
         viewModelScope.launch {
-            devicesBleSettingsRepository.updateDevice(
+            devicesBleSettingsRepository.saveDevice(
                 DeviceBleSettings.newBuilder()
                     .setName(device.name)
                     .setAddress(device.address)
