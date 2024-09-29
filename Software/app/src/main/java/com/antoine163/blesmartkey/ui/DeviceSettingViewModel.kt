@@ -5,8 +5,10 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.antoine163.blesmartkey.DeviceBleSettings
 import com.antoine163.blesmartkey.ble.BleDevice
 import com.antoine163.blesmartkey.ble.BleDeviceCallback
+import com.antoine163.blesmartkey.data.DevicesBleSettingsRepository
 import com.antoine163.blesmartkey.model.DeviceSetting
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,6 +36,7 @@ data class DeviceSettingUiState(
  */
 class DeviceSettingViewModel(
     application: Application,
+    devicesBleSettingsRepository : DevicesBleSettingsRepository,
     deviceAdd: String
 ) : AndroidViewModel(application) {
 
@@ -108,6 +111,15 @@ class DeviceSettingViewModel(
 
     init {
         viewModelScope.launch {
+
+            devicesBleSettingsRepository.updateDevice(
+                DeviceBleSettings.newBuilder()
+                    .setAddress(deviceAdd)
+                    .setName("todo")
+                    .build()
+            )
+
+
             while (true) {
                 // Read Rssi and brightness every 0.8s
                 delay(800)
@@ -131,13 +143,14 @@ class DeviceSettingViewModel(
  */
 class DeviceSettingViewModelFactory(
     private val application: Application,
+    private val devicesBleSettingsRepository : DevicesBleSettingsRepository,
     private val deviceAdd: String
 ) : ViewModelProvider.AndroidViewModelFactory(application) {
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(DeviceSettingViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return DeviceSettingViewModel(application, deviceAdd) as T
+            return DeviceSettingViewModel(application, devicesBleSettingsRepository, deviceAdd) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

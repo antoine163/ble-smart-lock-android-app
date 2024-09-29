@@ -1,7 +1,6 @@
 package com.antoine163.blesmartkey.ui
 
 import android.app.Application
-import android.content.res.Configuration
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -25,7 +24,6 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -34,13 +32,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.antoine163.blesmartkey.DeviceBleSettings
-import com.antoine163.blesmartkey.DevicesBleSettings
 import com.antoine163.blesmartkey.R
 import com.antoine163.blesmartkey.data.DevicesBleSettingsRepository
-import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 
 
 enum class SmartKeyScreen(
@@ -137,7 +130,7 @@ fun BleSmartKeyScreen(
                 // Create and manage the DeviceSettingViewModel
                 val application = LocalContext.current.applicationContext as Application
                 val viewModel: DeviceSettingViewModel = viewModel(
-                    factory = DeviceSettingViewModelFactory(application, deviceAdd)
+                    factory = DeviceSettingViewModelFactory(application, devicesBleSettingsRepository, deviceAdd)
                 )
 
                 // Display the DeviceSettingScreen
