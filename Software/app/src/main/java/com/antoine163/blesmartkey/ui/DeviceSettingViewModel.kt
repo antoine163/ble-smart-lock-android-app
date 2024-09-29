@@ -36,14 +36,38 @@ data class DeviceSettingUiState(
  */
 class DeviceSettingViewModel(
     application: Application,
-    devicesBleSettingsRepository : DevicesBleSettingsRepository,
-    deviceAdd: String
+    deviceAdd: String,
+    val devicesBleSettingsRepository: DevicesBleSettingsRepository
 ) : AndroidViewModel(application) {
 
     // MutableStateFlow to hold the UI state of the device setting
     private val _uiState = MutableStateFlow(
-        DeviceSettingUiState(setting = DeviceSetting(address = deviceAdd)))
+        DeviceSettingUiState(setting = DeviceSetting(address = deviceAdd))
+    )
     val uiState: StateFlow<DeviceSettingUiState> = _uiState.asStateFlow()
+
+    /**
+     * Updates the device settings in the repository.
+     *
+     * This function launches a coroutine to update the device settings in the
+     * [devicesBleSettingsRepository]. It maps the [DeviceSetting] object to a
+     * [DeviceBleSettings] object and updates the repository with the new settings.
+     *
+     * @param device The [DeviceSetting] object containing the updated device settings.
+     */
+    private fun saveDeviceSetting(device: DeviceSetting) {
+        viewModelScope.launch {
+            devicesBleSettingsRepository.updateDevice(
+                DeviceBleSettings.newBuilder()
+                    .setName(device.name)
+                    .setAddress(device.address)
+                    .setWasOpened(device.isOpened)
+                    .setAutoUnlockEnabled(device.autoUnlockEnabled)
+                    .setAutoUnlockRssiTh(device.autoUnlockRssiTh)
+                    .build()
+            )
+        }
+    }
 
     // BleDeviceCallback instance to handle callbacks from the BleDevice
     private val bleDeviceCallback = object : BleDeviceCallback() {
@@ -71,6 +95,9 @@ class DeviceSettingViewModel(
             _uiState.update { currentState ->
                 currentState.copy(setting = currentState.setting.copy(isOpened = isOpened))
             }
+
+            // Update the device setting in the repository
+            saveDeviceSetting(_uiState.value.setting)
         }
 
         // Handle current brightness read
@@ -85,6 +112,9 @@ class DeviceSettingViewModel(
             _uiState.update { currentState ->
                 currentState.copy(setting = currentState.setting.copy(thresholdNight = brightness))
             }
+
+            // Update the device setting in the repository
+            saveDeviceSetting(_uiState.value.setting)
         }
 
         // Handle device name changes
@@ -92,6 +122,9 @@ class DeviceSettingViewModel(
             _uiState.update { currentState ->
                 currentState.copy(setting = currentState.setting.copy(name = deviceName))
             }
+
+            // Update the device setting in the repository
+            saveDeviceSetting(_uiState.value.setting)
         }
 
         // Handle rssi changes
@@ -111,15 +144,6 @@ class DeviceSettingViewModel(
 
     init {
         viewModelScope.launch {
-
-            devicesBleSettingsRepository.updateDevice(
-                DeviceBleSettings.newBuilder()
-                    .setAddress(deviceAdd)
-                    .setName("todo")
-                    .build()
-            )
-
-
             while (true) {
                 // Read Rssi and brightness every 0.8s
                 delay(800)
@@ -143,14 +167,14 @@ class DeviceSettingViewModel(
  */
 class DeviceSettingViewModelFactory(
     private val application: Application,
-    private val devicesBleSettingsRepository : DevicesBleSettingsRepository,
+    private val devicesBleSettingsRepository: DevicesBleSettingsRepository,
     private val deviceAdd: String
 ) : ViewModelProvider.AndroidViewModelFactory(application) {
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(DeviceSettingViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return DeviceSettingViewModel(application, devicesBleSettingsRepository, deviceAdd) as T
+            return DeviceSettingViewModel(application, deviceAdd, devicesBleSettingsRepository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
