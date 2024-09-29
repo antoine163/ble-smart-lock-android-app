@@ -48,17 +48,19 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
 import com.antoine163.blesmartkey.R
 import com.antoine163.blesmartkey.model.DeviceSetting
 import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
 
+
 /**
- * Composable function representing the Devices Setting Screen.
+ * Composable function for the device settings screen.
  *
- * @param modifier Modifier for styling the screen.
- * @param viewModel The ViewModel associated with this screen.
- * @param navController Navigation controller for navigating between screens.
+ * This screen displays the current device settings and allows the user to interact with them.
+ *
+ * @param modifier Modifier to be applied to the layout.
+ * @param viewModel The ViewModel that holds the device settings and handles user interactions.
+ * @param onBack Callback function to be invoked when the user navigates back from this screen.
  */
 @Composable
 fun DevicesSettingScreen(
@@ -82,8 +84,8 @@ fun DevicesSettingScreen(
         },
         onDeviceNameChange = { deviceName -> viewModel.bleDevice.setDeviceName(deviceName) },
         onBrightnessThChange = { brightnessTh -> viewModel.bleDevice.setBrightnessTh(brightnessTh) },
-        onAutoUnlockChange = { autoUnlock -> /* todo */ },
-        onUnlockRssiThChange = { unlockRssiTh -> /* todo */ }
+        onAutoUnlockChange = { autoUnlock -> viewModel.autoUnlock(autoUnlock) },
+        onUnlockRssiThChange = { unlockRssiTh -> viewModel.setAutoUnlockRssiTh(unlockRssiTh) }
     )
 }
 

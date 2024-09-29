@@ -1,7 +1,6 @@
 package com.antoine163.blesmartkey.ui
 
 import android.app.Application
-import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -46,6 +45,36 @@ class DeviceSettingViewModel(
         DeviceSettingUiState(setting = DeviceSetting(address = deviceAdd))
     )
     val uiState: StateFlow<DeviceSettingUiState> = _uiState.asStateFlow()
+
+    /**
+     * Enables or disables the auto-unlock feature.
+     *
+     * This function updates the UI state and saves the updated setting to persistent storage.
+     *
+     * @param enable `true` to enable auto-unlock, `false` to disable it.
+     */
+    fun autoUnlock(enable : Boolean) {
+        _uiState.update { currentState ->
+            currentState.copy(setting = currentState.setting.copy(autoUnlockEnabled = enable))
+        }
+
+        saveDeviceSetting(_uiState.value.setting)
+    }
+
+    /**
+     * Sets the RSSI threshold for automatic unlocking.
+     *
+     * This function updates the UI state with the new RSSI threshold and saves the updated device settings.
+     *
+     * @param rssiTh The new RSSI threshold value.
+     */
+    fun setAutoUnlockRssiTh(rssiTh : Int) {
+        _uiState.update { currentState ->
+            currentState.copy(setting = currentState.setting.copy(autoUnlockRssiTh = rssiTh))
+        }
+
+        saveDeviceSetting(_uiState.value.setting)
+    }
 
     /**
      * Updates the device settings in the repository.
@@ -148,7 +177,7 @@ class DeviceSettingViewModel(
 
             // Initialize the device setting with default values
             _uiState.update { it ->
-                it.copy(setting = DeviceSetting() )
+                it.copy(setting = DeviceSetting(address = deviceAdd) )
             }
 
             // Read the device settings from the repository

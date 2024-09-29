@@ -15,7 +15,7 @@ package com.antoine163.blesmartkey.model
  * @property autoUnlockRssiTh The RSSI threshold for auto-unlock.
  */
 data class DeviceSetting(
-    val name: String = "",
+    val name: String = "Unknown",
     val address: String = "",
     val currentRssi: Int? = null,
     val isOpened: Boolean = false,
