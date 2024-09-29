@@ -20,8 +20,8 @@ data class DeviceSetting(
     val currentRssi: Int? = null,
     val isOpened: Boolean = false,
     val isUnlocked: Boolean = false,
-    val thresholdNight: Float = 0f,
-    val currentBrightness: Float = 0f,
-    val autoUnlockEnabled: Boolean = true,
-    val autoUnlockRssiTh: Int = 0
+    val thresholdNight: Float = 50f,
+    val currentBrightness: Float? = null,
+    val autoUnlockEnabled: Boolean = false,
+    val autoUnlockRssiTh: Int = -40
 )

@@ -10,6 +10,7 @@ import com.antoine163.blesmartkey.DevicesBleSettings
 import com.antoine163.blesmartkey.model.DeviceListItem
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import java.io.IOException
 
@@ -20,8 +21,8 @@ private val Context.devicesBleSettingsStore: DataStore<DevicesBleSettings> by da
 
 interface DevicesBleSettingsRepository {
     val devicesFlow: Flow<DevicesBleSettings>
-    suspend fun readDevice(address: String) : DeviceBleSettings?
-    suspend fun saveDevice(device: DeviceBleSettings)
+    suspend fun getDevice(address: String) : DeviceBleSettings?
+    suspend fun updateDevice(device: DeviceBleSettings)
 }
 
 class DevicesBleSettingsRepositoryApp(
@@ -38,19 +39,20 @@ class DevicesBleSettingsRepositoryApp(
             }
         }
 
-    override suspend fun readDevice(address: String): DeviceBleSettings? {
+    override suspend fun getDevice(address: String): DeviceBleSettings? {
         var device : DeviceBleSettings? = null
 
         // Collect the devices from the repository and convert them to a list of DeviceListItem objects
-        devicesFlow.collect { devicesBleSettings ->
+        devicesFlow.first { devicesBleSettings ->
             // Find the device with the given address
             device = devicesBleSettings.devicesList.find {it.address == address}
+            true
         }
 
         return device;
     }
 
-    override suspend fun saveDevice(device: DeviceBleSettings) {
+    override suspend fun updateDevice(device: DeviceBleSettings) {
         context.devicesBleSettingsStore.updateData { currentDevices ->
             val updatedDevices = currentDevices.devicesList
             val index = updatedDevices.indexOfFirst { it.address == device.address }

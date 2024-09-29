@@ -210,10 +210,6 @@ class BleDevice(
         }
     }
 
-    init {
-        connect()
-    }
-
     @SuppressLint("NewApi")
     fun setDeviceName(deviceName: String) {
         gattCharDeviceName?.let { charDeviceName ->

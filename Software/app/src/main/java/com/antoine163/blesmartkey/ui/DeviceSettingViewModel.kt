@@ -1,6 +1,7 @@
 package com.antoine163.blesmartkey.ui
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -57,7 +58,7 @@ class DeviceSettingViewModel(
      */
     private fun saveDeviceSetting(device: DeviceSetting) {
         viewModelScope.launch {
-            devicesBleSettingsRepository.saveDevice(
+            devicesBleSettingsRepository.updateDevice(
                 DeviceBleSettings.newBuilder()
                     .setName(device.name)
                     .setAddress(device.address)
@@ -144,6 +145,30 @@ class DeviceSettingViewModel(
 
     init {
         viewModelScope.launch {
+
+            // Initialize the device setting with default values
+            _uiState.update { it ->
+                it.copy(setting = DeviceSetting() )
+            }
+
+            // Read the device settings from the repository
+            val device = devicesBleSettingsRepository.getDevice(deviceAdd)
+            device?.let {
+                _uiState.update { it ->
+                    it.copy(
+                        setting = DeviceSetting(
+                            name = device.name,
+                            address = device.address,
+                            isOpened = device.wasOpened,
+                            autoUnlockEnabled = device.autoUnlockEnabled,
+                            autoUnlockRssiTh = device.autoUnlockRssiTh
+                        )
+                    )
+                }
+            }
+
+            // Connect to the Bluetooth device
+            bleDevice.connect()
             while (true) {
                 // Read Rssi and brightness every 0.8s
                 delay(800)

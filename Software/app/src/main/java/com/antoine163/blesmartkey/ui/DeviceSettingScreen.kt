@@ -263,6 +263,7 @@ fun DevicesSettingScreen(
                 .fillMaxWidth(),
             currentBrightness = deviceSetting.currentRssi ?.let { deviceSetting.currentBrightness },
             brightnessTh = deviceSetting.thresholdNight,
+            enabled = deviceSetting.currentRssi != null,
             onBrightnessThChange = onBrightnessThChange
         )
 
@@ -383,6 +384,7 @@ fun NightLightingCard(
     modifier: Modifier,
     currentBrightness: Float?,
     brightnessTh: Float,
+    enabled: Boolean,
     onBrightnessThChange: (Float) -> Unit,
 ) {
     ElevatedCard(
@@ -421,6 +423,7 @@ fun NightLightingCard(
             value = "%.1f".format(brightnessTh),
             currentValue = currentBrightness?.let { "%.1f".format(it) },
             onNewValue = { showEditDialog = true },
+            enabled = enabled,
             onSetCurrentValue = { currentBrightness ?.let { onBrightnessThChange(it) } },
         )
     }
