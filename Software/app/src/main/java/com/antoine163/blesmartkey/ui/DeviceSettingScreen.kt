@@ -64,7 +64,7 @@ import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
 fun DevicesSettingScreen(
     modifier: Modifier = Modifier,
     viewModel: DeviceSettingViewModel,
-    navController: NavHostController
+    onBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -78,7 +78,7 @@ fun DevicesSettingScreen(
         },
         onDisconnect = {
             viewModel.bleDevice.disconnect()
-            navController.navigateUp()
+            onBack()
         },
         onDeviceNameChange = { deviceName -> viewModel.bleDevice.setDeviceName(deviceName) },
         onBrightnessThChange = { brightnessTh -> viewModel.bleDevice.setBrightnessTh(brightnessTh) },

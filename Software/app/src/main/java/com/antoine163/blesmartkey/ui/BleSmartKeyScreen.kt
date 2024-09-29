@@ -148,7 +148,7 @@ fun BleSmartKeyScreen(
                         .fillMaxSize(1f)
                         .verticalScroll(scrollState),
                     viewModel = viewModel,
-                    navController = navController
+                    onBack = { navController.navigateUp() }
                 )
             }
         }
