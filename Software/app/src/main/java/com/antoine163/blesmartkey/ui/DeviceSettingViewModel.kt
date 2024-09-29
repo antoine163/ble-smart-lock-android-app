@@ -169,8 +169,9 @@ class DeviceSettingViewModel(
 
             // Connect to the Bluetooth device
             bleDevice.connect()
+
+            // Read Rssi and brightness every 0.8s
             while (true) {
-                // Read Rssi and brightness every 0.8s
                 delay(800)
                 bleDevice.readRssi()
                 bleDevice.readBrightness()
