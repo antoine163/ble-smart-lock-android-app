@@ -1,17 +1,14 @@
 package com.antoine163.blesmartkey.data
 
 import android.content.Context
-import android.location.Address
 import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.dataStore
 import com.antoine163.blesmartkey.DeviceBleSettings
 import com.antoine163.blesmartkey.DevicesBleSettings
-import com.antoine163.blesmartkey.model.DeviceListItem
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.update
 import java.io.IOException
 
 private val Context.devicesBleSettingsStore: DataStore<DevicesBleSettings> by dataStore(

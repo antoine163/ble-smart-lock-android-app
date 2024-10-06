@@ -86,8 +86,9 @@ fun BleSmartKeyScreen(
             composable(route = SmartKeyScreen.Main.name) {
 
                 // Create and manage the DevicesListViewModel
+                val application = LocalContext.current.applicationContext as Application
                 val viewModel: DevicesListViewModel = viewModel(
-                    factory = DevicesListViewModelFactory(devicesBleSettingsRepository)
+                    factory = DevicesListViewModelFactory(application, devicesBleSettingsRepository)
                 )
 
                 // Display the DevicesListScreen

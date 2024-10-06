@@ -35,24 +35,27 @@ data class DevicesScanUiState(
 /**
  * ViewModel for the Devices Scan screen.
  * It handles scanning for Bluetooth devices and exposes the scan results as a StateFlow.
+ * The scan process automatically starts when the ViewModel is initialized and lasts for 5 minutes.
  *
  * @param application The application context.
  */
+@SuppressLint("MissingPermission")
 class DevicesScanViewModel(application: Application) : AndroidViewModel(application) {
 
+    // MutableStateFlow to hold the UI state of the device scan
     private val _uiState = MutableStateFlow(DevicesScanUiState())
     val uiState: StateFlow<DevicesScanUiState> = _uiState.asStateFlow()
 
+    // Map to store the scanned devices
     private val scannedDevices: MutableMap<String, DeviceScanItem> = mutableMapOf()
+    // Bluetooth manager and scanner
     private val bluetoothManager = application.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-    private val bluetoothAdapter = bluetoothManager.adapter
-    private val bluetoothLeScanner = bluetoothAdapter.bluetoothLeScanner
+    private val bluetoothLeScanner = bluetoothManager.adapter.bluetoothLeScanner
 
     /**
      * Scan callback object that handles the results of Bluetooth LE scans.
      */
     private val scanCallback = object : ScanCallback() {
-        @SuppressLint("MissingPermission")
         override fun onScanResult(callbackType: Int, result: ScanResult) {
             super.onScanResult(callbackType, result)
 
@@ -71,21 +74,12 @@ class DevicesScanViewModel(application: Application) : AndroidViewModel(applicat
 
         override fun onScanFailed(errorCode: Int) {
             super.onScanFailed(errorCode)
-            // Gérer les erreurs de scan
+            // Handle scan failure
             Log.e("BSK", "Scan failed with error code: $errorCode")
         }
     }
 
-
-    /**
-     * Refreshes the list of scanned Bluetooth devices.
-     *
-     * This function clears the current list of scanned devices, updates the UI state to reflect the empty list,
-     * and initiates a Bluetooth scan for 5 minutes. After 5 minutes, the scan is stopped.
-     */
-    @SuppressLint("MissingPermission")
-    fun refresh()
-    {
+    init {
         // Clean devices list
         scannedDevices.clear()
         _uiState.update { currentState ->
@@ -100,17 +94,10 @@ class DevicesScanViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
-
-    init {
-        // Launch the refresh function to start the first scanning
-        refresh()
-    }
-
     /**
      * Called when the ViewModel is no longer used and will be destroyed.
      * It is used here to stop the Bluetooth LE scan.
      */
-    @SuppressLint("MissingPermission")
     override fun onCleared() {
         super.onCleared()
         bluetoothLeScanner.stopScan(scanCallback)
