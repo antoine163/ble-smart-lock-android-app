@@ -31,7 +31,7 @@ fun DevicesListScreen(
         modifier = modifier,
         devices = uiState.devices,
         onSettingClick = onSettingClick,
-        onOpenDoorClick = { /* TODO */ }
+        onOpenDoorClick = { address -> viewModel.openDoor(address) }
     )
 }
 
@@ -40,7 +40,7 @@ fun DevicesListScreen(
     modifier: Modifier = Modifier,
     devices: List<DeviceListItem>,
     onSettingClick: (String) -> Unit,
-    onOpenDoorClick: () -> Unit
+    onOpenDoorClick: (String) -> Unit
 ) {
     LazyColumn(
         modifier = modifier,
@@ -56,7 +56,8 @@ fun DevicesListScreen(
                 deviceName = device.name,
                 isDoorOpen = device.isOpened,
                 rssi = device.rssi,
-                onOpenDoorClick = onOpenDoorClick)
+                onOpenDoorClick = { onOpenDoorClick(device.address) }
+            )
         }
     }
 }

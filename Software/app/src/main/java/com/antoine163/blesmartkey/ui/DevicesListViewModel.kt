@@ -13,14 +13,14 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.antoine163.blesmartkey.ble.BleDevice
+import com.antoine163.blesmartkey.ble.BleDeviceCallback
 import com.antoine163.blesmartkey.data.DevicesBleSettingsRepository
 import com.antoine163.blesmartkey.model.DeviceListItem
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -39,8 +39,79 @@ class DevicesListViewModel(
     val uiState: StateFlow<DevicesListUiState> = _uiState.asStateFlow()
 
     // Bluetooth manager and scanner
-    private val bluetoothManager = application.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+    private val bluetoothManager = getApplication<Application>().getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
     private val bluetoothLeScanner = bluetoothManager.adapter.bluetoothLeScanner
+
+
+    private var bleDevice: BleDevice? = null
+
+    // BleDeviceCallback instance to handle callbacks from the BleDevice
+    private val bleDeviceCallback = object : BleDeviceCallback() {
+
+        // Handle connection state changes
+        override fun onConnectionStateChanged(isConnected: Boolean) {
+            if (isConnected)
+                bleDevice?.openDoor()
+            else
+                bleDevice = null
+        }
+
+        // Handle lock state changes
+        override fun onLockStateChanged(isLocked: Boolean) {}
+
+        // Handle door state changes
+        override fun onDoorStateChanged(isOpened: Boolean) {
+            if (isOpened) {
+                bleDevice?.disconnect()
+            }else {
+                bleDevice?.unlock()
+                bleDevice?.openDoor()
+            }
+
+            // Update the UI state with the new list of devices
+            bleDevice?.let { bleDevice ->
+                _uiState.update { currentState ->
+                    val updatedDevices = currentState.devices.map { device ->
+                        if (device.address == bleDevice.getAdress()) {
+                            device.copy(isOpened = isOpened)
+                        } else {
+                            device
+                        }
+                    }
+                    currentState.copy(devices = updatedDevices)
+                }
+            }
+        }
+
+        // Handle current brightness read
+        override fun onBrightnessRead(brightness: Float) {}
+
+        // Handle brightness threshold read
+        override fun onBrightnessThChanged(brightness: Float) {}
+
+        // Handle device name changes
+        override fun onDeviceNameChanged(deviceName: String) {}
+
+        // Handle rssi changes
+        override fun onRssiRead(rssi: Int) {}
+    }
+
+
+    /**
+     * Opens the door associated with the given device address.
+     *
+     * This function attempts to connect to the BLE device using the provided address.
+     * If a connection is already established, it will be reused.
+     *
+     * @param address The Bluetooth address of the door device.
+     */
+    fun openDoor(address: String) {
+        /* TODO programmer un timeout */
+        if (bleDevice == null) {
+            bleDevice = BleDevice(getApplication<Application>(), address, bleDeviceCallback)
+            bleDevice?.connect()
+        }
+    }
 
     /**
      * Scan callback object that handles the results of Bluetooth LE scans.
