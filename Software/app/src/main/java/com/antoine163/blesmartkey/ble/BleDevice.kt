@@ -18,7 +18,7 @@ import java.util.UUID
 @SuppressLint("MissingPermission")
 class BleDevice(
     private val application: Application,
-    address: String,
+    private val address: String,
     callback: BleDeviceCallback
 ) {
     private val bluetoothManager: BluetoothManager =
@@ -38,6 +38,10 @@ class BleDevice(
 
     // Map of UUID to BluetoothGattCharacteristic for writing multiple characteristics
     private var pendingWrite = mutableMapOf<UUID, WriteCharData>()
+
+    fun getAdress(): String {
+        return address
+    }
 
     /**
      * Data class representing data to be written to a Bluetooth GATT characteristic.
