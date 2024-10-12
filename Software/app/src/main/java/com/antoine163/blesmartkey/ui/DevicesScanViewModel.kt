@@ -40,7 +40,9 @@ data class DevicesScanUiState(
  * @param application The application context.
  */
 @SuppressLint("MissingPermission")
-class DevicesScanViewModel(application: Application) : AndroidViewModel(application) {
+class DevicesScanViewModel(application: Application)
+    : AndroidViewModel(application)
+{
 
     // MutableStateFlow to hold the UI state of the device scan
     private val _uiState = MutableStateFlow(DevicesScanUiState())
@@ -49,7 +51,7 @@ class DevicesScanViewModel(application: Application) : AndroidViewModel(applicat
     // Map to store the scanned devices
     private val scannedDevices: MutableMap<String, DeviceScanItem> = mutableMapOf()
     // Bluetooth manager and scanner
-    private val bluetoothManager = application.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+    private val bluetoothManager = getApplication<Application>().getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
     private val bluetoothLeScanner = bluetoothManager.adapter.bluetoothLeScanner
 
     /**

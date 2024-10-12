@@ -170,7 +170,7 @@ class DeviceSettingViewModel(
     }
 
     // bleDevice instance to interact with the Bluetooth device
-    val bleDevice: BleDevice = BleDevice(application, deviceAdd, bleDeviceCallback)
+    val bleDevice: BleDevice = BleDevice(getApplication<Application>(), deviceAdd, bleDeviceCallback)
 
     init {
         viewModelScope.launch {
