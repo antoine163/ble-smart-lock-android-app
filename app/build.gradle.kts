@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.antoine163.blesmartkey"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.antoine163.blesmartkey"
