@@ -43,9 +43,11 @@ class DevicesListViewModel(
     private val bluetoothLeScanner = bluetoothManager.adapter.bluetoothLeScanner
 
 
+    // Ble device to implement the openDoor function
     private var bleDevice: BleDevice? = null
 
-    // BleDeviceCallback instance to handle callbacks from the BleDevice
+    // BleDeviceCallback instance to handle callbacks from the BleDevice to implement the openDoor
+    // function
     private val bleDeviceCallback = object : BleDeviceCallback() {
 
         // Handle connection state changes
@@ -72,7 +74,7 @@ class DevicesListViewModel(
             bleDevice?.let { bleDevice ->
                 _uiState.update { currentState ->
                     val updatedDevices = currentState.devices.map { device ->
-                        if (device.address == bleDevice.getAdress()) {
+                        if (device.address == bleDevice.getAddress()) {
                             device.copy(isOpened = isOpened)
                         } else {
                             device
@@ -96,7 +98,6 @@ class DevicesListViewModel(
         override fun onRssiRead(rssi: Int) {}
     }
 
-
     /**
      * Opens the door associated with the given device address.
      *
@@ -107,7 +108,11 @@ class DevicesListViewModel(
      */
     fun openDoor(address: String) {
         /* TODO programmer un timeout */
-        if (bleDevice == null) {
+
+        if (bleDevice != null && bleDevice?.getAddress() == address) {
+            bleDevice?.unlock()
+            bleDevice?.openDoor()
+        } else {
             bleDevice = BleDevice(getApplication<Application>(), address, bleDeviceCallback)
             bleDevice?.connect()
         }
@@ -125,7 +130,7 @@ class DevicesListViewModel(
             _uiState.update { currentState ->
                 val updatedDevices = currentState.devices.map { device ->
                     if (device.address == result.device.address) {
-                        device.copy(rssi = result.rssi)
+                        device.copy(rssi = result.rssi, isOpened = false)
                     } else {
                         device
                     }
