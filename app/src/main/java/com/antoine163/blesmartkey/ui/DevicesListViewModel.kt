@@ -17,6 +17,7 @@ import com.antoine163.blesmartkey.ble.BleDevice
 import com.antoine163.blesmartkey.ble.BleDeviceCallback
 import com.antoine163.blesmartkey.data.DevicesBleSettingsRepository
 import com.antoine163.blesmartkey.model.DeviceListItem
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,7 +32,7 @@ data class DevicesListUiState(
 @SuppressLint("MissingPermission")
 class DevicesListViewModel(
     application: Application,
-    devicesBleSettingsRepository : DevicesBleSettingsRepository
+    devicesBleSettingsRepository: DevicesBleSettingsRepository
 ) : AndroidViewModel(application) {
 
     // MutableStateFlow to hold the UI state of the device scan
@@ -39,12 +40,16 @@ class DevicesListViewModel(
     val uiState: StateFlow<DevicesListUiState> = _uiState.asStateFlow()
 
     // Bluetooth manager and scanner
-    private val bluetoothManager = getApplication<Application>().getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+    private val bluetoothManager =
+        getApplication<Application>().getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
     private val bluetoothLeScanner = bluetoothManager.adapter.bluetoothLeScanner
-
 
     // Ble device to implement the openDoor function
     private var bleDevice: BleDevice? = null
+
+    // Map of device addresses to their last seen timestamp
+    private val deviceLastSeen = mutableMapOf<String, Long>()
+    private val timeoutMillis = 3000L // 3 secondes
 
     // BleDeviceCallback instance to handle callbacks from the BleDevice to implement the openDoor
     // function
@@ -65,7 +70,7 @@ class DevicesListViewModel(
         override fun onDoorStateChanged(isOpened: Boolean) {
             if (isOpened) {
                 bleDevice?.disconnect()
-            }else {
+            } else {
                 bleDevice?.unlock()
                 bleDevice?.openDoor()
             }
@@ -124,18 +129,50 @@ class DevicesListViewModel(
     private val scanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult) {
             super.onScanResult(callbackType, result)
-            Log.d("BSK", "Scan result: ${result.device.name} - ${result.device.address} : ${result.rssi}")
+            Log.d(
+                "BSK",
+                "Scan result: ${result.device.name} - ${result.device.address} : ${result.rssi}"
+            )
+
+            // Update the last seen timestamp for the device
+            deviceLastSeen[result.device.address] = System.currentTimeMillis()
 
             // Update the UI state with the new list of devices
-            _uiState.update { currentState ->
-                val updatedDevices = currentState.devices.map { device ->
-                    if (device.address == result.device.address) {
-                        device.copy(rssi = result.rssi, isOpened = false)
+            _uiState.update { currentUiState ->
+                currentUiState.copy(devices = currentUiState.devices.map { uiDevice ->
+                    if (uiDevice.address == result.device.address) {
+                        uiDevice.copy(rssi = result.rssi, isOpened = false)
                     } else {
-                        device
+                        uiDevice
                     }
+                })
+            }
+        }
+
+        override fun onBatchScanResults(results: List<ScanResult?>?) {
+            super.onBatchScanResults(results)
+
+            Log.d("BSK", "Batch scan results: ${results?.size} devices detected")
+
+            // Log the address of each device found in the batch scan results
+            results?.forEach { bleResult ->
+                Log.d(
+                    "BSK",
+                    "Device address: ${bleResult?.device?.address}, name: ${bleResult?.device?.name}"
+                )
+            }
+
+            // Update the UI state with the new list of devices
+            _uiState.update { currentUiState ->
+                // Create a map of results, keyed by device address, for efficient lookup
+                val resultsMap = results?.associateBy { it?.device?.address } ?: emptyMap()
+                // Update the UI devices with the latest RSSI values from the scan results
+                val updatedUiDevices = currentUiState.devices.map { uiDevice ->
+                    resultsMap[uiDevice.address]?.let { bleResult -> // 3 & 4
+                        uiDevice.copy(rssi = bleResult.rssi, isOpened = false)
+                    } ?: uiDevice
                 }
-                currentState.copy(devices = updatedDevices)
+                currentUiState.copy(devices = updatedUiDevices)
             }
         }
 
@@ -147,22 +184,13 @@ class DevicesListViewModel(
     }
 
     init {
-        // Set scan settings
-        val scanSettings: ScanSettings = ScanSettings.Builder()
-            .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
-            .setMatchMode(ScanSettings.MATCH_MODE_AGGRESSIVE)
-            .setNumOfMatches(ScanSettings.MATCH_NUM_MAX_ADVERTISEMENT)
-            .setReportDelay(0L)
-            .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
-            .build()
-
-
-
-
         viewModelScope.launch {
+            /* TODO relire la config suit a un changement de config d'un device ou ajout d'un device */
+
+            // 1) Read configuration (list of device) from repository
+
             // Create a list of ScanFilter objects for each device
             val scanFilters: MutableList<ScanFilter> = mutableListOf()
-
 
             // Collect the devices from the repository and convert them to a list of DeviceListItem objects
             val devicesBleSettings = devicesBleSettingsRepository.devicesFlow.first()
@@ -185,16 +213,47 @@ class DevicesListViewModel(
                 )
             }
 
-            // Update the UI state with the new list of devices
+            // 2) Update the UI state with the devices list
             _uiState.update { currentState ->
-                currentState.copy( devices )
+                currentState.copy(devices)
             }
 
-            // Start scan
+            // 3) Start scanning
             bluetoothLeScanner.stopScan(scanCallback)
             if (scanFilters.isNotEmpty()) {
-                //bluetoothLeScanner.startScan(scanFilters, scanSettings, scanCallback)
-                bluetoothLeScanner.startScan(scanCallback)
+                val scanSettings = ScanSettings.Builder()
+                    .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+                    .setReportDelay(0)
+                    .build()
+
+                bluetoothLeScanner.startScan(scanFilters, scanSettings, scanCallback)
+
+
+                // Loop indefinitely to check for device timeouts
+                while (true) {
+                    // Wait for 1 second before checking again
+                    delay(1000)
+
+                    // Get the current time
+                    val currentTime = System.currentTimeMillis()
+
+                    // Iterate through each device in the deviceLastSeen map
+                    deviceLastSeen.entries.forEach { (address, lastSeen) ->
+                        // Check if the device has exceeded the timeout period
+                        if (currentTime - lastSeen > timeoutMillis) {
+                            // If the device has timed out, update the UI state to remove its RSSI value
+                            _uiState.update { currentState ->
+                                currentState.copy(devices = currentState.devices.map { device ->
+                                    if (device.address == address) {
+                                        device.copy(rssi = null)
+                                    } else device
+                                })
+                            }
+                            // Remove the device from the deviceLastSeen map
+                            deviceLastSeen.remove(address)
+                        }
+                    }
+                }
             }
         }
     }
@@ -222,7 +281,7 @@ class DevicesListViewModel(
  */
 class DevicesListViewModelFactory(
     private val application: Application,
-    private val devicesBleSettingsRepository : DevicesBleSettingsRepository
+    private val devicesBleSettingsRepository: DevicesBleSettingsRepository
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(DevicesListViewModel::class.java)) {
