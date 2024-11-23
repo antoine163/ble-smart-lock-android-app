@@ -16,7 +16,6 @@ import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
 class MainActivity : ComponentActivity() {
 
     // Bluetooth permissions required for Android 12 (API 31) and above
-    @RequiresApi(Build.VERSION_CODES.S)
     private val bluetoothPermissions = arrayOf(
         Manifest.permission.BLUETOOTH_SCAN,
         Manifest.permission.ACCESS_COARSE_LOCATION,
@@ -32,7 +31,6 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-    @RequiresApi(Build.VERSION_CODES.S)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
