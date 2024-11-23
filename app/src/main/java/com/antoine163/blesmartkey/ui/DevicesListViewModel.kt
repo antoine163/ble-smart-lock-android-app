@@ -24,6 +24,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.collections.get
+import kotlin.compareTo
+import kotlin.text.toInt
 
 data class DevicesListUiState(
     val devices: List<DeviceListItem> = listOf()
@@ -129,9 +132,22 @@ class DevicesListViewModel(
     private val scanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult) {
             super.onScanResult(callbackType, result)
+
+            // Extract device name from advertising data
+            val bleDevName =
+                result.scanRecord?.advertisingDataMap?.get(0x09)?.let { byteArray ->
+                    String(byteArray, Charsets.UTF_8)
+                } ?: result.device?.name ?: "Unknown"
+
+            // Extract device door state from advertising data
+            val isBleDoorOpen =
+                result.scanRecord?.advertisingDataMap?.get(0x2D)
+                    ?.takeIf { it.size >= 3 }
+                    ?.let { it[2].toInt() == 0x01 } == true
+
             Log.d(
                 "BSK",
-                "Scan result: ${result.device.name} - ${result.device.address} : ${result.rssi}"
+                "Scan result: $bleDevName - ${result.device.address} : ${result.rssi}"
             )
 
             // Update the last seen timestamp for the device
@@ -141,7 +157,10 @@ class DevicesListViewModel(
             _uiState.update { currentUiState ->
                 currentUiState.copy(devices = currentUiState.devices.map { uiDevice ->
                     if (uiDevice.address == result.device.address) {
-                        uiDevice.copy(rssi = result.rssi, isOpened = false)
+                        uiDevice.copy(
+                            name = bleDevName,
+                            rssi = result.rssi,
+                            isOpened = isBleDoorOpen)
                     } else {
                         uiDevice
                     }
@@ -152,13 +171,25 @@ class DevicesListViewModel(
         override fun onBatchScanResults(results: List<ScanResult?>?) {
             super.onBatchScanResults(results)
 
-            Log.d("BSK", "Batch scan results: ${results?.size} devices detected")
-
             // Log the address of each device found in the batch scan results
+            Log.d("BSK", "Batch scan results: ${results?.size} devices detected:")
             results?.forEach { bleResult ->
+
+                // Extract device name from advertising data
+                val bleDevName =
+                    bleResult?.scanRecord?.advertisingDataMap?.get(0x09)?.let { byteArray ->
+                        String(byteArray, Charsets.UTF_8)
+                    } ?: bleResult?.device?.name ?: "Unknown"
+
+                // Extract device door state from advertising data
+                val isBleDoorOpen =
+                    bleResult?.scanRecord?.advertisingDataMap?.get(0x2D)
+                        ?.takeIf { it.size >= 3 }
+                        ?.let { it[2].toInt() == 0x01 } == true
+
                 Log.d(
                     "BSK",
-                    "Device address: ${bleResult?.device?.address}, name: ${bleResult?.device?.name}"
+                    "    > $bleDevName - ${bleResult?.device?.address} : ${bleResult?.rssi}"
                 )
             }
 
@@ -225,7 +256,6 @@ class DevicesListViewModel(
                     .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
                     .setReportDelay(0)
                     .build()
-
                 bluetoothLeScanner.startScan(scanFilters, scanSettings, scanCallback)
 
 

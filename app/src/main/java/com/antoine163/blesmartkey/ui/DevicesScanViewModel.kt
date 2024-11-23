@@ -4,7 +4,9 @@ import android.annotation.SuppressLint
 import android.app.Application
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.ScanCallback
+import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
+import android.bluetooth.le.ScanSettings
 import android.content.Context
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
@@ -18,6 +20,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.collections.List
 import kotlin.collections.MutableMap
+import kotlin.collections.get
 import kotlin.collections.listOf
 import kotlin.collections.mutableMapOf
 import kotlin.collections.set
@@ -40,9 +43,7 @@ data class DevicesScanUiState(
  * @param application The application context.
  */
 @SuppressLint("MissingPermission")
-class DevicesScanViewModel(application: Application)
-    : AndroidViewModel(application)
-{
+class DevicesScanViewModel(application: Application) : AndroidViewModel(application) {
 
     // MutableStateFlow to hold the UI state of the device scan
     private val _uiState = MutableStateFlow(DevicesScanUiState())
@@ -50,8 +51,10 @@ class DevicesScanViewModel(application: Application)
 
     // Map to store the scanned devices
     private val scannedDevices: MutableMap<String, DeviceScanItem> = mutableMapOf()
+
     // Bluetooth manager and scanner
-    private val bluetoothManager = getApplication<Application>().getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+    private val bluetoothManager =
+        getApplication<Application>().getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
     private val bluetoothLeScanner = bluetoothManager.adapter.bluetoothLeScanner
 
     /**
@@ -61,14 +64,63 @@ class DevicesScanViewModel(application: Application)
         override fun onScanResult(callbackType: Int, result: ScanResult) {
             super.onScanResult(callbackType, result)
 
-            // Add or update the device in the list
+            // Extract device name from advertising data
+            val bleDevName =
+                result.scanRecord?.advertisingDataMap?.get(0x09)?.let { byteArray ->
+                    String(byteArray, Charsets.UTF_8)
+                } ?: result.device?.name ?: "Unknown"
+
+            Log.d(
+                "BSK",
+                "Scan result: $bleDevName - ${result.device.address} : ${result.rssi}"
+            )
+
+            // Update the list of scanned devices with the new results
             scannedDevices[result.device.address] =
                 DeviceScanItem(
-                    name = result.device.name ?: "Unknown",
+                    name = bleDevName,
                     address = result.device.address,
                     rssi = result.rssi
                 )
 
+            // Update the UI state with the new list of devices
+            _uiState.update { currentState ->
+                currentState.copy(devices = scannedDevices.values.sortedByDescending { it.rssi })
+            }
+        }
+
+        override fun onBatchScanResults(results: List<ScanResult?>?) {
+            super.onBatchScanResults(results)
+            Log.d("BSK", "Batch scan results: ${results?.size} devices detected:")
+
+            results?.forEach { bleResult ->
+
+                // Extract device name from advertising data
+                val bleDevName =
+                    bleResult?.scanRecord?.advertisingDataMap?.get(0x09)?.let { byteArray ->
+                        String(byteArray, Charsets.UTF_8)
+                    } ?: bleResult?.device?.name ?: "Unknown"
+
+                // Log information about each device
+                Log.d(
+                    "BSK",
+                    "    > $bleDevName " +
+                            "- ${bleResult?.device?.address} " +
+                            ": ${bleResult?.rssi} "
+                )
+
+                // Update the list of scanned devices with the new results
+                bleResult?.device?.address?.let { bleAddress ->
+                    scannedDevices[bleAddress] =
+                        DeviceScanItem(
+                            name = bleDevName,
+                            address = bleAddress,
+                            rssi = bleResult.rssi
+                        )
+                }
+            }
+
+            // Update the UI state with the new list of devices
             _uiState.update { currentState ->
                 currentState.copy(devices = scannedDevices.values.sortedByDescending { it.rssi })
             }
@@ -88,8 +140,20 @@ class DevicesScanViewModel(application: Application)
             currentState.copy(devices = listOf())
         }
 
-        // Start scan for 5min
-        bluetoothLeScanner.startScan(scanCallback)
+        // Create a list of ScanFilter objects for each device
+        val scanFilters: List<ScanFilter> = emptyList()
+
+        // Configure the scan settings
+        val scanSettings = ScanSettings.Builder()
+            .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+            .setReportDelay(200)
+            .build()
+
+        // Start scanning
+        bluetoothLeScanner.startScan(scanFilters, scanSettings, scanCallback)
+        //bluetoothLeScanner.startScan(scanCallback)
+
+        // Scan for 5 minutes
         viewModelScope.launch {
             delay(5 * 60 * 1000)
             bluetoothLeScanner.stopScan(scanCallback)
