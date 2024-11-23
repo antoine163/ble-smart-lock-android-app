@@ -65,7 +65,7 @@ interface DevicesBleSettingsRepository {
      *
      * @suspend This function is suspendable and should be called from a coroutine.
      */
-    suspend fun updateDevice(device: DeviceBleSettings): Unit
+    suspend fun updateDevice(device: DeviceBleSettings)
 
     /**
      * Deletes the device settings associated with a given address.
@@ -74,7 +74,7 @@ interface DevicesBleSettingsRepository {
      *
      * @param address The address of the device to delete.
      */
-    suspend fun deleteDevice(address: String): Unit
+    suspend fun deleteDevice(address: String)
 }
 
 /**
@@ -110,10 +110,10 @@ class DevicesBleSettingsRepositoryApp(
             true
         }
 
-        return device;
+        return device
     }
 
-    override suspend fun updateDevice(device: DeviceBleSettings): Unit {
+    override suspend fun updateDevice(device: DeviceBleSettings) {
         context.devicesBleSettingsStore.updateData { currentDevices ->
             val updatedDevices = currentDevices.devicesList
             val index = updatedDevices.indexOfFirst { it.address == device.address }
@@ -126,7 +126,7 @@ class DevicesBleSettingsRepositoryApp(
         }
     }
 
-    override suspend fun deleteDevice(address: String): Unit {
+    override suspend fun deleteDevice(address: String) {
         context.devicesBleSettingsStore.updateData { currentDevices ->
             val updatedDevices = currentDevices.devicesList
             val index = updatedDevices.indexOfFirst { it.address == address }

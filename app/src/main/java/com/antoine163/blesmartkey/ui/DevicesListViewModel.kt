@@ -224,7 +224,7 @@ class DevicesListViewModel(
             val devicesBleSettings = devicesBleSettingsRepository.devicesFlow.first()
 
             // Convert the DevicesBleSettings object to a list of DeviceListItem objects
-            val devices = devicesBleSettings.devicesList.map { deviceBleSettings ->
+            val devicesList = devicesBleSettings.devicesList.map { deviceBleSettings ->
 
                 // Create a ScanFilter for each device
                 val scanFilter = ScanFilter.Builder()
@@ -243,7 +243,7 @@ class DevicesListViewModel(
 
             // 2) Update the UI state with the devices list
             _uiState.update { currentState ->
-                currentState.copy(devices)
+                currentState.copy(devicesList)
             }
 
             // 3) Start scanning
