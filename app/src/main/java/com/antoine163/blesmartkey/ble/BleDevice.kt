@@ -15,14 +15,26 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.UUID
 
+/**
+ * Represents a Bluetooth Low Energy (BLE) device.
+ *
+ * This class handles the connection, communication, and data exchange with a BLE device.
+ * It provides methods for connecting, disconnecting, reading, and writing to characteristics
+ * of the device. It also manages the callback interface for notifying the application
+ * about device events like connection state changes, data updates, and errors.
+ *
+ * @param context The application context.
+ * @param address The MAC address of the BLE device.
+ * @param callback The callback interface for receiving device events.
+ */
 @SuppressLint("MissingPermission")
 class BleDevice(
-    private val application: Application,
+    private val context: Context,
     private val address: String,
     callback: BleDeviceCallback
 ) {
     private val bluetoothManager: BluetoothManager =
-        application.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+        context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
     private val bluetoothDevice: BluetoothDevice = bluetoothManager.adapter.getRemoteDevice(address)
 
     private var gattDevice: BluetoothGatt? = null
@@ -39,6 +51,11 @@ class BleDevice(
     // Map of UUID to BluetoothGattCharacteristic for writing multiple characteristics
     private var pendingWrite = mutableMapOf<UUID, WriteCharData>()
 
+    /**
+     * Returns the address.
+     *
+     * @return The address as a String.
+     */
     fun getAddress(): String {
         return address
     }
@@ -496,7 +513,7 @@ class BleDevice(
      */
     fun connect() {
         if (gattDevice == null) {
-            bluetoothDevice.connectGatt(application, false, gattCallback)
+            bluetoothDevice.connectGatt(context, false, gattCallback)
         }
     }
 
