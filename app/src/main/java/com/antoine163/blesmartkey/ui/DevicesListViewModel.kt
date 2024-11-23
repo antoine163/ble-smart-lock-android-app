@@ -24,9 +24,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.collections.get
-import kotlin.compareTo
-import kotlin.text.toInt
 
 data class DevicesListUiState(
     val devices: List<DeviceListItem> = listOf()
@@ -170,41 +167,41 @@ class DevicesListViewModel(
 
         override fun onBatchScanResults(results: List<ScanResult?>?) {
             super.onBatchScanResults(results)
-
-            // Log the address of each device found in the batch scan results
-            Log.d("BSK", "Batch scan results: ${results?.size} devices detected:")
-            results?.forEach { bleResult ->
-
-                // Extract device name from advertising data
-                val bleDevName =
-                    bleResult?.scanRecord?.advertisingDataMap?.get(0x09)?.let { byteArray ->
-                        String(byteArray, Charsets.UTF_8)
-                    } ?: bleResult?.device?.name ?: "Unknown"
-
-                // Extract device door state from advertising data
-                val isBleDoorOpen =
-                    bleResult?.scanRecord?.advertisingDataMap?.get(0x2D)
-                        ?.takeIf { it.size >= 3 }
-                        ?.let { it[2].toInt() == 0x01 } == true
-
-                Log.d(
-                    "BSK",
-                    "    > $bleDevName - ${bleResult?.device?.address} : ${bleResult?.rssi}"
-                )
-            }
-
-            // Update the UI state with the new list of devices
-            _uiState.update { currentUiState ->
-                // Create a map of results, keyed by device address, for efficient lookup
-                val resultsMap = results?.associateBy { it?.device?.address } ?: emptyMap()
-                // Update the UI devices with the latest RSSI values from the scan results
-                val updatedUiDevices = currentUiState.devices.map { uiDevice ->
-                    resultsMap[uiDevice.address]?.let { bleResult -> // 3 & 4
-                        uiDevice.copy(rssi = bleResult.rssi, isOpened = false)
-                    } ?: uiDevice
-                }
-                currentUiState.copy(devices = updatedUiDevices)
-            }
+//
+//            // Log the address of each device found in the batch scan results
+//            Log.d("BSK", "Batch scan results: ${results?.size} devices detected:")
+//            results?.forEach { bleResult ->
+//
+//                // Extract device name from advertising data
+//                val bleDevName =
+//                    bleResult?.scanRecord?.advertisingDataMap?.get(0x09)?.let { byteArray ->
+//                        String(byteArray, Charsets.UTF_8)
+//                    } ?: bleResult?.device?.name ?: "Unknown"
+//
+//                // Extract device door state from advertising data
+//                val isBleDoorOpen =
+//                    bleResult?.scanRecord?.advertisingDataMap?.get(0x2D)
+//                        ?.takeIf { it.size >= 3 }
+//                        ?.let { it[2].toInt() == 0x01 } == true
+//
+//                Log.d(
+//                    "BSK",
+//                    "    > $bleDevName - ${bleResult?.device?.address} : ${bleResult?.rssi}"
+//                )
+//            }
+//
+//            // Update the UI state with the new list of devices
+//            _uiState.update { currentUiState ->
+//                // Create a map of results, keyed by device address, for efficient lookup
+//                val resultsMap = results?.associateBy { it?.device?.address } ?: emptyMap()
+//                // Update the UI devices with the latest RSSI values from the scan results
+//                val updatedUiDevices = currentUiState.devices.map { uiDevice ->
+//                    resultsMap[uiDevice.address]?.let { bleResult -> // 3 & 4
+//                        uiDevice.copy(rssi = bleResult.rssi, isOpened = false)
+//                    } ?: uiDevice
+//                }
+//                currentUiState.copy(devices = updatedUiDevices)
+//            }
         }
 
         override fun onScanFailed(errorCode: Int) {

@@ -1,14 +1,12 @@
 package com.antoine163.blesmartkey
 
 import android.Manifest
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
 import com.antoine163.blesmartkey.data.DevicesBleSettingsRepositoryApp
 import com.antoine163.blesmartkey.ui.BleSmartKeyScreen
 import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme

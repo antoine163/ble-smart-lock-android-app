@@ -53,7 +53,7 @@ interface DevicesBleSettingsRepository {
      *
      * @suspend This function is suspendable and should be called from a coroutine.
      */
-    suspend fun getDevice(address: String) : DeviceBleSettings?
+    suspend fun getDevice(address: String): DeviceBleSettings?
 
     /**
      * Updates the settings of a Bluetooth Low Energy (BLE) device.
@@ -65,7 +65,16 @@ interface DevicesBleSettingsRepository {
      *
      * @suspend This function is suspendable and should be called from a coroutine.
      */
-    suspend fun updateDevice(device: DeviceBleSettings)
+    suspend fun updateDevice(device: DeviceBleSettings): Unit
+
+    /**
+     * Deletes the device settings associated with a given address.
+     *
+     * This function removes the device associated with the given address.
+     *
+     * @param address The address of the device to delete.
+     */
+    suspend fun deleteDevice(address: String): Unit
 }
 
 /**
@@ -92,19 +101,19 @@ class DevicesBleSettingsRepositoryApp(
         }
 
     override suspend fun getDevice(address: String): DeviceBleSettings? {
-        var device : DeviceBleSettings? = null
+        var device: DeviceBleSettings? = null
 
         // Collect the devices from the repository and convert them to a list of DeviceListItem objects
         devicesFlow.first { devicesBleSettings ->
             // Find the device with the given address
-            device = devicesBleSettings.devicesList.find {it.address == address}
+            device = devicesBleSettings.devicesList.find { it.address == address }
             true
         }
 
         return device;
     }
 
-    override suspend fun updateDevice(device: DeviceBleSettings) {
+    override suspend fun updateDevice(device: DeviceBleSettings): Unit {
         context.devicesBleSettingsStore.updateData { currentDevices ->
             val updatedDevices = currentDevices.devicesList
             val index = updatedDevices.indexOfFirst { it.address == device.address }
@@ -114,6 +123,14 @@ class DevicesBleSettingsRepositoryApp(
             } else {
                 currentDevices.toBuilder().addDevices(device).build()
             }
+        }
+    }
+
+    override suspend fun deleteDevice(address: String): Unit {
+        context.devicesBleSettingsStore.updateData { currentDevices ->
+            val updatedDevices = currentDevices.devicesList
+            val index = updatedDevices.indexOfFirst { it.address == address }
+            currentDevices.toBuilder().removeDevices(index).build()
         }
     }
 }

@@ -39,7 +39,7 @@ class BleDevice(
     // Map of UUID to BluetoothGattCharacteristic for writing multiple characteristics
     private var pendingWrite = mutableMapOf<UUID, WriteCharData>()
 
-    fun getAdress(): String {
+    fun getAddress(): String {
         return address
     }
 
@@ -476,6 +476,18 @@ class BleDevice(
      */
     fun readBrightness() {
         readCharacteristics(gattCharBrightness)
+    }
+
+    /**
+     * Dissociates (unpairs) the current Bluetooth device.
+     *
+     * This function first disconnects from the device if it's connected,
+     * then removes the bond (pairing) information using reflection.
+     */
+    fun dissociate() {
+        disconnect();
+        val method = bluetoothDevice.javaClass.getMethod("removeBond")
+        method.invoke(bluetoothDevice)
     }
 
     /**

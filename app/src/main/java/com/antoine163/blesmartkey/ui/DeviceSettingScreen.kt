@@ -85,7 +85,11 @@ fun DevicesSettingScreen(
         onDeviceNameChange = { deviceName -> viewModel.bleDevice.setDeviceName(deviceName) },
         onBrightnessThChange = { brightnessTh -> viewModel.bleDevice.setBrightnessTh(brightnessTh) },
         onAutoUnlockChange = { autoUnlock -> viewModel.autoUnlock(autoUnlock) },
-        onUnlockRssiThChange = { unlockRssiTh -> viewModel.setAutoUnlockRssiTh(unlockRssiTh) }
+        onUnlockRssiThChange = { unlockRssiTh -> viewModel.setAutoUnlockRssiTh(unlockRssiTh) },
+        onDissociate = {
+            viewModel.dissociate()
+            onBack()
+        }
     )
 }
 
@@ -114,6 +118,7 @@ fun DevicesSettingScreen(
     onBrightnessThChange: (Float) -> Unit,
     onAutoUnlockChange: (Boolean) -> Unit,
     onUnlockRssiThChange: (Int) -> Unit,
+    onDissociate: () -> Unit
 ) {
     Column(modifier = modifier) {
         Row(
@@ -122,13 +127,15 @@ fun DevicesSettingScreen(
         ) {
             // Dissociate Button
             Column(
-                modifier = Modifier.clickable { /* TODO */ },
+                modifier = Modifier.clickable { onDissociate() },
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Icon(
-                    modifier = Modifier.size(dimensionResource(R.dimen.icon_small_height)),
+                    modifier = Modifier
+                        .size(dimensionResource(R.dimen.icon_small_height)),
                     painter = painterResource(R.drawable.rounded_link_off_24),
                     contentDescription = stringResource(R.string.dissociate)
+
                 )
                 Text(
                     text = stringResource(R.string.dissociate),
@@ -741,7 +748,8 @@ private fun DevicesSettingScreenPreview() {
                 onDeviceNameChange = {},
                 onBrightnessThChange = {},
                 onAutoUnlockChange = {},
-                onUnlockRssiThChange = {}
+                onUnlockRssiThChange = {},
+                onDissociate = {}
             )
         }
     }

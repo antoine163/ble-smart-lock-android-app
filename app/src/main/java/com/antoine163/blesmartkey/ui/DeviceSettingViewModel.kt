@@ -53,7 +53,7 @@ class DeviceSettingViewModel(
      *
      * @param enable `true` to enable auto-unlock, `false` to disable it.
      */
-    fun autoUnlock(enable : Boolean) {
+    fun autoUnlock(enable: Boolean) {
         _uiState.update { currentState ->
             currentState.copy(setting = currentState.setting.copy(autoUnlockEnabled = enable))
         }
@@ -68,7 +68,7 @@ class DeviceSettingViewModel(
      *
      * @param rssiTh The new RSSI threshold value.
      */
-    fun setAutoUnlockRssiTh(rssiTh : Int) {
+    fun setAutoUnlockRssiTh(rssiTh: Int) {
         _uiState.update { currentState ->
             currentState.copy(setting = currentState.setting.copy(autoUnlockRssiTh = rssiTh))
         }
@@ -170,14 +170,33 @@ class DeviceSettingViewModel(
     }
 
     // bleDevice instance to interact with the Bluetooth device
-    val bleDevice: BleDevice = BleDevice(getApplication<Application>(), deviceAdd, bleDeviceCallback)
+    val bleDevice: BleDevice =
+        BleDevice(getApplication<Application>(), deviceAdd, bleDeviceCallback)
+
+
+    /**
+     * Dissociates from the current BLE device.
+     *
+     * This function performs the following actions:
+     * 1. Disconnects from the BLE device.
+     * 2. Dissociates from the BLE device, clearing any bonding information.
+     * 3. Deletes the device's settings from the repository.
+     */
+    fun dissociate() {
+        bleDevice.disconnect()
+        bleDevice.dissociate()
+
+        viewModelScope.launch {
+            devicesBleSettingsRepository.deleteDevice(uiState.value.setting.address)
+        }
+    }
 
     init {
         viewModelScope.launch {
 
             // Initialize the device setting with default values
             _uiState.update { it ->
-                it.copy(setting = DeviceSetting(address = deviceAdd) )
+                it.copy(setting = DeviceSetting(address = deviceAdd))
             }
 
             // Read the device settings from the repository
