@@ -1,8 +1,6 @@
 package com.antoine163.blesmartkey.ble
 
 import android.annotation.SuppressLint
-import android.app.Application
-import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCallback
 import android.bluetooth.BluetoothGattCharacteristic
@@ -35,7 +33,6 @@ class BleDevice(
 ) {
     private val bluetoothManager: BluetoothManager =
         context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-    private val bluetoothDevice: BluetoothDevice = bluetoothManager.adapter.getRemoteDevice(address)
 
     private var gattDevice: BluetoothGatt? = null
     private var gattCharDeviceName: BluetoothGattCharacteristic? = null
@@ -86,15 +83,25 @@ class BleDevice(
         override fun onConnectionStateChange(gatt: BluetoothGatt?, status: Int, newState: Int) {
             super.onConnectionStateChange(gatt, status, newState)
 
-            if (newState == BluetoothGatt.STATE_CONNECTED) {
-                // successfully connected to the GATT Server
-                callback.onConnectionStateChanged(true)
-                // Attempts to discover services after successful connection.
-                gatt?.discoverServices()
-            } else if (newState == BluetoothGatt.STATE_DISCONNECTED) {
-                // Disconnected from the GATT Server
-                callback.onConnectionStateChanged(false)
-                disconnect()
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                if (newState == BluetoothGatt.STATE_CONNECTED) {
+                    // successfully connected to the GATT Server
+                    callback.onConnectionStateChanged(true)
+
+                    // Attempts to discover services after successful connection.
+                    gatt?.discoverServices()
+
+                    Log.i("BSK", "Connected to $address")
+                } else if (newState == BluetoothGatt.STATE_DISCONNECTED) {
+                    // Disconnected from the GATT Server
+                    callback.onConnectionStateChanged(false)
+
+
+                    Log.i("BSK", "Disconnected from $address")
+                }
+            }
+            else {
+                Log.e("BSK", "Connection state change to $address failed! Status: $status")
             }
         }
 
@@ -502,7 +509,9 @@ class BleDevice(
      * then removes the bond (pairing) information using reflection.
      */
     fun dissociate() {
-        disconnect();
+        disconnect()
+
+        val bluetoothDevice = bluetoothManager.adapter.getRemoteDevice(address)
         val method = bluetoothDevice.javaClass.getMethod("removeBond")
         method.invoke(bluetoothDevice)
     }
@@ -512,9 +521,11 @@ class BleDevice(
      * If already connected, this function does nothing.
      */
     fun connect() {
-        if (gattDevice == null) {
-            bluetoothDevice.connectGatt(context, false, gattCallback)
-        }
+        Log.d("BSK", "connect")
+        disconnect()
+
+        val bluetoothDevice = bluetoothManager.adapter.getRemoteDevice(address)
+        bluetoothDevice.connectGatt(context, true, gattCallback)
     }
 
     /**
