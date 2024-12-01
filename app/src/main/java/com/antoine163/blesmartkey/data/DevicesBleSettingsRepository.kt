@@ -56,6 +56,16 @@ interface DevicesBleSettingsRepository {
     suspend fun getDevice(address: String): DeviceBleSettings?
 
     /**
+     * Retrieves all available Bluetooth devices and their associated settings.
+     *
+     * This function attempts to retrieve all the stored Bluetooth device settings.
+     *
+     * @return A [DevicesBleSettings] object containing a map of device addresses to their
+     * corresponding Bluetooth settings.
+     */
+    suspend fun getAllDevices(): DevicesBleSettings
+
+    /**
      * Updates the settings of a Bluetooth Low Energy (BLE) device.
      *
      * This function takes a [DeviceBleSettings] object containing the updated settings
@@ -111,6 +121,11 @@ class DevicesBleSettingsRepositoryApp(
         }
 
         return device
+    }
+
+
+    override suspend fun getAllDevices(): DevicesBleSettings {
+        return devicesFlow.first()
     }
 
     override suspend fun updateDevice(device: DeviceBleSettings) {
