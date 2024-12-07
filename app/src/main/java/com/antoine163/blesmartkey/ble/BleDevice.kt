@@ -72,6 +72,21 @@ class BleDevice(
     )
 
 
+    /**
+     * GATT callback instance that handles various Bluetooth events.
+     *
+     * This callback is responsible for handling connection state changes, service discovery,
+     * characteristic reads and writes, and notifications. It interacts with the `callback`
+     * instance to notify the application about these events.
+     *
+     * Key functionalities handled by this callback:
+     * - Connection state changes: Informs the application when the device connects or disconnects.
+     * - Service discovery: Discovers and saves references to essential services and characteristics.
+     * - Characteristic reads: Reads values from characteristics like device name, door state, etc.
+     * - Characteristic writes: Writes values to characteristics like lock state, brightness, etc.
+     * - Notifications: Handles notifications for characteristic changes, such as door state updates.
+     * - RSSI reads: Reads and reports the Received Signal Strength Indicator (RSSI) value.
+     */
     private val gattCallback = object : BluetoothGattCallback() {
         /**
          * Called when the connection state changes.
@@ -85,22 +100,18 @@ class BleDevice(
 
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 if (newState == BluetoothGatt.STATE_CONNECTED) {
-                    // successfully connected to the GATT Server
-                    callback.onConnectionStateChanged(true)
-
                     // Attempts to discover services after successful connection.
                     gatt?.discoverServices()
 
-                    Log.i("BSK", "Connected to $address")
+                    Log.i("BSK", "$address -> Connected")
                 } else if (newState == BluetoothGatt.STATE_DISCONNECTED) {
                     // Disconnected from the GATT Server
                     callback.onConnectionStateChanged(false)
 
-
-                    Log.i("BSK", "Disconnected from $address")
+                    Log.i("BSK", "$address -> Disconnected")
                 }
             } else {
-                Log.e("BSK", "Connection state change to $address failed! Status: $status")
+                Log.e("BSK", "$address -> Connection state change failed! Status: $status")
             }
         }
 
@@ -142,7 +153,15 @@ class BleDevice(
                         gattCharBrightnessTh = service.getCharacteristic(CHAR_UUID_BRIGHTNESS_TH)
                     }
 
-                    /* Todo manage error if service and characteristic not found */
+                    // Error if service and characteristic not found
+                    if (gattCharLockState == null || gattCharDoorState == null || gattCharOpenDoor == null ||
+                        gattCharBrightness == null || gattCharBrightnessTh == null) {
+                        Log.e("BSK", "$address -> Service not found!")
+
+                        callback.onConnectionFailed();
+                        disconnect()
+                        return
+                    }
 
                     // Enable notifications for the door state characteristic
                     gatt.setCharacteristicNotification(gattCharDoorState, true)
@@ -157,20 +176,17 @@ class BleDevice(
                         logWriteError(state, descriptor.uuid)
                     }
 
+                    // Successfully connected to the GATT Server and discovered services
+                    callback.onConnectionStateChanged(true)
+                    Log.i("BSK", "$address -> Services discovered with success!")
+
                     // Handle the door state change, before a connection the lock is locked
                     callback.onLockStateChanged(true)
-
-                    // Read the device name characteristic
-                    readCharacteristics(gattCharDeviceName)
-
-                    // Read the door state characteristic
-                    readCharacteristics(gattCharDoorState)
-
-                    // Read the brightness threshold characteristic
-                    readCharacteristics(gattCharBrightnessTh)
                 }
             } else {
-                Log.e("BSK", "Service discovery failed for device $address! Status: $status")
+                Log.e("BSK", "$address -> Service discovery failed! Status: $status")
+                callback.onConnectionFailed();
+                disconnect()
             }
         }
 
@@ -514,6 +530,8 @@ class BleDevice(
         val bluetoothDevice = bluetoothManager.adapter.getRemoteDevice(address)
         val method = bluetoothDevice.javaClass.getMethod("removeBond")
         method.invoke(bluetoothDevice)
+
+        Log.i("BSK", "$address -> Dissociating")
     }
 
     /**
@@ -521,18 +539,25 @@ class BleDevice(
      * If already connected, this function does nothing.
      */
     fun connect() {
-        Log.d("BSK", "connect")
         disconnect()
 
         val bluetoothDevice = bluetoothManager.adapter.getRemoteDevice(address)
         bluetoothDevice.connectGatt(context, true, gattCallback)
+
+        Log.i("BSK", "$address -> Connecting")
     }
 
     /**
      * Disconnects from the GATT server and resets all associated GATT characteristics and pending operations.
      */
     fun disconnect() {
-        gattDevice?.disconnect()
+
+        gattDevice?.let { bleDev ->
+            bleDev.disconnect()
+            bleDev.close()
+
+            Log.d("BSK", "Disconnecting from BLE device: $address")
+        }
 
         gattDevice = null
         gattCharDeviceName = null

@@ -30,7 +30,7 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-    private var bleAutoUnlockManager: BleAutoUnlockManager? = null
+//    private var bleAutoUnlockManager: BleAutoUnlockManager? = null
 
 
 
@@ -52,16 +52,16 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         requestBluetoothPermissions.launch(bluetoothPermissions) // Request permissions
 
-
-        val unlockDev = listOf(
-            DeviceAutoUnlok("5A:9B:63:59:DC:8D", -60),
-            DeviceAutoUnlok("11:22:33:44:55:66", -60),
-            DeviceAutoUnlok("77:88:99:AA:BB:CC", -100)
-        )
+//
+//        val unlockDev = listOf(
+//            DeviceAutoUnlok("5A:9B:63:59:DC:8D", -60),
+//            DeviceAutoUnlok("11:22:33:44:55:66", -60),
+//            DeviceAutoUnlok("77:88:99:AA:BB:CC", -100)
+//        )
         //val unlockDev = emptyList<DeviceAutoUnlok>()
 
-        bleAutoUnlockManager = BleAutoUnlockManager(this)
-        bleAutoUnlockManager?.setUnlockDev(unlockDev)
+//        bleAutoUnlockManager = BleAutoUnlockManager(this)
+//        bleAutoUnlockManager?.setUnlockDev(unlockDev)
 //        if (!isServiceRunning(this, BleAutoUnlockService::class.java)) {
 //            Intent(this, BleAutoUnlockService::class.java).also { intent ->
 //                startForegroundService(intent)

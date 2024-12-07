@@ -2,6 +2,7 @@ package com.antoine163.blesmartkey.ble
 
 open class BleDeviceCallback {
     open fun onConnectionStateChanged(isConnected: Boolean) {}
+    open fun onConnectionFailed() {}
 
     open fun onLockStateChanged(isLocked: Boolean) {}
     open fun onDoorStateChanged(isOpened: Boolean) {}
