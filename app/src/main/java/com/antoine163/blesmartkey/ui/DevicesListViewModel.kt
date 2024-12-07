@@ -115,7 +115,6 @@ class DevicesListViewModel(
         /* TODO programmer un timeout */
 
         if (bleDevice != null && bleDevice?.getAddress() == address) {
-            bleDevice?.unlock()
             bleDevice?.openDoor()
         } else {
             bleDevice = BleDevice(getApplication<Application>(), address, bleDeviceCallback)
@@ -157,7 +156,8 @@ class DevicesListViewModel(
                         uiDevice.copy(
                             name = bleDevName,
                             rssi = result.rssi,
-                            isOpened = isBleDoorOpen)
+                            isOpened = isBleDoorOpen
+                        )
                     } else {
                         uiDevice
                     }
@@ -212,73 +212,73 @@ class DevicesListViewModel(
     }
 
     init {
+        // Coroutine to read BLE device setting list and  update device to scan
         viewModelScope.launch {
-            /* TODO relire la config suit a un changement de config d'un device ou ajout d'un device */
-
-            // 1) Read configuration (list of device) from repository
-
             // Create a list of ScanFilter objects for each device
             val scanFilters: MutableList<ScanFilter> = mutableListOf()
 
-            // Collect the devices from the repository and convert them to a list of DeviceListItem objects
-            val devicesBleSettings = devicesBleSettingsRepository.devicesFlow.first()
+            // Collect the list of setting devices from repository
+            devicesBleSettingsRepository.devicesFlow.collect { bleDeviceSettingList ->
 
-            // Convert the DevicesBleSettings object to a list of DeviceListItem objects
-            val devicesList = devicesBleSettings.devicesList.map { deviceBleSettings ->
+                // Convert the DevicesBleSettings object to a list of DeviceListItem objects and create a list of ScanFilter objects
+                val devicesList = bleDeviceSettingList.devicesList.map { bleDeviceSettings ->
 
-                // Create a ScanFilter for each device
-                val scanFilter = ScanFilter.Builder()
-                    .setDeviceAddress(deviceBleSettings.address)
-                    .build()
-                scanFilters.add(scanFilter)
+                    // Create a ScanFilter for each device
+                    val scanFilter = ScanFilter.Builder()
+                        .setDeviceAddress(bleDeviceSettings.address)
+                        .build()
+                    scanFilters.add(scanFilter)
 
-                // Create a DeviceListItem object for each device
-                DeviceListItem(
-                    name = deviceBleSettings.name,
-                    address = deviceBleSettings.address,
-                    rssi = null,
-                    isOpened = deviceBleSettings.wasOpened,
-                )
+                    // Create a DeviceListItem object for each device
+                    DeviceListItem(
+                        name = bleDeviceSettings.name,
+                        address = bleDeviceSettings.address,
+                        rssi = null,
+                        isOpened = bleDeviceSettings.wasOpened
+                    )
+                }
+
+                // Update the UI state with the devices list
+                _uiState.update { currentState ->
+                    currentState.copy(devicesList)
+                }
+
+                // Scanning BLE device with new list
+                bluetoothLeScanner.stopScan(scanCallback)
+                if (scanFilters.isNotEmpty()) {
+                    val scanSettings = ScanSettings.Builder()
+                        .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+                        .build()
+                    bluetoothLeScanner.startScan(scanFilters, scanSettings, scanCallback)
+                }
             }
+        }
 
-            // 2) Update the UI state with the devices list
-            _uiState.update { currentState ->
-                currentState.copy(devicesList)
-            }
+        // Coroutine to detect devices that become inaccessible
+        viewModelScope.launch {
+            // Loop indefinitely to check for device timeouts
+            while (true) {
+                // Wait for 1 second before checking again
+                delay(1000)
 
-            // 3) Start scanning
-            bluetoothLeScanner.stopScan(scanCallback)
-            if (scanFilters.isNotEmpty()) {
-                val scanSettings = ScanSettings.Builder()
-                    .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
-                    .setReportDelay(0)
-                    .build()
-                bluetoothLeScanner.startScan(scanFilters, scanSettings, scanCallback)
+                // Get the current time
+                val currentTime = System.currentTimeMillis()
 
-
-                // Loop indefinitely to check for device timeouts
-                while (true) {
-                    // Wait for 1 second before checking again
-                    delay(1000)
-
-                    // Get the current time
-                    val currentTime = System.currentTimeMillis()
-
-                    // Iterate through each device in the deviceLastSeen map
-                    deviceLastSeen.entries.forEach { (address, lastSeen) ->
-                        // Check if the device has exceeded the timeout period
-                        if (currentTime - lastSeen > timeoutMillis) {
-                            // If the device has timed out, update the UI state to remove its RSSI value
-                            _uiState.update { currentState ->
-                                currentState.copy(devices = currentState.devices.map { device ->
-                                    if (device.address == address) {
-                                        device.copy(rssi = null)
-                                    } else device
-                                })
-                            }
-                            // Remove the device from the deviceLastSeen map
-                            deviceLastSeen.remove(address)
+                // Iterate through the deviceLastSeen map and remove devices that have timed out
+                // We use an iterator to safely remove elements while iterating
+                val iterator = deviceLastSeen.iterator()
+                while (iterator.hasNext()) {
+                    val (address, lastSeen) = iterator.next()
+                    if (currentTime - lastSeen > timeoutMillis) {
+                        _uiState.update { currentState ->
+                            currentState.copy(devices = currentState.devices.map { device ->
+                                if (device.address == address) {
+                                    device.copy(rssi = null)
+                                } else device
+                            })
                         }
+                        // Remove the device from the deviceLastSeen map
+                        iterator.remove()
                     }
                 }
             }
