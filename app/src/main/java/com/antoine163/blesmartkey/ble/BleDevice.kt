@@ -170,7 +170,7 @@ class BleDevice(
                     ) {
                         Log.e("BSK", "$address -> Service not found!")
 
-                        callback.onConnectionFailed();
+                        callback.onConnectionFailed()
                         disconnect()
                         return
                     }
@@ -197,7 +197,7 @@ class BleDevice(
                 }
             } else {
                 Log.e("BSK", "$address -> Service discovery failed! Status: $status")
-                callback.onConnectionFailed();
+                callback.onConnectionFailed()
                 disconnect()
             }
         }
