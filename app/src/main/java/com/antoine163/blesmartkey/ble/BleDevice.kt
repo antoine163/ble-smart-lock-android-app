@@ -9,6 +9,11 @@ import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothStatusCodes
 import android.content.Context
 import android.util.Log
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.UUID
@@ -47,6 +52,12 @@ class BleDevice(
 
     // Map of UUID to BluetoothGattCharacteristic for writing multiple characteristics
     private var pendingWrite = mutableMapOf<UUID, WriteCharData>()
+
+
+    private var pendingReadRssi = false
+    private var isAutoUnlockEnabled = false
+    private var autoUnlockRssi: Int = 0
+    private var autoUnlockJob: Job? = null
 
     /**
      * Returns the address.
@@ -333,16 +344,46 @@ class BleDevice(
         }
 
         /**
-         * Callback triggered when a request to read the remote device's RSSI has completed.
+         * Callback triggered when a remote RSSI value is read.
          *
-         * @param gatt The BluetoothGatt object.
-         * @param rssi The RSSI value in dBm.
-         * @param status The status of the operation, e.g., [BluetoothGatt.GATT_SUCCESS] if successful.
+         * This function handles the received RSSI value, updating the UI or triggering actions
+         * based on the RSSI level.
+         *
+         * It performs the following tasks:
+         * - Checks if the RSSI read was successful.
+         * - If successful and initiated by a user request, delivers the RSSI value to the callback.
+         * - If successful and auto-unlock is enabled, checks if the RSSI is above the threshold
+         *   to trigger an unlock action.
+         * - If the RSSI read failed, logs an error and disables auto-unlock.
+         *
+         * @param gatt The Bluetooth GATT object associated with the remote device.
+         * @param rssi The received RSSI value in dBm.
+         * @param status The status of the operation, indicating success or failure.
          */
         override fun onReadRemoteRssi(gatt: BluetoothGatt?, rssi: Int, status: Int) {
             super.onReadRemoteRssi(gatt, rssi, status)
-            // Handle the RSSI value
-            callback.onRssiRead(rssi)
+
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                // The user requested to read the RSSI.
+                if (pendingReadRssi == true) {
+                    pendingReadRssi = false
+
+                    // Handle the RSSI value
+                    callback.onRssiRead(rssi)
+                }
+
+                // The auto unlock is enable ?
+                if ((isAutoUnlockEnabled == true) &&
+                    (rssi >= autoUnlockRssi)) {
+                    autoUnlockDisable()
+                    unlock()
+                }
+            } else {
+                Log.e("BSK", "$address -> Read remote RSSI failed! Status: $status")
+
+                pendingReadRssi = false
+                autoUnlockDisable()
+            }
         }
     }
 
@@ -507,6 +548,7 @@ class BleDevice(
      * `BleDeviceCallback.onRssiRead()` callback.
      */
     fun readRssi() {
+        pendingReadRssi = true
         gattDevice?.readRemoteRssi()
     }
 
@@ -517,6 +559,73 @@ class BleDevice(
      */
     fun readBrightness() {
         readCharacteristics(gattCharBrightness)
+    }
+
+    /**
+     * Enables and configures the auto-unlock feature.
+     *
+     * This function starts a job that periodically checks the RSSI value of the connected
+     * Bluetooth device. If the RSSI value is greater than or equal to the specified
+     * `rssi` threshold, it triggers the unlock action.
+     *
+     * @param rssi The RSSI threshold value. If the device's RSSI is greater than or equal
+     * to this value, the auto-unlock mechanism will be triggered.
+     */
+    fun autoUnlock(rssi: Int) {
+        stopAutoUnlockJob()
+
+        gattDevice?.let { device ->
+            autoUnlockRssi = rssi
+            isAutoUnlockEnabled = true
+
+            startAutoUnlockJob()
+        }
+    }
+
+    /**
+     * Disables the auto-unlock feature.
+     *
+     * This function sets the `isAutoUnlockEnabled` flag to false, indicating that auto-unlock is disabled.
+     * It also calls `stopAutoUnlockJob()` to stop any ongoing auto-unlock job.
+     */
+    fun autoUnlockDisable() {
+        isAutoUnlockEnabled = false
+        stopAutoUnlockJob()
+    }
+
+    /**
+     * Starts a background job that periodically checks the RSSI of the connected GATT device.
+     *
+     * This job runs on the IO dispatcher and continuously performs the following actions:
+     * 1. Reads the RSSI of the connected GATT device.
+     * 2. Waits for a specified interval (AUTO_UNLOCK_CHECK_INTERVAL).
+     * 3. Repeats the process.
+     *
+     * If the GATT device becomes disconnected (gattDevice is null), the job will:
+     * 1. Call autoUnlockDisable() to disable auto-unlock functionality.
+     * 2. Terminate the job.
+     */
+    private fun startAutoUnlockJob() {
+        autoUnlockJob = CoroutineScope(Dispatchers.IO).launch {
+            while (true) {
+                gattDevice?.let { device ->
+                    device.readRemoteRssi()
+                    delay(AUTO_UNLOCK_CHECK_INTERVAL)
+                } ?: run {
+                    autoUnlockDisable()
+                    return@launch
+                }
+            }
+        }
+    }
+
+    /**
+     * Cancels the currently running auto-unlock job, if any, and sets it to null.
+     * This effectively stops the scheduled auto-unlock operation.
+     */
+    private fun stopAutoUnlockJob() {
+        autoUnlockJob?.cancel()
+        autoUnlockJob = null
     }
 
     /**
@@ -552,6 +661,7 @@ class BleDevice(
      * Disconnects from the GATT server and resets all associated GATT characteristics and pending operations.
      */
     fun disconnect() {
+        autoUnlockDisable()
 
         gattDevice?.let { bleDev ->
             bleDev.disconnect()
@@ -583,10 +693,9 @@ class BleDevice(
         disconnect()
     }
 
-    /**
-     * Companion object containing UUIDs for the Bluetooth GATT services and characteristics.
-     */
     companion object {
+        private const val AUTO_UNLOCK_CHECK_INTERVAL = 800L
+
         private val SERV_UUID_GENERIC_ACCESS =
             UUID.fromString("00001800-0000-1000-8000-00805f9b34fb")
         private val CHAR_UUID_DEVICE_NAME = UUID.fromString("00002a00-0000-1000-8000-00805f9b34fb")
