@@ -99,8 +99,7 @@ class BleDevice(
 
                     Log.i("BSK", "Disconnected from $address")
                 }
-            }
-            else {
+            } else {
                 Log.e("BSK", "Connection state change to $address failed! Status: $status")
             }
         }
@@ -421,6 +420,7 @@ class BleDevice(
             readNextCharacteristic()
         }
     }
+
     /**
      * Sets the device name on the Bluetooth device.
      *
@@ -544,6 +544,17 @@ class BleDevice(
 
         pendingRead.clear()
         pendingWrite.clear()
+    }
+
+    /**
+     * Called by the garbage collector on an object when garbage collection
+     * determines that there are no more references to the object.
+     *
+     * This implementation calls `disconnect()` to ensure any resources held
+     * by the object are released before it is garbage collected.
+     */
+    protected fun finalize() {
+        disconnect()
     }
 
     /**
