@@ -155,7 +155,8 @@ class BleDevice(
 
                     // Error if service and characteristic not found
                     if (gattCharLockState == null || gattCharDoorState == null || gattCharOpenDoor == null ||
-                        gattCharBrightness == null || gattCharBrightnessTh == null) {
+                        gattCharBrightness == null || gattCharBrightnessTh == null
+                    ) {
                         Log.e("BSK", "$address -> Service not found!")
 
                         callback.onConnectionFailed();
@@ -416,7 +417,7 @@ class BleDevice(
         if (pendingRead.isNotEmpty()) {
             val char = pendingRead.values.first()
             if (gattDevice?.readCharacteristic(char) == false) {
-                Log.w("BSK", "Read ${uuidName(char.uuid)} failed")
+                Log.w("BSK", "$address -> ${uuidName(char.uuid)}: Read failed!")
             }
         }
     }
@@ -531,7 +532,7 @@ class BleDevice(
         val method = bluetoothDevice.javaClass.getMethod("removeBond")
         method.invoke(bluetoothDevice)
 
-        Log.i("BSK", "$address -> Dissociating")
+        Log.i("BSK", "$address -> Dissociated")
     }
 
     /**
@@ -556,7 +557,7 @@ class BleDevice(
             bleDev.disconnect()
             bleDev.close()
 
-            Log.d("BSK", "Disconnecting from BLE device: $address")
+            Log.d("BSK", "$address -> Disconnecting")
         }
 
         gattDevice = null
@@ -654,6 +655,6 @@ class BleDevice(
      */
     private fun logWriteError(state: Int, uuid: UUID) {
         if (state == BluetoothGatt.GATT_SUCCESS) return
-        Log.e("BSK", "Write ${uuidName(uuid)} failed: ${stateToString(state)}")
+        Log.e("BSK", "$address -> ${uuidName(uuid)}: Write failed: ${stateToString(state)}")
     }
 }
