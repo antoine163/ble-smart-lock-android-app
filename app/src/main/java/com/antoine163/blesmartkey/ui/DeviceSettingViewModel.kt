@@ -1,12 +1,11 @@
 package com.antoine163.blesmartkey.ui
 
-import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.antoine163.blesmartkey.ble.BleDevice
 import com.antoine163.blesmartkey.ble.BleDeviceCallback
 import com.antoine163.blesmartkey.data.DataModule
-import com.antoine163.blesmartkey.data.model.DeviceSetting
+import com.antoine163.blesmartkey.data.model.DeviceSettings
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,10 +13,10 @@ import kotlinx.coroutines.flow.update
 
 /**
  * UI state for representing the state of a device setting.
- * @property setting The device setting data. Defaults to an empty [DeviceSetting].
+ * @property setting The device setting data. Defaults to an empty [DeviceSettings].
  */
 data class DeviceSettingUiState(
-    val setting: DeviceSetting = DeviceSetting()
+    val setting: DeviceSettings = DeviceSettings()
 )
 
 
@@ -38,7 +37,7 @@ class DeviceSettingViewModel(
 
     // MutableStateFlow to hold the UI state of the device setting
     private val _uiState = MutableStateFlow(
-        DeviceSettingUiState(setting = DeviceSetting(address = deviceAdd))
+        DeviceSettingUiState(setting = DeviceSettings(address = deviceAdd))
     )
     val uiState: StateFlow<DeviceSettingUiState> = _uiState.asStateFlow()
 
@@ -76,12 +75,12 @@ class DeviceSettingViewModel(
      * Updates the device settings in the repository.
      *
      * This function launches a coroutine to update the device settings in the
-     * [devicesBleSettingsRepository]. It maps the [DeviceSetting] object to a
+     * [devicesBleSettingsRepository]. It maps the [DeviceSettings] object to a
      * [DeviceBleSettings] object and updates the repository with the new settings.
      *
-     * @param device The [DeviceSetting] object containing the updated device settings.
+     * @param device The [DeviceSettings] object containing the updated device settings.
      */
-    private fun saveDeviceSetting(device: DeviceSetting) {
+    private fun saveDeviceSetting(device: DeviceSettings) {
 //        viewModelScope.launch {
 //            devicesBleSettingsRepository.updateDevice(
 //                DeviceBleSettings.newBuilder()

@@ -14,7 +14,7 @@ package com.antoine163.blesmartkey.data.model
  * @property autoUnlockEnabled Indicates whether auto-unlock is enabled.
  * @property autoUnlockRssiTh The RSSI threshold for auto-unlock.
  */
-data class DeviceSetting(
+data class DeviceSettings(
     val name: String = "Unknown",
     val address: String = "",
     val currentRssi: Int? = null,

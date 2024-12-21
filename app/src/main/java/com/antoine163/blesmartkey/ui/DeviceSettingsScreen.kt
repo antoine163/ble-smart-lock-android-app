@@ -49,7 +49,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.antoine163.blesmartkey.R
-import com.antoine163.blesmartkey.data.model.DeviceSetting
+import com.antoine163.blesmartkey.data.model.DeviceSettings
 import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
 
 
@@ -72,7 +72,7 @@ fun DevicesSettingScreen(
 
     DevicesSettingScreen(
         modifier = modifier,
-        deviceSetting = uiState.setting,
+        deviceSettings = uiState.setting,
         onUnlock = { viewModel.bleDevice.unlock() },
         onOpenDoor = {
             viewModel.bleDevice.unlock()
@@ -98,7 +98,7 @@ fun DevicesSettingScreen(
  * Screen for device settings.
  *
  * @param modifier Modifier for the root composable.
- * @param deviceSetting The device setting data.
+ * @param deviceSettings The device setting data.
  * @param onUnlock Callback when the unlock button is clicked.
  * @param onOpenDoor Callback when the open door button is clicked.
  * @param onDisconnect Callback when the disconnect button is clicked.
@@ -110,7 +110,7 @@ fun DevicesSettingScreen(
 @Composable
 fun DevicesSettingScreen(
     modifier: Modifier = Modifier,
-    deviceSetting: DeviceSetting,
+    deviceSettings: DeviceSettings,
     onUnlock: () -> Unit,
     onOpenDoor: () -> Unit,
     onDisconnect: () -> Unit,
@@ -150,20 +150,20 @@ fun DevicesSettingScreen(
                 Spacer(modifier = Modifier.padding(top = 50.dp))
 
                 Box {
-                    val doorStateIconId = when (deviceSetting.isOpened) {
+                    val doorStateIconId = when (deviceSettings.isOpened) {
                         true -> R.drawable.rounded_door_open_24
                         false -> R.drawable.rounded_door_front_24
                     }
-                    val doorStateDescId = when (deviceSetting.isOpened) {
+                    val doorStateDescId = when (deviceSettings.isOpened) {
                         true -> R.string.state_open
                         false -> R.string.state_close
                     }
 
-                    val lockIconId = when (deviceSetting.isUnlocked) {
+                    val lockIconId = when (deviceSettings.isUnlocked) {
                         true -> R.drawable.rounded_lock_open_right_24
                         false -> R.drawable.rounded_lock_24
                     }
-                    val lockDescId = when (deviceSetting.isUnlocked) {
+                    val lockDescId = when (deviceSettings.isUnlocked) {
                         true -> R.string.unlocked
                         false -> R.string.locked
                     }
@@ -195,7 +195,7 @@ fun DevicesSettingScreen(
 
             // Signal Strength
             Column {
-                SignalStrengthIcon(rssi = deviceSetting.currentRssi)
+                SignalStrengthIcon(rssi = deviceSettings.currentRssi)
             }
         }
 
@@ -207,11 +207,11 @@ fun DevicesSettingScreen(
                 .padding(bottom = dimensionResource(id = R.dimen.padding_small))
         ) {
             Row {
-                if (deviceSetting.currentRssi != null) {
+                if (deviceSettings.currentRssi != null) {
                     var showEditDialog by remember { mutableStateOf(false) }
                     if (showEditDialog) {
                         EditValueDialog(
-                            initialValue = deviceSetting.name,
+                            initialValue = deviceSettings.name,
                             onConfirm = { newName ->
                                 onDeviceNameChange(newName)
                                 showEditDialog = false
@@ -227,7 +227,7 @@ fun DevicesSettingScreen(
                     }
 
                     Text(
-                        text = deviceSetting.name,
+                        text = deviceSettings.name,
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
@@ -249,7 +249,7 @@ fun DevicesSettingScreen(
                 }
             }
             Text(
-                text = deviceSetting.address, style = MaterialTheme.typography.bodyMedium
+                text = deviceSettings.address, style = MaterialTheme.typography.bodyMedium
             )
         }
 
@@ -258,9 +258,9 @@ fun DevicesSettingScreen(
         ActionsCard(modifier = Modifier
             .padding(vertical = dimensionResource(id = R.dimen.padding_small))
             .fillMaxWidth(),
-            enabled = deviceSetting.currentRssi != null,
-            isUnlock = deviceSetting.isUnlocked,
-            isDoorOpen = deviceSetting.isOpened,
+            enabled = deviceSettings.currentRssi != null,
+            isUnlock = deviceSettings.isUnlocked,
+            isDoorOpen = deviceSettings.isOpened,
             onUnlock = onUnlock,
             onOpenDoor = onOpenDoor,
             onDisconnect = onDisconnect)
@@ -270,9 +270,9 @@ fun DevicesSettingScreen(
             modifier = Modifier
                 .padding(vertical = dimensionResource(id = R.dimen.padding_tiny))
                 .fillMaxWidth(),
-            currentBrightness = deviceSetting.currentRssi ?.let { deviceSetting.currentBrightness },
-            brightnessTh = deviceSetting.thresholdNight,
-            enabled = deviceSetting.currentRssi != null,
+            currentBrightness = deviceSettings.currentRssi ?.let { deviceSettings.currentBrightness },
+            brightnessTh = deviceSettings.thresholdNight,
+            enabled = deviceSettings.currentRssi != null,
             onBrightnessThChange = onBrightnessThChange
         )
 
@@ -280,9 +280,9 @@ fun DevicesSettingScreen(
         AutoUnlockCard(modifier = Modifier
             .padding(vertical = dimensionResource(id = R.dimen.padding_small))
             .fillMaxWidth(),
-            autoUnlock = deviceSetting.autoUnlockEnabled,
-            unlockRssiTh = deviceSetting.autoUnlockRssiTh,
-            currentRssi = deviceSetting.currentRssi,
+            autoUnlock = deviceSettings.autoUnlockEnabled,
+            unlockRssiTh = deviceSettings.autoUnlockRssiTh,
+            currentRssi = deviceSettings.currentRssi,
             onAutoUnlockChange = onAutoUnlockChange,
             onUnlockRssiThChange = onUnlockRssiThChange)
     }
@@ -741,7 +741,7 @@ private fun DevicesSettingScreenPreview() {
     BleSmartKeyTheme {
         Surface {
             DevicesSettingScreen(
-                deviceSetting = createDemoDeviceSetting(),
+                deviceSettings = createDemoDeviceSetting(),
                 onUnlock = {},
                 onOpenDoor = {},
                 onDisconnect = {},
@@ -755,8 +755,8 @@ private fun DevicesSettingScreenPreview() {
     }
 }
 
-fun createDemoDeviceSetting(): DeviceSetting {
-    return DeviceSetting(
+fun createDemoDeviceSetting(): DeviceSettings {
+    return DeviceSettings(
         name = "BLE Smart Lock",
         address = "12:34:56:78:90:AB",
         currentRssi = -70,
