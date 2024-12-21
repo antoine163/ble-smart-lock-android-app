@@ -19,26 +19,15 @@ interface DeviceListSettingsRepository {
      *
      * Consumers can collect from this flow to observe and react to changes in the device list.
      */
-    val devices: Flow<DeviceListSettings>
+    val deviceListSettingsFlow: Flow<DeviceListSettings>
 
-    /**
-     * Retrieves the device list settings.
-     *
-     * This function fetches the current settings for the device list,
-     * such as preferred sorting order, filtering criteria, etc.
-     *
-     * @return A [DeviceListSettings] object containing the current settings.
-     */
-    suspend fun getDeviceListSettings(): DeviceListSettings
+    suspend fun getDevice(address: String): DeviceSettings?
+    suspend fun getDeviceList(): DeviceListSettings
+    suspend fun updateDevice(device: DeviceSettings)
+    suspend fun deleteDevice(address: String)
 
-    /**
-     * Updates the device list settings.
-     *
-     * This function updates the stored device list settings with the provided [deviceListSettings].
-     *
-     * @param deviceListSettings The new device list settings to be applied.
-     */
-    suspend fun updateDeviceListSettings(deviceListSettings: DeviceListSettings)
+    suspend fun load()
+    suspend fun save()
 }
 
 

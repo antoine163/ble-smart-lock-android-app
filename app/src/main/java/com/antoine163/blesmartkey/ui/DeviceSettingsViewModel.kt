@@ -2,14 +2,18 @@ package com.antoine163.blesmartkey.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
+import com.antoine163.blesmartkey.DeviceSettings
 import com.antoine163.blesmartkey.ble.BleDevice
 import com.antoine163.blesmartkey.ble.BleDeviceCallback
 import com.antoine163.blesmartkey.data.DataModule
 import com.antoine163.blesmartkey.data.model.DeviceSettingsItem
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 /**
  * UI state for representing the state of a device setting.
@@ -31,8 +35,8 @@ data class DeviceSettingsUiState(
  * @param deviceAdd The Bluetooth address of the device.
  */
 class DeviceSettingsViewModel(
-    dataModule: DataModule,
-    deviceAdd: String,
+    private val dataModule: DataModule,
+    private val deviceAdd: String,
 ) : ViewModel() {
 
     // MutableStateFlow to hold the UI state of the device setting
@@ -71,27 +75,28 @@ class DeviceSettingsViewModel(
         saveDeviceSetting(_uiState.value.setting)
     }
 
+
     /**
-     * Updates the device settings in the repository.
+     * Saves the device settings to the repository.
      *
-     * This function launches a coroutine to update the device settings in the
-     * [devicesBleSettingsRepository]. It maps the [DeviceSettingsItem] object to a
-     * [DeviceBleSettings] object and updates the repository with the new settings.
+     * This function updates the device settings in the repository based on the provided
+     * [DeviceSettingsItem] object. It launches a coroutine within the viewModelScope
+     * to perform the update operation.
      *
-     * @param device The [DeviceSettingsItem] object containing the updated device settings.
+     * @param device The [DeviceSettingsItem] containing the updated device settings.
      */
     private fun saveDeviceSetting(device: DeviceSettingsItem) {
-//        viewModelScope.launch {
-//            devicesBleSettingsRepository.updateDevice(
-//                DeviceBleSettings.newBuilder()
-//                    .setName(device.name)
-//                    .setAddress(device.address)
-//                    .setWasOpened(device.isOpened)
-//                    .setAutoUnlockEnabled(device.autoUnlockEnabled)
-//                    .setAutoUnlockRssiTh(device.autoUnlockRssiTh)
-//                    .build()
-//            )
-//        }
+        viewModelScope.launch {
+            dataModule.deviceListSettingsRepository().updateDevice(
+                DeviceSettings.newBuilder()
+                    .setName(device.name)
+                    .setAddress(device.address)
+                    .setWasOpened(device.isOpened)
+                    .setAutoUnlockEnabled(device.autoUnlockEnabled)
+                    .setAutoUnlockRssiTh(device.autoUnlockRssiTh)
+                    .build()
+            )
+        }
     }
 
     // BleDeviceCallback instance to handle callbacks from the BleDevice
@@ -99,19 +104,20 @@ class DeviceSettingsViewModel(
 
         // Handle connection state changes
         override fun onConnectionStateChanged(isConnected: Boolean) {
-            super.onConnectionStateChanged(isConnected)
 
-            if (!isConnected) {
+            if (isConnected) {
+                bleDevice.readDeviceName()
+                bleDevice.readDoorState()
+                bleDevice.readBrightnessTh()
+            } else {
                 _uiState.update { currentState ->
                     currentState.copy(setting = currentState.setting.copy(currentRssi = null))
                 }
-            } else {
-                bleDevice.autoUnlock(-40)
             }
         }
 
         override fun onConnectionFailed() {
-            super.onConnectionFailed()
+            //Todo afficher un erreur a l'utilisateur
         }
 
         // Handle lock state changes
@@ -186,9 +192,9 @@ class DeviceSettingsViewModel(
         bleDevice.disconnect()
         bleDevice.dissociate()
 
-//        viewModelScope.launch {
-//            devicesBleSettingsRepository.deleteDevice(uiState.value.setting.address)
-//        }
+        viewModelScope.launch {
+            dataModule.deviceListSettingsRepository().deleteDevice(uiState.value.setting.address)
+        }
     }
 
     init {
@@ -196,22 +202,31 @@ class DeviceSettingsViewModel(
         bleDevice.connect()
 
         // Read the device settings from the repository
-//        viewModelScope.launch {
-//            val device = devicesBleSettingsRepository.getDevice(deviceAdd)
-//            device?.let {
-//                _uiState.update { it ->
-//                    it.copy(
-//                        setting = DeviceSetting(
-//                            name = device.name,
-//                            address = device.address,
-//                            isOpened = device.wasOpened,
-//                            autoUnlockEnabled = device.autoUnlockEnabled,
-//                            autoUnlockRssiTh = device.autoUnlockRssiTh
-//                        )
-//                    )
-//                }
-//            }
-//        }
+        viewModelScope.launch {
+            val deviceSetting = dataModule.deviceListSettingsRepository().getDevice(deviceAdd)
+            deviceSetting?.let {
+                _uiState.update { it ->
+                    it.copy(
+                        setting = DeviceSettingsItem(
+                            name = deviceSetting.name,
+                            address = deviceSetting.address,
+                            isOpened = deviceSetting.wasOpened,
+                            autoUnlockEnabled = deviceSetting.autoUnlockEnabled,
+                            autoUnlockRssiTh = deviceSetting.autoUnlockRssiTh
+                        )
+                    )
+                }
+            }
+        }
+
+        // Read Rssi and brightness every 0.8s
+        viewModelScope.launch {
+            while (true) {
+                delay(800)
+                bleDevice.readRssi()
+                bleDevice.readBrightness()
+            }
+        }
     }
 
     override fun onCleared() {

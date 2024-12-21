@@ -7,9 +7,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.lifecycle.lifecycleScope
 import com.antoine163.blesmartkey.data.DataModule
 import com.antoine163.blesmartkey.ui.BleSmartKeyScreen
 import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     // Bluetooth permissions required for Android 12 (API 31) and above
@@ -28,6 +30,7 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+
     /**
      * The DataModule instance used for dependency injection.
      * This property is initialized later and provides access to data sources and repositories.
@@ -43,6 +46,10 @@ class MainActivity : ComponentActivity() {
         // Initialize the DataModule
         if (!this::dataModule.isInitialized) {
             dataModule = DataModule(application)
+
+            lifecycleScope.launch {
+                dataModule.deviceListSettingsRepository().load()
+            }
         }
 
         // Request bluetooth permissions
@@ -77,6 +84,13 @@ class MainActivity : ComponentActivity() {
 
     override fun onStop() {
         super.onStop()
+
+
+        lifecycleScope.launch {
+            dataModule.deviceListSettingsRepository().save()
+        }
+
+
         Log.d("BSK", "::onStop")
     }
 

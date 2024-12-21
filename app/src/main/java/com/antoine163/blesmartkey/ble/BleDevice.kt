@@ -146,6 +146,8 @@ class BleDevice(
 
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 gatt?.let {
+                    Log.i("BSK", "$address -> Services discovered with success!")
+
                     // Save the gatt device
                     gattDevice = gatt
 
@@ -190,7 +192,6 @@ class BleDevice(
 
                     // Successfully connected to the GATT Server and discovered services
                     callback.onConnectionStateChanged(true)
-                    Log.i("BSK", "$address -> Services discovered with success!")
 
                     // Handle the door state change, before a connection the lock is locked
                     callback.onLockStateChanged(true)
@@ -495,6 +496,19 @@ class BleDevice(
     }
 
     /**
+     * Reads the device name from the connected Bluetooth device.
+     *
+     * This function initiates the reading of the device name characteristic
+     * (gattCharDeviceName) using the `readCharacteristics` function.
+     * The result of the read operation will be handled by the corresponding callback
+     * mechanism (e.g., onCharacteristicRead).
+     */
+    fun readDeviceName()
+    {
+        readCharacteristics(gattCharDeviceName)
+    }
+
+    /**
      * Sets the brightness threshold for the device.
      *
      * This function converts the given [brightnessTh] value to a byte array and writes it to the
@@ -512,6 +526,34 @@ class BleDevice(
             gattCharBrightnessTh,
             byteArray, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
         )
+    }
+
+    /**
+     * Reads the brightness threshold characteristic from the connected device.
+     *
+     * This function initiates a read operation for the characteristic
+     * represented by `gattCharBrightnessTh`. The result of the read operation
+     * is typically handled by a callback function that is registered when
+     * setting up Bluetooth communication.
+     */
+    fun readBrightnessTh()
+    {
+        readCharacteristics(gattCharBrightnessTh)
+    }
+
+    /**
+     * Reads the current state of the door.
+     *
+     * This function initiates a read operation for the characteristic
+     * representing the door state. The result of the read operation
+     * will be handled by the callback registered for characteristic
+     * value changes.
+     *
+     * @see readCharacteristics
+     */
+    fun readDoorState()
+    {
+        readCharacteristics(gattCharDoorState)
     }
 
     /**
@@ -667,7 +709,7 @@ class BleDevice(
             bleDev.disconnect()
             bleDev.close()
 
-            Log.d("BSK", "$address -> Disconnecting")
+            Log.i("BSK", "$address -> Disconnecting")
         }
 
         gattDevice = null
