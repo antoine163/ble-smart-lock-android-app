@@ -4,12 +4,14 @@ import android.annotation.SuppressLint
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
+import android.bluetooth.le.ScanSettings
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.antoine163.blesmartkey.ble.BleDevice
 import com.antoine163.blesmartkey.ble.BleDeviceCallback
+import com.antoine163.blesmartkey.copy
 import com.antoine163.blesmartkey.data.DataModule
 import com.antoine163.blesmartkey.data.model.DeviceListItem
 import kotlinx.coroutines.delay
@@ -159,19 +161,18 @@ class DeviceListViewModel(
             }
 
             // If isBleDoorOpen is different with de setting, update the setting
-//            if (updateSetting == true) {
-//                viewModelScope.launch {
-//                    val bleDevice = devicesBleSettingsRepository.getDevice(result.device.address)
-//                    bleDevice?.let { device ->
-//                        val bleDeviceUpdated = device.copy {
-//                            this.name = bleDevName
-//                            this.wasOpened = isDoorOpened
-//                        }
-//                        devicesBleSettingsRepository.updateDevice(bleDeviceUpdated)
-//                    }
-//
-//                }
-//            }
+            if (updateSetting == true) {
+                viewModelScope.launch {
+                    val deviceSettings = dataModule.deviceListSettingsRepository().getDevice(result.device.address)
+                    deviceSettings?.let { deviceSettings ->
+                        val deviceSettingsUpdated = deviceSettings.copy {
+                            this.name = bleDevName
+                            this.wasOpened = isDoorOpened
+                        }
+                        dataModule.deviceListSettingsRepository().updateDevice(deviceSettingsUpdated)
+                    }
+                }
+            }
         }
 
         override fun onBatchScanResults(results: List<ScanResult?>?) {
@@ -254,15 +255,15 @@ class DeviceListViewModel(
                 _uiState.update { currentState ->
                     currentState.copy(deviceList)
                 }
-//
-//                // Scanning BLE device with new list
-//                bluetoothLeScanner.stopScan(scanCallback)
-//                if (scanFilters.isNotEmpty()) {
-//                    val scanSettings = ScanSettings.Builder()
-//                        .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
-//                        .build()
-//                    bluetoothLeScanner.startScan(scanFilters, scanSettings, scanCallback)
-//                }
+
+                // Scanning BLE device with new list
+                bluetoothLeScanner.stopScan(scanCallback)
+                if (scanFilters.isNotEmpty()) {
+                    val scanSettings = ScanSettings.Builder()
+                        .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+                        .build()
+                    bluetoothLeScanner.startScan(scanFilters, scanSettings, scanCallback)
+                }
             }
         }
 
