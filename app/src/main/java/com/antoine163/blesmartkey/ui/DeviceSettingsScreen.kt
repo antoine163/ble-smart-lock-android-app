@@ -63,14 +63,14 @@ import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
  * @param onBack Callback function to be invoked when the user navigates back from this screen.
  */
 @Composable
-fun DevicesSettingScreen(
+fun DeviceSettingsScreen(
     modifier: Modifier = Modifier,
     viewModel: DeviceSettingsViewModel,
     onBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    DevicesSettingScreen(
+    DeviceSettingsScreen(
         modifier = modifier,
         deviceSettings = uiState.setting,
         onUnlock = { viewModel.bleDevice.unlock() },
@@ -108,7 +108,7 @@ fun DevicesSettingScreen(
  * @param onUnlockRssiThChange Callback when the unlock RSSI threshold is changed.
  */
 @Composable
-fun DevicesSettingScreen(
+fun DeviceSettingsScreen(
     modifier: Modifier = Modifier,
     deviceSettings: DeviceSettings,
     onUnlock: () -> Unit,
@@ -740,7 +740,7 @@ private fun EditValueDialogPreview() {
 private fun DevicesSettingScreenPreview() {
     BleSmartKeyTheme {
         Surface {
-            DevicesSettingScreen(
+            DeviceSettingsScreen(
                 deviceSettings = createDemoDeviceSetting(),
                 onUnlock = {},
                 onOpenDoor = {},

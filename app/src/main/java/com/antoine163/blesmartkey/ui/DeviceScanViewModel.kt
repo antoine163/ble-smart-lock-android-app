@@ -36,7 +36,7 @@ data class DevicesScanUiState(
  * processing scan results, and managing the UI state through a StateFlow.
  */
 @SuppressLint("MissingPermission")
-class DevicesScanViewModel(
+class DeviceScanViewModel(
     dataModule: DataModule
 ) : ViewModel() {
 
@@ -167,9 +167,9 @@ class DevicesScanViewModelFactory(
     private val dataModule: DataModule,
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(DevicesScanViewModel::class.java)) {
+        if (modelClass.isAssignableFrom(DeviceScanViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return DevicesScanViewModel(dataModule) as T
+            return DeviceScanViewModel(dataModule) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

@@ -43,7 +43,7 @@ import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
  * @param devices List of devices discovered during the scan.
  */
 @Composable
-fun DevicesScanScreen(
+fun DeviceScanScreen(
     modifier: Modifier = Modifier,
     devices: List<DeviceScanItem>,
     onConnectClick: (String) -> Unit,
@@ -232,7 +232,7 @@ private fun DevicesScanScreenPreview() {
     val devices = createDemoDeviceScan()
     BleSmartKeyTheme {
         Surface {
-            DevicesScanScreen(devices = devices){}
+            DeviceScanScreen(devices = devices){}
         }
     }
 }
@@ -251,7 +251,7 @@ private fun DevicesScanScreenEmptyPreview() {
     val devices: List<DeviceScanItem> = emptyList()
     BleSmartKeyTheme {
         Surface {
-            DevicesScanScreen(devices = devices){}
+            DeviceScanScreen(devices = devices){}
         }
     }
 }

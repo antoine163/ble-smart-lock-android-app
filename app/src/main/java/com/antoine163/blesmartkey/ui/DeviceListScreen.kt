@@ -19,14 +19,14 @@ import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
 
 
 @Composable
-fun DevicesListScreen(
+fun DeviceListScreen(
     modifier: Modifier = Modifier,
     viewModel: DeviceListViewModel,
     onSettingClick: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    DevicesListScreen(
+    DeviceListScreen(
         modifier = modifier,
         devices = uiState.devices,
         onSettingClick = onSettingClick,
@@ -35,7 +35,7 @@ fun DevicesListScreen(
 }
 
 @Composable
-fun DevicesListScreen(
+fun DeviceListScreen(
     modifier: Modifier = Modifier,
     devices: List<DeviceListItem>,
     onSettingClick: (String) -> Unit,
@@ -76,7 +76,7 @@ private fun DevicesListScreenPreview() {
     val devices = createDemoDeviceList()
     BleSmartKeyTheme {
         Surface {
-            DevicesListScreen(
+            DeviceListScreen(
                 devices = devices,
                 onSettingClick = {},
                 onOpenDoorClick = {})

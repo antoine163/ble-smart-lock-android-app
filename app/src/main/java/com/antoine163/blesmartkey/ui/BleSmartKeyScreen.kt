@@ -91,7 +91,7 @@ fun BleSmartKeyScreen(
                 )
 
                 // Display the DevicesListScreen
-                DevicesListScreen(
+                DeviceListScreen(
                     modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.padding_medium)),
                     viewModel = viewModel,
                     onSettingClick = { deviceAdd ->
@@ -103,13 +103,13 @@ fun BleSmartKeyScreen(
             // Define a composable function for the SmartKey scanning screen
             composable(route = SmartKeyScreen.Scanning.name) {
                 // Create and manage the DevicesScanViewModel
-                val viewModel: DevicesScanViewModel = viewModel(
+                val viewModel: DeviceScanViewModel = viewModel(
                     factory = DevicesScanViewModelFactory(dataModule)
                 )
                 val uiState by viewModel.uiState.collectAsState()
 
                 // Display the DevicesScanScreen
-                DevicesScanScreen(
+                DeviceScanScreen(
                     modifier = Modifier
                         .padding(horizontal = dimensionResource(R.dimen.padding_medium))
                         .fillMaxSize(1f),
@@ -137,7 +137,7 @@ fun BleSmartKeyScreen(
 
                 // Display the DeviceSettingScreen
                 val scrollState = rememberScrollState()
-                DevicesSettingScreen(
+                DeviceSettingsScreen(
                     modifier = Modifier
                         .padding(horizontal = dimensionResource(R.dimen.padding_medium))
                         .fillMaxSize(1f)
