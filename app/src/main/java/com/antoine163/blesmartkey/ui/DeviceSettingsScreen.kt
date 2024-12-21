@@ -49,7 +49,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.antoine163.blesmartkey.R
-import com.antoine163.blesmartkey.data.model.DeviceSettings
+import com.antoine163.blesmartkey.data.model.DeviceSettingsItem
 import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
 
 
@@ -110,7 +110,7 @@ fun DeviceSettingsScreen(
 @Composable
 fun DeviceSettingsScreen(
     modifier: Modifier = Modifier,
-    deviceSettings: DeviceSettings,
+    deviceSettings: DeviceSettingsItem,
     onUnlock: () -> Unit,
     onOpenDoor: () -> Unit,
     onDisconnect: () -> Unit,
@@ -755,8 +755,8 @@ private fun DevicesSettingScreenPreview() {
     }
 }
 
-fun createDemoDeviceSetting(): DeviceSettings {
-    return DeviceSettings(
+fun createDemoDeviceSetting(): DeviceSettingsItem {
+    return DeviceSettingsItem(
         name = "BLE Smart Lock",
         address = "12:34:56:78:90:AB",
         currentRssi = -70,
