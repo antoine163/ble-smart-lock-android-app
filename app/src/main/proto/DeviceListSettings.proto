@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+option java_package = "com.antoine163.blesmartkey";
+option java_multiple_files = true;
+
+message DeviceSettings {
+  string name = 1;
+  string address = 2;
+  bool wasOpened = 3;
+  bool brightnessTh = 4;
+  bool autoUnlockEnabled = 5;
+  int32 autoUnlockRssiTh = 6;
+}
+message DeviceListSettings {
+  repeated DeviceSettings devices = 1;
+}
