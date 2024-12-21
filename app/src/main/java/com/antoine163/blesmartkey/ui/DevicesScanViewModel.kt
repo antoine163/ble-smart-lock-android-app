@@ -11,7 +11,7 @@ import android.content.Context
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.antoine163.blesmartkey.model.DeviceScanItem
+import com.antoine163.blesmartkey.data.model.DeviceScanItem
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

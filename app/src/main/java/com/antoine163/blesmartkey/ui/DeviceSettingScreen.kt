@@ -49,7 +49,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.antoine163.blesmartkey.R
-import com.antoine163.blesmartkey.model.DeviceSetting
+import com.antoine163.blesmartkey.data.model.DeviceSetting
 import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
 
 

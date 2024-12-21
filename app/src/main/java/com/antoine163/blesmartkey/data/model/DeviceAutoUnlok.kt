@@ -1,4 +1,4 @@
-package com.antoine163.blesmartkey.model
+package com.antoine163.blesmartkey.data.model
 
 /**
  * Data class representing a device that can automatically unlock.

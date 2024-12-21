@@ -1,4 +1,4 @@
-package com.antoine163.blesmartkey.model
+package com.antoine163.blesmartkey.data.model
 
 /**
  * Represents a single device found during a device scan.

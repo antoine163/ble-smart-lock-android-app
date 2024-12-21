@@ -32,7 +32,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.antoine163.blesmartkey.R
-import com.antoine163.blesmartkey.model.DeviceScanItem
+import com.antoine163.blesmartkey.data.model.DeviceScanItem
 import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
 
 

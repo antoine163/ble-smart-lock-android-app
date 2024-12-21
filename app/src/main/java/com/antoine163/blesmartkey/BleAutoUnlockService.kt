@@ -14,7 +14,7 @@ import android.os.Binder
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import com.antoine163.blesmartkey.model.DeviceAutoUnlok
+import com.antoine163.blesmartkey.data.model.DeviceAutoUnlok
 
 class BleAutoUnlockService : Service() {
 
