@@ -7,9 +7,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import com.antoine163.blesmartkey.ble.BleAutoUnlockManager
-import com.antoine163.blesmartkey.data.DevicesBleSettingsRepositoryApp
-import com.antoine163.blesmartkey.model.DeviceAutoUnlok
+import com.antoine163.blesmartkey.data.DataModule
 import com.antoine163.blesmartkey.ui.BleSmartKeyScreen
 import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
 
@@ -30,59 +28,80 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-//    private var bleAutoUnlockManager: BleAutoUnlockManager? = null
-
-
-
-//
-//
-//    fun isServiceRunning(context: Context, serviceClass: Class<*>): Boolean {
-//        val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-//        for (service in activityManager.getRunningServices(Int.MAX_VALUE)) {
-//            if (serviceClass.name == service.service.className) {
-//                return true
-//            }
-//        }
-//        return false
-//    }
+    /**
+     * The DataModule instance used for dependency injection.
+     * This property is initialized later and provides access to data sources and repositories.
+     */
+    private lateinit var dataModule: DataModule
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         enableEdgeToEdge()
-        requestBluetoothPermissions.launch(bluetoothPermissions) // Request permissions
 
-//
-//        val unlockDev = listOf(
-//            DeviceAutoUnlok("5A:9B:63:59:DC:8D", -60),
-//            DeviceAutoUnlok("11:22:33:44:55:66", -60),
-//            DeviceAutoUnlok("77:88:99:AA:BB:CC", -100)
-//        )
-        //val unlockDev = emptyList<DeviceAutoUnlok>()
+        Log.d("BSK", "::onCreate")
 
-//        bleAutoUnlockManager = BleAutoUnlockManager(this)
-//        bleAutoUnlockManager?.setUnlockDev(unlockDev)
-//        if (!isServiceRunning(this, BleAutoUnlockService::class.java)) {
-//            Intent(this, BleAutoUnlockService::class.java).also { intent ->
-//                startForegroundService(intent)
-//            }
-//            Log.d("BSK", "Service started")
-//        }
-//        else {
-//            Log.d("BSK", "Service already running")
-//        }
+        // Initialize the DataModule
+        if (!this::dataModule.isInitialized) {
+            dataModule = DataModule(application)
+        }
 
-
-
-
-
+        // Request bluetooth permissions
+        requestBluetoothPermissions.launch(bluetoothPermissions)
 
         setContent {
             BleSmartKeyTheme {
-                BleSmartKeyScreen(
-                    devicesBleSettingsRepository = DevicesBleSettingsRepositoryApp(this)
-                )
+                BleSmartKeyScreen(dataModule = dataModule)
             }
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.d("BSK", "::onDestroy")
+    }
+
+    override fun onRestart() {
+        super.onRestart()
+        Log.d("BSK", "::onRestart")
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Log.d("BSK", "::onResume")
+    }
+
+    override fun onPause() {
+        super.onPause()
+        Log.d("BSK", "::onPause")
+    }
+
+    override fun onStop() {
+        super.onStop()
+        Log.d("BSK", "::onStop")
+    }
+
+    override fun onStart() {
+        super.onStart()
+        Log.d("BSK", "::onStart")
+    }
+
+    override fun onLowMemory() {
+        super.onLowMemory()
+        Log.d("BSK", "::onLowMemory")
+    }
+
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        Log.d("BSK", "::onTrimMemory")
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        Log.d("BSK", "::onSaveInstanceState: $outState")
+    }
+
+    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
+        super.onRestoreInstanceState(savedInstanceState)
+        Log.d("BSK", "::onRestoreInstanceState: $savedInstanceState")
     }
 }

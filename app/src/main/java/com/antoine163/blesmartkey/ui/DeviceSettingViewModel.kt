@@ -1,21 +1,16 @@
 package com.antoine163.blesmartkey.ui
 
 import android.app.Application
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewModelScope
-import com.antoine163.blesmartkey.DeviceBleSettings
 import com.antoine163.blesmartkey.ble.BleDevice
 import com.antoine163.blesmartkey.ble.BleDeviceCallback
-import com.antoine163.blesmartkey.data.DevicesBleSettingsRepository
-import com.antoine163.blesmartkey.model.DeviceSetting
-import kotlinx.coroutines.delay
+import com.antoine163.blesmartkey.data.DataModule
+import com.antoine163.blesmartkey.data.model.DeviceSetting
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 
 /**
  * UI state for representing the state of a device setting.
@@ -25,20 +20,21 @@ data class DeviceSettingUiState(
     val setting: DeviceSetting = DeviceSetting()
 )
 
+
 /**
- * ViewModel for the Device Setting screen.
+ * ViewModel for managing the settings of a Bluetooth device.
  *
- * This ViewModel is responsible for managing the UI state of the Device Setting screen
- * and interacting with the BleDevice class.
+ * This ViewModel handles the UI state of the device setting screen and interacts with the
+ * BleDevice class to control the device's behavior. It also saves and loads device settings
+ * from persistent storage.
  *
- * @param application The application context.
- * @param deviceAdd The MAC address of the Bluetooth device.
+ * @param dataModule The data module providing access to application resources.
+ * @param deviceAdd The Bluetooth address of the device.
  */
 class DeviceSettingViewModel(
-    application: Application,
+    dataModule: DataModule,
     deviceAdd: String,
-    val devicesBleSettingsRepository: DevicesBleSettingsRepository
-) : AndroidViewModel(application) {
+) : ViewModel() {
 
     // MutableStateFlow to hold the UI state of the device setting
     private val _uiState = MutableStateFlow(
@@ -86,17 +82,17 @@ class DeviceSettingViewModel(
      * @param device The [DeviceSetting] object containing the updated device settings.
      */
     private fun saveDeviceSetting(device: DeviceSetting) {
-        viewModelScope.launch {
-            devicesBleSettingsRepository.updateDevice(
-                DeviceBleSettings.newBuilder()
-                    .setName(device.name)
-                    .setAddress(device.address)
-                    .setWasOpened(device.isOpened)
-                    .setAutoUnlockEnabled(device.autoUnlockEnabled)
-                    .setAutoUnlockRssiTh(device.autoUnlockRssiTh)
-                    .build()
-            )
-        }
+//        viewModelScope.launch {
+//            devicesBleSettingsRepository.updateDevice(
+//                DeviceBleSettings.newBuilder()
+//                    .setName(device.name)
+//                    .setAddress(device.address)
+//                    .setWasOpened(device.isOpened)
+//                    .setAutoUnlockEnabled(device.autoUnlockEnabled)
+//                    .setAutoUnlockRssiTh(device.autoUnlockRssiTh)
+//                    .build()
+//            )
+//        }
     }
 
     // BleDeviceCallback instance to handle callbacks from the BleDevice
@@ -110,7 +106,13 @@ class DeviceSettingViewModel(
                 _uiState.update { currentState ->
                     currentState.copy(setting = currentState.setting.copy(currentRssi = null))
                 }
+            } else {
+                bleDevice.autoUnlock(-40)
             }
+        }
+
+        override fun onConnectionFailed() {
+            super.onConnectionFailed()
         }
 
         // Handle lock state changes
@@ -169,10 +171,9 @@ class DeviceSettingViewModel(
         }
     }
 
-    // bleDevice instance to interact with the Bluetooth device
+    // Public BleDevice instance to interact with the Bluetooth device
     val bleDevice: BleDevice =
-        BleDevice(getApplication<Application>(), deviceAdd, bleDeviceCallback)
-
+        BleDevice(dataModule.context, deviceAdd, bleDeviceCallback)
 
     /**
      * Dissociates from the current BLE device.
@@ -186,45 +187,32 @@ class DeviceSettingViewModel(
         bleDevice.disconnect()
         bleDevice.dissociate()
 
-        viewModelScope.launch {
-            devicesBleSettingsRepository.deleteDevice(uiState.value.setting.address)
-        }
+//        viewModelScope.launch {
+//            devicesBleSettingsRepository.deleteDevice(uiState.value.setting.address)
+//        }
     }
 
     init {
-        viewModelScope.launch {
+        // Connect to the Bluetooth device
+        bleDevice.connect()
 
-            // Initialize the device setting with default values
-            _uiState.update { it ->
-                it.copy(setting = DeviceSetting(address = deviceAdd))
-            }
-
-            // Read the device settings from the repository
-            val device = devicesBleSettingsRepository.getDevice(deviceAdd)
-            device?.let {
-                _uiState.update { it ->
-                    it.copy(
-                        setting = DeviceSetting(
-                            name = device.name,
-                            address = device.address,
-                            isOpened = device.wasOpened,
-                            autoUnlockEnabled = device.autoUnlockEnabled,
-                            autoUnlockRssiTh = device.autoUnlockRssiTh
-                        )
-                    )
-                }
-            }
-
-            // Connect to the Bluetooth device
-            bleDevice.connect()
-
-            // Read Rssi and brightness every 0.8s
-            while (true) {
-                delay(800)
-                bleDevice.readRssi()
-                bleDevice.readBrightness()
-            }
-        }
+        // Read the device settings from the repository
+//        viewModelScope.launch {
+//            val device = devicesBleSettingsRepository.getDevice(deviceAdd)
+//            device?.let {
+//                _uiState.update { it ->
+//                    it.copy(
+//                        setting = DeviceSetting(
+//                            name = device.name,
+//                            address = device.address,
+//                            isOpened = device.wasOpened,
+//                            autoUnlockEnabled = device.autoUnlockEnabled,
+//                            autoUnlockRssiTh = device.autoUnlockRssiTh
+//                        )
+//                    )
+//                }
+//            }
+//        }
     }
 
     override fun onCleared() {
@@ -233,22 +221,16 @@ class DeviceSettingViewModel(
     }
 }
 
-/**
- * Factory for creating a [DeviceSettingViewModel].
- * This factory takes an [Application] and a device address as parameters, which are then used to create the ViewModel.
- * @param application The application context.
- * @param deviceAdd The Bluetooth device address.
- */
+
 class DeviceSettingViewModelFactory(
-    private val application: Application,
-    private val devicesBleSettingsRepository: DevicesBleSettingsRepository,
+    private val dataModule: DataModule,
     private val deviceAdd: String
-) : ViewModelProvider.AndroidViewModelFactory(application) {
+) : ViewModelProvider.Factory {
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(DeviceSettingViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return DeviceSettingViewModel(application, deviceAdd, devicesBleSettingsRepository) as T
+            return DeviceSettingViewModel(dataModule, deviceAdd) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

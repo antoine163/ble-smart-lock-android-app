@@ -1,16 +1,15 @@
 package com.antoine163.blesmartkey.ui
 
 import android.annotation.SuppressLint
-import android.app.Application
-import android.bluetooth.BluetoothManager
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
-import android.content.Context
 import android.util.Log
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.antoine163.blesmartkey.data.DataModule
 import com.antoine163.blesmartkey.data.model.DeviceScanItem
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,12 +17,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.collections.List
-import kotlin.collections.MutableMap
-import kotlin.collections.listOf
-import kotlin.collections.mutableMapOf
-import kotlin.collections.set
-import kotlin.collections.sortedByDescending
 
 /**
  * Represents the UI state for the device scan screen.
@@ -34,15 +27,18 @@ data class DevicesScanUiState(
     val devices: List<DeviceScanItem> = listOf()
 )
 
+
 /**
- * ViewModel for the Devices Scan screen.
- * It handles scanning for Bluetooth devices and exposes the scan results as a StateFlow.
- * The scan process automatically starts when the ViewModel is initialized and lasts for 5 minutes.
+ * ViewModel responsible for managing the device scan process and providing the UI state.
  *
- * @param application The application context.
+ * This ViewModel uses Bluetooth LE to scan for nearby devices and updates the UI
+ * with the list of found devices. It handles starting and stopping the scan,
+ * processing scan results, and managing the UI state through a StateFlow.
  */
 @SuppressLint("MissingPermission")
-class DevicesScanViewModel(application: Application) : AndroidViewModel(application) {
+class DevicesScanViewModel(
+    dataModule: DataModule
+) : ViewModel() {
 
     // MutableStateFlow to hold the UI state of the device scan
     private val _uiState = MutableStateFlow(DevicesScanUiState())
@@ -52,9 +48,7 @@ class DevicesScanViewModel(application: Application) : AndroidViewModel(applicat
     private val scannedDevices: MutableMap<String, DeviceScanItem> = mutableMapOf()
 
     // Bluetooth manager and scanner
-    private val bluetoothManager =
-        getApplication<Application>().getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-    private val bluetoothLeScanner = bluetoothManager.adapter.bluetoothLeScanner
+    private val bluetoothLeScanner = dataModule.bluetoothManager().adapter.bluetoothLeScanner
 
     /**
      * Scan callback object that handles the results of Bluetooth LE scans.
@@ -166,5 +160,17 @@ class DevicesScanViewModel(application: Application) : AndroidViewModel(applicat
     override fun onCleared() {
         super.onCleared()
         bluetoothLeScanner.stopScan(scanCallback)
+    }
+}
+
+class DevicesScanViewModelFactory(
+    private val dataModule: DataModule,
+) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(DevicesScanViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return DevicesScanViewModel(dataModule) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

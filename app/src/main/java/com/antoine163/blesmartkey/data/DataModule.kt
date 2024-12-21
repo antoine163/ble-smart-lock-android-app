@@ -19,6 +19,9 @@ import com.antoine163.blesmartkey.data.repository.DefaultDeviceListSettingsRepos
  */
 class DataModule(application: Application) {
 
+    // TODO a supprimer
+    val context = application.applicationContext
+
     private val bluetoothManager: BluetoothManager =
         application.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
 

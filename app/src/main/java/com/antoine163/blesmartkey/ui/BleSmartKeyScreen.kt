@@ -33,7 +33,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.antoine163.blesmartkey.R
-import com.antoine163.blesmartkey.data.DevicesBleSettingsRepository
+import com.antoine163.blesmartkey.data.DataModule
 
 
 enum class SmartKeyScreen(
@@ -47,7 +47,7 @@ enum class SmartKeyScreen(
 @Composable
 fun BleSmartKeyScreen(
     navController: NavHostController = rememberNavController(),
-    devicesBleSettingsRepository: DevicesBleSettingsRepository
+    dataModule: DataModule
 ) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentScreen = SmartKeyScreen.valueOf(
@@ -86,9 +86,8 @@ fun BleSmartKeyScreen(
             composable(route = SmartKeyScreen.Main.name) {
 
                 // Create and manage the DevicesListViewModel
-                val application = LocalContext.current.applicationContext as Application
-                val viewModel: DevicesListViewModel = viewModel(
-                    factory = DevicesListViewModelFactory(application, devicesBleSettingsRepository)
+                val viewModel: DeviceListViewModel = viewModel(
+                    factory = DevicesListViewModelFactory(dataModule)
                 )
 
                 // Display the DevicesListScreen
@@ -104,7 +103,9 @@ fun BleSmartKeyScreen(
             // Define a composable function for the SmartKey scanning screen
             composable(route = SmartKeyScreen.Scanning.name) {
                 // Create and manage the DevicesScanViewModel
-                val viewModel: DevicesScanViewModel = viewModel()
+                val viewModel: DevicesScanViewModel = viewModel(
+                    factory = DevicesScanViewModelFactory(dataModule)
+                )
                 val uiState by viewModel.uiState.collectAsState()
 
                 // Display the DevicesScanScreen
@@ -131,8 +132,7 @@ fun BleSmartKeyScreen(
                 // Create and manage the DeviceSettingViewModel
                 val application = LocalContext.current.applicationContext as Application
                 val viewModel: DeviceSettingViewModel = viewModel(
-                    factory = DeviceSettingViewModelFactory(
-                        application, devicesBleSettingsRepository, deviceAdd)
+                    factory = DeviceSettingViewModelFactory(dataModule, deviceAdd)
                 )
 
                 // Display the DeviceSettingScreen

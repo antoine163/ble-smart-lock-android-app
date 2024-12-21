@@ -21,7 +21,7 @@ import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
 @Composable
 fun DevicesListScreen(
     modifier: Modifier = Modifier,
-    viewModel: DevicesListViewModel,
+    viewModel: DeviceListViewModel,
     onSettingClick: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()

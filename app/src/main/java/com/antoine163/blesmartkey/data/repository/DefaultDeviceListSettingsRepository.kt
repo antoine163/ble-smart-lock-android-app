@@ -38,4 +38,58 @@ class DefaultDeviceListSettingsRepository (
             deviceListSettings
         }
     }
+
+
+
+
+//
+//
+//    override val devicesFlow: Flow<DevicesBleSettings> = context.devicesBleSettingsStore.data
+//        .catch { exception ->
+//            if (exception is IOException) {
+//                Log.e("BSK", "Error reading settings.", exception)
+//                emit(DevicesBleSettings.getDefaultInstance())
+//            } else {
+//                throw exception
+//            }
+//        }
+//
+//    override suspend fun getDevice(address: String): DeviceBleSettings? {
+//        var device: DeviceBleSettings? = null
+//
+//        // Collect the devices from the repository and convert them to a list of DeviceListItem objects
+//        devicesFlow.first { devicesBleSettings ->
+//            // Find the device with the given address
+//            device = devicesBleSettings.devicesList.find { it.address == address }
+//            true
+//        }
+//
+//        return device
+//    }
+//
+//
+//    override suspend fun getAllDevices(): DevicesBleSettings {
+//        return devicesFlow.first()
+//    }
+//
+//    override suspend fun updateDevice(device: DeviceBleSettings) {
+//        context.devicesBleSettingsStore.updateData { currentDevices ->
+//            val updatedDevices = currentDevices.devicesList
+//            val index = updatedDevices.indexOfFirst { it.address == device.address }
+//
+//            if (index != -1) {
+//                currentDevices.toBuilder().setDevices(index, device).build()
+//            } else {
+//                currentDevices.toBuilder().addDevices(device).build()
+//            }
+//        }
+//    }
+//
+//    override suspend fun deleteDevice(address: String) {
+//        context.devicesBleSettingsStore.updateData { currentDevices ->
+//            val updatedDevices = currentDevices.devicesList
+//            val index = updatedDevices.indexOfFirst { it.address == address }
+//            currentDevices.toBuilder().removeDevices(index).build()
+//        }
+//    }
 }

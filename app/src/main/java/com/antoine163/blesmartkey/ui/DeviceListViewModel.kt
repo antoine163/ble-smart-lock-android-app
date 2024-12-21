@@ -1,27 +1,20 @@
 package com.antoine163.blesmartkey.ui
 
 import android.annotation.SuppressLint
-import android.app.Application
-import android.bluetooth.BluetoothManager
 import android.bluetooth.le.ScanCallback
-import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
-import android.bluetooth.le.ScanSettings
-import android.content.Context
 import android.util.Log
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.antoine163.blesmartkey.ble.BleDevice
 import com.antoine163.blesmartkey.ble.BleDeviceCallback
-import com.antoine163.blesmartkey.data.DevicesBleSettingsRepository
-import com.antoine163.blesmartkey.model.DeviceListItem
+import com.antoine163.blesmartkey.data.DataModule
+import com.antoine163.blesmartkey.data.model.DeviceListItem
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -30,26 +23,23 @@ data class DevicesListUiState(
 )
 
 @SuppressLint("MissingPermission")
-class DevicesListViewModel(
-    application: Application,
-    devicesBleSettingsRepository: DevicesBleSettingsRepository
-) : AndroidViewModel(application) {
+class DeviceListViewModel(
+    dataModule: DataModule
+) : ViewModel() {
 
     // MutableStateFlow to hold the UI state of the device scan
     private val _uiState = MutableStateFlow(DevicesListUiState())
     val uiState: StateFlow<DevicesListUiState> = _uiState.asStateFlow()
 
     // Bluetooth manager and scanner
-    private val bluetoothManager =
-        getApplication<Application>().getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-    private val bluetoothLeScanner = bluetoothManager.adapter.bluetoothLeScanner
+    private val bluetoothLeScanner = dataModule.bluetoothManager().adapter.bluetoothLeScanner
 
     // Ble device to implement the openDoor function
     private var bleDevice: BleDevice? = null
 
     // Map of device addresses to their last seen timestamp
     private val deviceLastSeen = mutableMapOf<String, Long>()
-    private val timeoutMillis = 3000L // 3 secondes
+    private val timeoutMillis = 5000L // 5 secondes
 
     // BleDeviceCallback instance to handle callbacks from the BleDevice to implement the openDoor
     // function
@@ -113,13 +103,13 @@ class DevicesListViewModel(
      */
     fun openDoor(address: String) {
         /* TODO programmer un timeout */
-
-        if (bleDevice != null && bleDevice?.getAddress() == address) {
-            bleDevice?.openDoor()
-        } else {
-            bleDevice = BleDevice(getApplication<Application>(), address, bleDeviceCallback)
-            bleDevice?.connect()
-        }
+//
+//        if (bleDevice != null && bleDevice?.getAddress() == address) {
+//            bleDevice?.openDoor()
+//        } else {
+//            bleDevice = BleDevice(getApplication<Application>(), address, bleDeviceCallback)
+//            bleDevice?.connect()
+//        }
     }
 
     /**
@@ -136,33 +126,51 @@ class DevicesListViewModel(
                 } ?: result.device?.name ?: "Unknown"
 
             // Extract device door state from advertising data
-            val isBleDoorOpen =
+            val isDoorOpened =
                 result.scanRecord?.advertisingDataMap?.get(0x2D)
                     ?.takeIf { it.size >= 3 }
                     ?.let { it[2].toInt() == 0x01 } == true
 
-            Log.d(
-                "BSK",
-                "Scan result: $bleDevName - ${result.device.address} : ${result.rssi}"
-            )
+//            Log.d(
+//                "BSK",
+//                "${result.device.address} -> Scanned : '$bleDevName' \t ${result.rssi}dbm"
+//            )
 
             // Update the last seen timestamp for the device
             deviceLastSeen[result.device.address] = System.currentTimeMillis()
+
+            var updateSetting = false
 
             // Update the UI state with the new list of devices
             _uiState.update { currentUiState ->
                 currentUiState.copy(devices = currentUiState.devices.map { uiDevice ->
                     if (uiDevice.address == result.device.address) {
+                        updateSetting = (uiDevice.isOpened != isDoorOpened) || (uiDevice.name != bleDevName)
                         uiDevice.copy(
                             name = bleDevName,
                             rssi = result.rssi,
-                            isOpened = isBleDoorOpen
+                            isOpened = isDoorOpened
                         )
                     } else {
                         uiDevice
                     }
                 })
             }
+
+            // If isBleDoorOpen is different with de setting, update the setting
+//            if (updateSetting == true) {
+//                viewModelScope.launch {
+//                    val bleDevice = devicesBleSettingsRepository.getDevice(result.device.address)
+//                    bleDevice?.let { device ->
+//                        val bleDeviceUpdated = device.copy {
+//                            this.name = bleDevName
+//                            this.wasOpened = isDoorOpened
+//                        }
+//                        devicesBleSettingsRepository.updateDevice(bleDeviceUpdated)
+//                    }
+//
+//                }
+//            }
         }
 
         override fun onBatchScanResults(results: List<ScanResult?>?) {
@@ -212,47 +220,50 @@ class DevicesListViewModel(
     }
 
     init {
-        // Coroutine to read BLE device setting list and  update device to scan
-        viewModelScope.launch {
-            // Create a list of ScanFilter objects for each device
-            val scanFilters: MutableList<ScanFilter> = mutableListOf()
-
-            // Collect the list of setting devices from repository
-            devicesBleSettingsRepository.devicesFlow.collect { bleDeviceSettingList ->
-
-                // Convert the DevicesBleSettings object to a list of DeviceListItem objects and create a list of ScanFilter objects
-                val devicesList = bleDeviceSettingList.devicesList.map { bleDeviceSettings ->
-
-                    // Create a ScanFilter for each device
-                    val scanFilter = ScanFilter.Builder()
-                        .setDeviceAddress(bleDeviceSettings.address)
-                        .build()
-                    scanFilters.add(scanFilter)
-
-                    // Create a DeviceListItem object for each device
-                    DeviceListItem(
-                        name = bleDeviceSettings.name,
-                        address = bleDeviceSettings.address,
-                        rssi = null,
-                        isOpened = bleDeviceSettings.wasOpened
-                    )
-                }
-
-                // Update the UI state with the devices list
-                _uiState.update { currentState ->
-                    currentState.copy(devicesList)
-                }
-
-                // Scanning BLE device with new list
-                bluetoothLeScanner.stopScan(scanCallback)
-                if (scanFilters.isNotEmpty()) {
-                    val scanSettings = ScanSettings.Builder()
-                        .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
-                        .build()
-                    bluetoothLeScanner.startScan(scanFilters, scanSettings, scanCallback)
-                }
-            }
-        }
+//        // Coroutine to read BLE device setting list and  update device to scan
+//        viewModelScope.launch {
+//            // Create a list of ScanFilter objects for each device
+//            val scanFilters: MutableList<ScanFilter> = mutableListOf()
+//
+//            // Collect the list of setting devices from repository
+//            devicesBleSettingsRepository.devicesFlow.collect { bleDeviceSettingList ->
+//
+//                // Convert the DevicesBleSettings object to a list of DeviceListItem objects and create a list of ScanFilter objects
+//                val devicesList = bleDeviceSettingList.devicesList.map { bleDeviceSetting ->
+//
+//                    // Create a ScanFilter for each device
+//                    val scanFilter = ScanFilter.Builder()
+//                        .setDeviceAddress(bleDeviceSetting.address)
+//                        .build()
+//                    scanFilters.add(scanFilter)
+//
+//                    // Find if ble device already existent
+//                    //val uiBleDevice = uiState.value.devices.find { item -> item.address == bleDeviceSetting.address }
+//
+//                    // Create a DeviceListItem object for each device
+//                    DeviceListItem(
+//                        name = bleDeviceSetting.name,
+//                        address = bleDeviceSetting.address,
+//                        rssi = null,
+//                        isOpened = bleDeviceSetting.wasOpened
+//                    )
+//                }
+//
+//                // Update the UI state with the devices list
+//                _uiState.update { currentState ->
+//                    currentState.copy(devicesList)
+//                }
+//
+//                // Scanning BLE device with new list
+//                bluetoothLeScanner.stopScan(scanCallback)
+//                if (scanFilters.isNotEmpty()) {
+//                    val scanSettings = ScanSettings.Builder()
+//                        .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+//                        .build()
+//                    bluetoothLeScanner.startScan(scanFilters, scanSettings, scanCallback)
+//                }
+//            }
+//        }
 
         // Coroutine to detect devices that become inaccessible
         viewModelScope.launch {
@@ -269,6 +280,7 @@ class DevicesListViewModel(
                 val iterator = deviceLastSeen.iterator()
                 while (iterator.hasNext()) {
                     val (address, lastSeen) = iterator.next()
+                    // If the device has not been seen in the timeout period, remove it
                     if (currentTime - lastSeen > timeoutMillis) {
                         _uiState.update { currentState ->
                             currentState.copy(devices = currentState.devices.map { device ->
@@ -288,32 +300,22 @@ class DevicesListViewModel(
     /**
      * Called when the ViewModel is no longer used and will be destroyed.
      * This function stops the Bluetooth LE scan.
-     *
-     * @SuppressLint("MissingPermission") - Permission check is handled before ViewModel initialization.
      */
     override fun onCleared() {
         super.onCleared()
         bluetoothLeScanner.stopScan(scanCallback)
+
+        Log.d("BSK", "onCleared")
     }
 }
 
-/**
- * Factory for creating [DevicesListViewModel] instances.
- *
- * This factory takes a [DevicesBleSettingsRepository] as a dependency and uses it to create
- * an instance of [DevicesListViewModel]. This allows for dependency injection and ensures
- * that the ViewModel has access to the necessary repository.
- *
- * @param devicesBleSettingsRepository The repository for accessing BLE settings for devices.
- */
 class DevicesListViewModelFactory(
-    private val application: Application,
-    private val devicesBleSettingsRepository: DevicesBleSettingsRepository
+    private val dataModule: DataModule,
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(DevicesListViewModel::class.java)) {
+        if (modelClass.isAssignableFrom(DeviceListViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return DevicesListViewModel(application, devicesBleSettingsRepository) as T
+            return DeviceListViewModel(dataModule) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
