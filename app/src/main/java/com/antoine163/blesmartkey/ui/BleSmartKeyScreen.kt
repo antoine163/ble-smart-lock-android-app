@@ -131,7 +131,7 @@ fun BleSmartKeyScreen(
 
                 // Create and manage the DeviceSettingViewModel
                 val application = LocalContext.current.applicationContext as Application
-                val viewModel: DeviceSettingViewModel = viewModel(
+                val viewModel: DeviceSettingsViewModel = viewModel(
                     factory = DeviceSettingViewModelFactory(dataModule, deviceAdd)
                 )
 

@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.update
  * UI state for representing the state of a device setting.
  * @property setting The device setting data. Defaults to an empty [DeviceSettings].
  */
-data class DeviceSettingUiState(
+data class DeviceSettingsUiState(
     val setting: DeviceSettings = DeviceSettings()
 )
 
@@ -30,16 +30,16 @@ data class DeviceSettingUiState(
  * @param dataModule The data module providing access to application resources.
  * @param deviceAdd The Bluetooth address of the device.
  */
-class DeviceSettingViewModel(
+class DeviceSettingsViewModel(
     dataModule: DataModule,
     deviceAdd: String,
 ) : ViewModel() {
 
     // MutableStateFlow to hold the UI state of the device setting
     private val _uiState = MutableStateFlow(
-        DeviceSettingUiState(setting = DeviceSettings(address = deviceAdd))
+        DeviceSettingsUiState(setting = DeviceSettings(address = deviceAdd))
     )
-    val uiState: StateFlow<DeviceSettingUiState> = _uiState.asStateFlow()
+    val uiState: StateFlow<DeviceSettingsUiState> = _uiState.asStateFlow()
 
     /**
      * Enables or disables the auto-unlock feature.
@@ -227,9 +227,9 @@ class DeviceSettingViewModelFactory(
 ) : ViewModelProvider.Factory {
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(DeviceSettingViewModel::class.java)) {
+        if (modelClass.isAssignableFrom(DeviceSettingsViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return DeviceSettingViewModel(dataModule, deviceAdd) as T
+            return DeviceSettingsViewModel(dataModule, deviceAdd) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

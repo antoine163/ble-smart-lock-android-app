@@ -65,7 +65,7 @@ import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
 @Composable
 fun DevicesSettingScreen(
     modifier: Modifier = Modifier,
-    viewModel: DeviceSettingViewModel,
+    viewModel: DeviceSettingsViewModel,
     onBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
