@@ -49,7 +49,7 @@ fun DeviceListItemScreen(
         buttonText = stringResource(id = R.string.open_door),
         isProgressing = isProgressing,
         isProgressError = isProgressError,
-        onButtonClick = if ((rssi != null) && !isDoorOpen) onOpenDoorClick else null
+        onButtonClick = if ((rssi != null) && !isDoorOpen && !isProgressing) onOpenDoorClick else null
     )
 }
 

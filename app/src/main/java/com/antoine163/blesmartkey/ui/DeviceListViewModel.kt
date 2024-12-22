@@ -53,7 +53,6 @@ class DeviceListViewModel(
      * @param address The Bluetooth address of the door device.
      */
     fun openDoor(address: String) {
-
         var deviceFound = false
 
         // Update the UI state to indicate that the door is being opened
@@ -76,10 +75,12 @@ class DeviceListViewModel(
                 val deferred = CompletableDeferred<Unit>()
 
                 var bleDevice: BleDevice? = null
+                var bleRssi: Int? = null
                 var bleDeviceCallback = object : BleDeviceCallback() {
                     override fun onConnectionStateChanged(isConnected: Boolean) {
                         // If the device is connected, read the door state
                         if (isConnected) {
+                            bleDevice?.readRssi()
                             bleDevice?.readDoorState()
                         }
                     }
@@ -93,6 +94,10 @@ class DeviceListViewModel(
                             // Completes the deferred object to indicate that the door is opened
                             deferred.complete(Unit)
                         }
+                    }
+
+                    override fun onRssiRead(rssi: Int) {
+                        bleRssi = rssi
                     }
                 }
 
@@ -112,9 +117,14 @@ class DeviceListViewModel(
                 _uiState.update { currentUiState ->
                     currentUiState.copy(devices = currentUiState.devices.map { device ->
                         if (device.address == address) {
+                            // Update the last seen timestamp for the device
+                            deviceLastSeen[device.address] = System.currentTimeMillis()
+
                             device.copy(
-                                isOpening = result != null,
-                                isOpenTimeout = result == null
+                                isOpened = result != null,
+                                isOpening = false,
+                                isOpenTimeout = result == null,
+                                rssi = bleRssi
                             )
                         } else device
                     })
@@ -233,7 +243,7 @@ class DeviceListViewModel(
     }
 
     init {
-        // Coroutine to read BLE device setting list and  update device to scan
+        // Coroutine to read BLE device setting list and update device to scan
         viewModelScope.launch {
             // Create a list of ScanFilter objects for each device
             val scanFilters: MutableList<ScanFilter> = mutableListOf()
