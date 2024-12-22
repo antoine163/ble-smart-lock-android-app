@@ -148,9 +148,6 @@ class BleDevice(
                 gatt?.let {
                     Log.i("BSK", "$address -> Services discovered with success!")
 
-                    // Save the gatt device
-                    gattDevice = gatt
-
                     // Get the generic access service and characteristic
                     val gattServiceGenericAccess = gatt.getService(SERV_UUID_GENERIC_ACCESS)
                     gattCharDeviceName =
@@ -694,7 +691,7 @@ class BleDevice(
         disconnect()
 
         val bluetoothDevice = bluetoothManager.adapter.getRemoteDevice(address)
-        bluetoothDevice.connectGatt(context, true, gattCallback)
+        gattDevice = bluetoothDevice.connectGatt(context, true, gattCallback)
 
         Log.i("BSK", "$address -> Connecting")
     }
