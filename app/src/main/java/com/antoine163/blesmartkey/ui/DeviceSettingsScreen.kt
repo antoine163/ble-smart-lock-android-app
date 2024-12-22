@@ -74,10 +74,7 @@ fun DeviceSettingsScreen(
         modifier = modifier,
         deviceSettings = uiState.setting,
         onUnlock = { viewModel.bleDevice.unlock() },
-        onOpenDoor = {
-            viewModel.bleDevice.unlock()
-            viewModel.bleDevice.openDoor()
-        },
+        onOpenDoor = { viewModel.bleDevice.openDoor() },
         onDisconnect = {
             viewModel.bleDevice.disconnect()
             onBack()

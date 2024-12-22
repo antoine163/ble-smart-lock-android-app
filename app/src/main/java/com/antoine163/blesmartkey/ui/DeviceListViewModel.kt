@@ -88,7 +88,6 @@ class DeviceListViewModel(
                     override fun onDoorStateChanged(isOpened: Boolean) {
                         // If the door is closed, open the door
                         if (isOpened == false) {
-                            bleDevice?.unlock() // Todo a supprimer
                             bleDevice?.openDoor()
                         } else {
                             // Completes the deferred object to indicate that the door is opened
