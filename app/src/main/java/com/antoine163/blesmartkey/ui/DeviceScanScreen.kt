@@ -210,6 +210,7 @@ fun DeviceList(
                 deviceName = device.name,
                 deviceAddress = device.address,
                 rssi = device.rssi,
+                isProgressing = false,
                 onConnectClick = { onConnectClick( device.address ) }
             )
         }

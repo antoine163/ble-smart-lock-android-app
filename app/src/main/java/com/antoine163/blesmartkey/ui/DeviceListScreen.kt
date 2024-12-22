@@ -50,11 +50,14 @@ fun DeviceListScreen(
                 modifier = Modifier
                     .padding(
                         top = topPadding,
-                        bottom = dimensionResource(id = R.dimen.padding_small))
+                        bottom = dimensionResource(id = R.dimen.padding_small)
+                    )
                     .clickable(onClick = { onSettingClick(device.address) }),
                 deviceName = device.name,
                 isDoorOpen = device.isOpened,
                 rssi = device.rssi,
+                isProgressing = device.isOpening,
+                isProgressError = device.isOpenTimeout,
                 onOpenDoorClick = { onOpenDoorClick(device.address) }
             )
         }
@@ -91,49 +94,65 @@ fun createDemoDeviceList(): List<DeviceListItem> {
             name = "Device 1",
             address = "4D:74:99:36:BB:74",
             rssi = -55,
-            isOpened = true
+            isOpened = true,
+            isOpening = true,
+            isOpenTimeout = true
         ),
         DeviceListItem(
             name = "Device 2",
             address = "CD:EF:GH:IJ:KL:MN",
             rssi = -60,
-            isOpened = false
+            isOpened = false,
+            isOpening = true,
+            isOpenTimeout = true
         ),
         DeviceListItem(
             name = "Device 3",
             address = "OP:QR:ST:UV:WX:YZ",
             rssi = -70,
-            isOpened = false
+            isOpened = false,
+            isOpening = false,
+            isOpenTimeout = false
         ),
         DeviceListItem(
             name = "Device 4",
             address = "12:34:56:78:90:AB",
             rssi = null,
-            isOpened = true
+            isOpened = true,
+            isOpening = false,
+            isOpenTimeout = false
         ),
         DeviceListItem(
             name = "Device 5",
             address = "12:34:56:78:90:AB",
             rssi = null,
-            isOpened = true
+            isOpened = true,
+            isOpening = false,
+            isOpenTimeout = false
         ),
         DeviceListItem(
             name = "Device 6",
             address = "CD:EF:GH:IJ:KL:MN",
             rssi = null,
-            isOpened = true
+            isOpened = true,
+            isOpening = false,
+            isOpenTimeout = false
         ),
         DeviceListItem(
             name = "Device 7",
             address = "OP:QR:ST:UV:WX:YZ",
             rssi = null,
-            isOpened = false
+            isOpened = false,
+            isOpening = false,
+            isOpenTimeout = false
         ),
         DeviceListItem(
             name = "Device 8",
             address = "12:34:56:78:90:AB",
             rssi = null,
-            isOpened = true
+            isOpened = true,
+            isOpening = false,
+            isOpenTimeout = false
         )
     )
 }

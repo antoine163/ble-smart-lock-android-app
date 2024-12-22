@@ -1,6 +1,7 @@
 package com.antoine163.blesmartkey.ui
 
 import android.content.res.Configuration
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -34,8 +36,10 @@ fun DeviceListItemScreen(
     deviceName: String,
     isDoorOpen: Boolean,
     rssi: Int?,
+    isProgressing: Boolean,
+    isProgressError: Boolean,
     onOpenDoorClick: () -> Unit,
-){
+) {
     DeviceItemScreen(
         modifier = modifier,
         deviceName = deviceName,
@@ -43,7 +47,9 @@ fun DeviceListItemScreen(
         infoText = if (isDoorOpen) stringResource(id = R.string.state_open) else stringResource(id = R.string.state_close),
         infoWarnings = (rssi == null) && isDoorOpen,
         buttonText = stringResource(id = R.string.open_door),
-        onButtonClick = if((rssi != null) && !isDoorOpen) onOpenDoorClick else null
+        isProgressing = isProgressing,
+        isProgressError = isProgressError,
+        onButtonClick = if ((rssi != null) && !isDoorOpen) onOpenDoorClick else null
     )
 }
 
@@ -53,8 +59,9 @@ fun DeviceScanItemScreen(
     deviceName: String,
     deviceAddress: String,
     rssi: Int?,
+    isProgressing: Boolean,
     onConnectClick: () -> Unit,
-){
+) {
     DeviceItemScreen(
         modifier = modifier,
         deviceName = deviceName,
@@ -62,6 +69,8 @@ fun DeviceScanItemScreen(
         infoText = deviceAddress,
         infoWarnings = false,
         buttonText = stringResource(id = R.string.connect),
+        isProgressing = isProgressing,
+        isProgressError = false,
         onButtonClick = if (rssi != null) onConnectClick else null
     )
 }
@@ -74,9 +83,11 @@ fun DeviceItemScreen(
     infoText: String,
     infoWarnings: Boolean,
     buttonText: String,
+    isProgressing: Boolean,
+    isProgressError: Boolean,
     onButtonClick: (() -> Unit)?
 ) {
-    Card (
+    Card(
         modifier = modifier
     ) {
         Row(
@@ -86,8 +97,7 @@ fun DeviceItemScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             SignalStrengthIcon(
-                modifier = Modifier.width(55.dp),
-                rssi = rssi
+                modifier = Modifier.width(55.dp), rssi = rssi
             )
 
             Spacer(modifier = Modifier.width(dimensionResource(id = R.dimen.padding_small)))
@@ -111,6 +121,7 @@ fun DeviceItemScreen(
                 )
             }
 
+
             // Place the button at the end of the row
             Button(
                 onClick = { onButtonClick?.invoke() },
@@ -119,10 +130,37 @@ fun DeviceItemScreen(
                     .padding(start = dimensionResource(id = R.dimen.padding_medium))
                     .size(width = 110.dp, height = 40.dp)
             ) {
-                Text(
-                    text = buttonText,
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                Column {
+
+                    Row {
+                        Text(
+                            text = buttonText,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+
+                        if (isProgressing) {
+                            Spacer(modifier = Modifier.width(dimensionResource(id = R.dimen.padding_small)))
+                            Box(modifier = Modifier.align(Alignment.CenterVertically)) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(dimensionResource(id = R.dimen.icon_small_height)),
+                                    color = MaterialTheme.colorScheme.secondary,
+                                    trackColor = MaterialTheme.colorScheme.surfaceVariant
+                                )
+                            }
+                        }
+
+                        if (isProgressError) {
+                            Spacer(modifier = Modifier.width(dimensionResource(id = R.dimen.padding_small)))
+                            Icon(
+                                painter = painterResource(id = R.drawable.rounded_error_24),
+                                contentDescription = stringResource(id = R.string.error),
+                                modifier = Modifier.size(dimensionResource(id = R.dimen.icon_small_height)),
+                                tint = Color.Red
+                            )
+                        }
+                    }
+                }
+
             }
         }
     }
@@ -130,8 +168,7 @@ fun DeviceItemScreen(
 
 @Composable
 fun SignalStrengthIcon(
-    modifier: Modifier = Modifier,
-    rssi: Int?
+    modifier: Modifier = Modifier, rssi: Int?
 ) {
     val signalStrengthIcon = when {
         rssi == null -> R.drawable.rounded_signal_cellular_off_24
@@ -145,8 +182,8 @@ fun SignalStrengthIcon(
 
     // Use a Column to arrange the icon and text vertically
     Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally) {
+        modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         Icon(
             painter = painterResource(id = signalStrengthIcon),
             contentDescription = stringResource(id = R.string.signal_strength),
@@ -156,7 +193,8 @@ fun SignalStrengthIcon(
             text = if (rssi != null) "$rssi dBm" else stringResource(id = R.string.offline),
             style = MaterialTheme.typography.bodySmall,
             maxLines = 1,
-            overflow = TextOverflow.Ellipsis)
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 
@@ -175,9 +213,10 @@ private fun DeviceItemScreenPreview() {
         DeviceListItemScreen(
             deviceName = "Ble Smart Lock",
             isDoorOpen = false,
-            rssi = null,
-            onOpenDoorClick = {}
-        )
+            rssi = -80,
+            isProgressing = true,
+            isProgressError = true,
+            onOpenDoorClick = {})
     }
 }
 
@@ -197,7 +236,7 @@ private fun DeviceScanItemScreenPreview() {
             deviceName = "Ble Smart Lock",
             deviceAddress = "46:AF:B8:A6:76:10",
             rssi = -154,
-            onConnectClick = {}
-        )
+            isProgressing = false,
+            onConnectClick = {})
     }
 }

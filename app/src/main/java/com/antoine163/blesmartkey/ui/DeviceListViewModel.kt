@@ -38,7 +38,7 @@ class DeviceListViewModel(
     private val bluetoothLeScanner = dataModule.bluetoothManager().adapter.bluetoothLeScanner
 
     // Ble device to implement the openDoor function
-    private var bleDevice: BleDevice? = null
+    private var bleDeviceToOpenDoor: BleDevice? = null
 
     // Map of device addresses to their last seen timestamp
     private val deviceLastSeen = mutableMapOf<String, Long>()
@@ -51,9 +51,9 @@ class DeviceListViewModel(
         // Handle connection state changes
         override fun onConnectionStateChanged(isConnected: Boolean) {
             if (isConnected)
-                bleDevice?.openDoor()
+                bleDeviceToOpenDoor?.openDoor()
             else
-                bleDevice = null
+                bleDeviceToOpenDoor = null
         }
 
         // Handle lock state changes
@@ -62,17 +62,17 @@ class DeviceListViewModel(
         // Handle door state changes
         override fun onDoorStateChanged(isOpened: Boolean) {
             if (isOpened) {
-                bleDevice?.disconnect()
+                bleDeviceToOpenDoor?.disconnect()
             } else {
-                bleDevice?.unlock()
-                bleDevice?.openDoor()
+                bleDeviceToOpenDoor?.unlock()
+                bleDeviceToOpenDoor?.openDoor()
             }
 
             // Update the UI state with the new list of devices
-            bleDevice?.let { bleDevice ->
+            bleDeviceToOpenDoor?.let { bleDeviceToOpenDoor ->
                 _uiState.update { currentState ->
                     val updatedDevices = currentState.devices.map { device ->
-                        if (device.address == bleDevice.getAddress()) {
+                        if (device.address == bleDeviceToOpenDoor.getAddress()) {
                             device.copy(isOpened = isOpened)
                         } else {
                             device
@@ -107,11 +107,11 @@ class DeviceListViewModel(
     fun openDoor(address: String) {
         /* TODO programmer un timeout */
 
-        if (bleDevice != null && bleDevice?.getAddress() == address) {
-            bleDevice?.openDoor()
+        if (bleDeviceToOpenDoor != null && bleDeviceToOpenDoor?.getAddress() == address) {
+            bleDeviceToOpenDoor?.openDoor()
         } else {
-            bleDevice = BleDevice(dataModule.context, address, bleDeviceCallback)
-            bleDevice?.connect()
+            bleDeviceToOpenDoor = BleDevice(dataModule.context, address, bleDeviceCallback)
+            bleDeviceToOpenDoor?.connect()
         }
     }
 
@@ -148,7 +148,8 @@ class DeviceListViewModel(
             _uiState.update { currentUiState ->
                 currentUiState.copy(devices = currentUiState.devices.map { uiDevice ->
                     if (uiDevice.address == result.device.address) {
-                        updateSetting = (uiDevice.isOpened != isDoorOpened) || (uiDevice.name != bleDevName)
+                        updateSetting =
+                            (uiDevice.isOpened != isDoorOpened) || (uiDevice.name != bleDevName)
                         uiDevice.copy(
                             name = bleDevName,
                             rssi = result.rssi,
@@ -163,13 +164,15 @@ class DeviceListViewModel(
             // If isBleDoorOpen is different with de setting, update the setting
             if (updateSetting == true) {
                 viewModelScope.launch {
-                    val deviceSettings = dataModule.deviceListSettingsRepository().getDevice(result.device.address)
+                    val deviceSettings =
+                        dataModule.deviceListSettingsRepository().getDevice(result.device.address)
                     deviceSettings?.let { deviceSettings ->
                         val deviceSettingsUpdated = deviceSettings.copy {
                             this.name = bleDevName
                             this.wasOpened = isDoorOpened
                         }
-                        dataModule.deviceListSettingsRepository().updateDevice(deviceSettingsUpdated)
+                        dataModule.deviceListSettingsRepository()
+                            .updateDevice(deviceSettingsUpdated)
                     }
                 }
             }
@@ -240,14 +243,17 @@ class DeviceListViewModel(
                     scanFilters.add(scanFilter)
 
                     // Find if ble device already existent
-                    val uiBleDevice = uiState.value.devices.find { item -> item.address == deviceSettings.address }
+                    val uiBleDevice =
+                        uiState.value.devices.find { item -> item.address == deviceSettings.address }
 
                     // Create a DeviceListItem object for each device
                     DeviceListItem(
                         name = deviceSettings.name,
                         address = deviceSettings.address,
                         rssi = uiBleDevice?.rssi,
-                        isOpened = deviceSettings.wasOpened
+                        isOpened = deviceSettings.wasOpened,
+                        isOpening = false,
+                        isOpenTimeout = false
                     )
                 }
 
@@ -306,6 +312,8 @@ class DeviceListViewModel(
     override fun onCleared() {
         super.onCleared()
         bluetoothLeScanner.stopScan(scanCallback)
+
+        bleDeviceToOpenDoor?.disconnect()
 
         Log.d("BSK", "onCleared")
     }
