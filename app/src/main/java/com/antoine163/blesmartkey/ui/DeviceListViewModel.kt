@@ -14,12 +14,14 @@ import com.antoine163.blesmartkey.ble.BleDeviceCallback
 import com.antoine163.blesmartkey.copy
 import com.antoine163.blesmartkey.data.DataModule
 import com.antoine163.blesmartkey.data.model.DeviceListItem
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 data class DevicesListUiState(
     val devices: List<DeviceListItem> = listOf()
@@ -37,64 +39,10 @@ class DeviceListViewModel(
     // Bluetooth manager and scanner
     private val bluetoothLeScanner = dataModule.bluetoothManager().adapter.bluetoothLeScanner
 
-    // Ble device to implement the openDoor function
-    private var bleDeviceToOpenDoor: BleDevice? = null
 
     // Map of device addresses to their last seen timestamp
     private val deviceLastSeen = mutableMapOf<String, Long>()
     private val timeoutMillis = 5000L // 5 secondes
-
-    // BleDeviceCallback instance to handle callbacks from the BleDevice to implement the openDoor
-    // function
-    private val bleDeviceCallback = object : BleDeviceCallback() {
-
-        // Handle connection state changes
-        override fun onConnectionStateChanged(isConnected: Boolean) {
-            if (isConnected)
-                bleDeviceToOpenDoor?.openDoor()
-            else
-                bleDeviceToOpenDoor = null
-        }
-
-        // Handle lock state changes
-        override fun onLockStateChanged(isLocked: Boolean) {}
-
-        // Handle door state changes
-        override fun onDoorStateChanged(isOpened: Boolean) {
-            if (isOpened) {
-                bleDeviceToOpenDoor?.disconnect()
-            } else {
-                bleDeviceToOpenDoor?.unlock()
-                bleDeviceToOpenDoor?.openDoor()
-            }
-
-            // Update the UI state with the new list of devices
-            bleDeviceToOpenDoor?.let { bleDeviceToOpenDoor ->
-                _uiState.update { currentState ->
-                    val updatedDevices = currentState.devices.map { device ->
-                        if (device.address == bleDeviceToOpenDoor.getAddress()) {
-                            device.copy(isOpened = isOpened)
-                        } else {
-                            device
-                        }
-                    }
-                    currentState.copy(devices = updatedDevices)
-                }
-            }
-        }
-
-        // Handle current brightness read
-        override fun onBrightnessRead(brightness: Float) {}
-
-        // Handle brightness threshold read
-        override fun onBrightnessThChanged(brightness: Float) {}
-
-        // Handle device name changes
-        override fun onDeviceNameChanged(deviceName: String) {}
-
-        // Handle rssi changes
-        override fun onRssiRead(rssi: Int) {}
-    }
 
     /**
      * Opens the door associated with the given device address.
@@ -105,13 +53,73 @@ class DeviceListViewModel(
      * @param address The Bluetooth address of the door device.
      */
     fun openDoor(address: String) {
-        /* TODO programmer un timeout */
 
-        if (bleDeviceToOpenDoor != null && bleDeviceToOpenDoor?.getAddress() == address) {
-            bleDeviceToOpenDoor?.openDoor()
-        } else {
-            bleDeviceToOpenDoor = BleDevice(dataModule.context, address, bleDeviceCallback)
-            bleDeviceToOpenDoor?.connect()
+        var deviceFound = false
+
+        // Update the UI state to indicate that the door is being opened
+        _uiState.update { currentUiState ->
+            currentUiState.copy(devices = currentUiState.devices.map { device ->
+                if (device.address == address) {
+                    deviceFound = true
+                    device.copy(
+                        isOpening = true,
+                        isOpenTimeout = false
+                    )
+                } else device
+            })
+        }
+
+        // Check if the device is already connected
+        if (deviceFound == true) {
+            viewModelScope.launch {
+                // Deffered object to wait for the door to be opened
+                val deferred = CompletableDeferred<Unit>()
+
+                var bleDevice: BleDevice? = null
+                var bleDeviceCallback = object : BleDeviceCallback() {
+                    override fun onConnectionStateChanged(isConnected: Boolean) {
+                        // If the device is connected, read the door state
+                        if (isConnected) {
+                            bleDevice?.readDoorState()
+                        }
+                    }
+
+                    override fun onDoorStateChanged(isOpened: Boolean) {
+                        // If the door is closed, open the door
+                        if (isOpened == false) {
+                            bleDevice?.unlock() // Todo a supprimer
+                            bleDevice?.openDoor()
+                        } else {
+                            // Completes the deferred object to indicate that the door is opened
+                            deferred.complete(Unit)
+                        }
+                    }
+                }
+
+                // 5 seconds timeout to open the door
+                val result = withTimeoutOrNull(10000) {
+
+                    bleDevice = BleDevice(dataModule.context, address, bleDeviceCallback)
+                    bleDevice.connect()
+
+                    // Wait for the door to be opened
+                    deferred.await()
+                }
+
+                bleDevice?.disconnect()
+
+                // Update the UI state to indicate that the door is opened or timeout.
+                _uiState.update { currentUiState ->
+                    currentUiState.copy(devices = currentUiState.devices.map { device ->
+                        if (device.address == address) {
+                            device.copy(
+                                isOpening = result != null,
+                                isOpenTimeout = result == null
+                            )
+                        } else device
+                    })
+                }
+            }
         }
     }
 
@@ -312,10 +320,6 @@ class DeviceListViewModel(
     override fun onCleared() {
         super.onCleared()
         bluetoothLeScanner.stopScan(scanCallback)
-
-        bleDeviceToOpenDoor?.disconnect()
-
-        Log.d("BSK", "onCleared")
     }
 }
 
