@@ -125,24 +125,9 @@ fun DeviceSettingsScreen(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            // Dissociate Button
-            Column(
-                modifier = Modifier.clickable { onDissociate() },
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Icon(
-                    modifier = Modifier
-                        .size(dimensionResource(R.dimen.icon_small_height)),
-                    painter = painterResource(R.drawable.rounded_link_off_24),
-                    contentDescription = stringResource(R.string.dissociate)
-
-                )
-                Text(
-                    text = stringResource(R.string.dissociate),
-                    style = MaterialTheme.typography.bodySmall,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+            // Signal Strength
+            Column {
+                SignalStrengthIcon(rssi = deviceSettings.currentRssi)
             }
 
             // Door Icon
@@ -193,9 +178,24 @@ fun DeviceSettingsScreen(
                 }
             }
 
-            // Signal Strength
-            Column {
-                SignalStrengthIcon(rssi = deviceSettings.currentRssi)
+            // Dissociate Button
+            Column(
+                modifier = Modifier.clickable { onDissociate() },
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Icon(
+                    modifier = Modifier
+                        .size(dimensionResource(R.dimen.icon_small_height)),
+                    painter = painterResource(R.drawable.rounded_link_off_24),
+                    contentDescription = stringResource(R.string.dissociate)
+
+                )
+                Text(
+                    text = stringResource(R.string.dissociate),
+                    style = MaterialTheme.typography.bodySmall,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
         }
 
