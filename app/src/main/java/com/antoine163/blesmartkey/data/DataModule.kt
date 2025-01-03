@@ -36,14 +36,6 @@ class DataModule(application: Application) {
      */
     fun bluetoothManager() = bluetoothManager
 
-    private val deviceListSettingsRepository: DefaultDeviceListSettingsRepository by lazy {
-        DefaultDeviceListSettingsRepository(
-            DataStoreFactory.create(
-                produceFile = { application.dataStoreFile("DeviceListSettings.pb") },
-                serializer = DeviceListSettingsSerializer
-            )
-        )
-    }
 
     /**
      * Provides access to the [DeviceListSettingsRepository] instance.
@@ -54,6 +46,15 @@ class DataModule(application: Application) {
      * @return The [DeviceListSettingsRepository] instance.
      */
     fun deviceListSettingsRepository() = deviceListSettingsRepository
+
+    private val deviceListSettingsRepository: DefaultDeviceListSettingsRepository by lazy {
+        DefaultDeviceListSettingsRepository(
+            DataStoreFactory.create(
+                produceFile = { application.dataStoreFile("DeviceListSettings.pb") },
+                serializer = DeviceListSettingsSerializer
+            )
+        )
+    }
 
 
 }
