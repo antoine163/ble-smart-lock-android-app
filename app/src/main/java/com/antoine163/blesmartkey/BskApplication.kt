@@ -1,6 +1,7 @@
 package com.antoine163.blesmartkey
 
 import android.app.Application
+import android.content.Intent
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.antoine163.blesmartkey.data.DataModule
@@ -25,14 +26,9 @@ class BskApplication : Application() {
         ProcessLifecycleOwner.get().lifecycleScope.launch {
             dataModule.deviceListSettingsRepository().load()
         }
-    }
 
-    override fun onTerminate() {
-        super.onTerminate()
-
-        // Save device list settings to data store
-        ProcessLifecycleOwner.get().lifecycleScope.launch {
-            dataModule.deviceListSettingsRepository().save()
-        }
+        // Start the AutoUnlockService
+        val serviceIntent = Intent(this, AutoUnlockService::class.java)
+        startForegroundService(serviceIntent)
     }
 }
