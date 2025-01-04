@@ -20,9 +20,18 @@ import kotlinx.coroutines.launch
  * @property setting The device setting data. Defaults to an empty [DeviceSettingsItem].
  */
 data class DeviceSettingsUiState(
-    val setting: DeviceSettingsItem = DeviceSettingsItem()
+    val setting: DeviceSettingsItem = DeviceSettingsItem(
+        name = "Unknown",
+        address = "",
+        currentRssi = null,
+        isOpened = false,
+        isUnlocked = false,
+        thresholdNight = 50f,
+        currentBrightness = null,
+        autoUnlockEnabled = false,
+        autoUnlockRssiTh = -40
+    )
 )
-
 
 /**
  * ViewModel for managing the settings of a Bluetooth device.
@@ -41,7 +50,17 @@ class DeviceSettingsViewModel(
 
     // MutableStateFlow to hold the UI state of the device setting
     private val _uiState = MutableStateFlow(
-        DeviceSettingsUiState(setting = DeviceSettingsItem(address = deviceAdd))
+        DeviceSettingsUiState(setting = DeviceSettingsItem(
+            name = "Unknown",
+            address = deviceAdd,
+            currentRssi = null,
+            isOpened = false,
+            isUnlocked = false,
+            thresholdNight = 50f,
+            currentBrightness = null,
+            autoUnlockEnabled = false,
+            autoUnlockRssiTh = -40
+        ))
     )
     val uiState: StateFlow<DeviceSettingsUiState> = _uiState.asStateFlow()
 
@@ -210,7 +229,11 @@ class DeviceSettingsViewModel(
                         setting = DeviceSettingsItem(
                             name = deviceSetting.name,
                             address = deviceSetting.address,
+                            currentRssi = null,
                             isOpened = deviceSetting.wasOpened,
+                            isUnlocked = false,
+                            thresholdNight = 50f,
+                            currentBrightness = null,
                             autoUnlockEnabled = deviceSetting.autoUnlockEnabled,
                             autoUnlockRssiTh = deviceSetting.autoUnlockRssiTh
                         )

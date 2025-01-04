@@ -15,13 +15,13 @@ package com.antoine163.blesmartkey.data.model
  * @property autoUnlockRssiTh The RSSI threshold for auto-unlock.
  */
 data class DeviceSettingsItem(
-    val name: String = "Unknown",
-    val address: String = "",
-    val currentRssi: Int? = null,
-    val isOpened: Boolean = false,
-    val isUnlocked: Boolean = false,
-    val thresholdNight: Float = 50f,
-    val currentBrightness: Float? = null,
-    val autoUnlockEnabled: Boolean = false,
-    val autoUnlockRssiTh: Int = -40
+    val name: String,
+    val address: String,
+    val currentRssi: Int?,
+    val isOpened: Boolean,
+    val isUnlocked: Boolean,
+    val thresholdNight: Float,
+    val currentBrightness: Float?,
+    val autoUnlockEnabled: Boolean,
+    val autoUnlockRssiTh: Int,
 )
