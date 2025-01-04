@@ -10,34 +10,36 @@ import android.os.Binder
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import com.antoine163.blesmartkey.ble.BleDevice
+import com.antoine163.blesmartkey.ble.BleDeviceCallback
 import com.antoine163.blesmartkey.data.DataModule
+import com.antoine163.blesmartkey.data.model.DeviceAutoUnlok
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 
 class AutoUnlockService : Service() {
 
     private val binder = LocalBinder()
-
     private val dataModule: DataModule by lazy { (application as BskApplication).dataModule() }
-    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-
+    private var autoUnlockJob: Job? = null
+    private var unlockDeviceList = listOf<DeviceAutoUnlok>()
+    private var unlockBleDeviceList = listOf<BleDevice>()
 
 
     companion object {
         private const val CHANNEL_ID = "auto_unlock_channel"
-        private const val CHANNEL_NAME = "Déverrouillage automatique"
+        private const val CHANNEL_NAME = "Automatic unlocking"
         private const val NOTIFICATION_ID = 1
     }
 
     private fun createNotificationChannel() {
         val channel = NotificationChannel(
-            CHANNEL_ID,
-            CHANNEL_NAME,
-            NotificationManager.IMPORTANCE_DEFAULT
+            CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT
         )
         val notificationManager = getSystemService(NotificationManager::class.java)
         notificationManager.createNotificationChannel(channel)
@@ -49,35 +51,83 @@ class AutoUnlockService : Service() {
         )
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Service de déverrouillage automatique")
-            .setContentText("En cours d'exécution en arrière-plan")
-            .setSmallIcon(R.drawable.notification_icon)
-            .setContentIntent(pendingIntent)
-            .build()
+            .setContentTitle("Automatic Unlock Service").setContentText("Running in background")
+            .setSmallIcon(R.drawable.notification_icon).setContentIntent(pendingIntent).build()
     }
 
     inner class LocalBinder : Binder() {
         fun getService(): AutoUnlockService = this@AutoUnlockService
     }
 
-    fun start() {
 
-        serviceScope.launch {
-            val devices = dataModule.deviceListSettingsRepository().getDeviceList()
-            Log.d("BSK", "AutoUnlockService::onStartCommand::serviceScope: devices: $devices")
+    // BleDeviceCallback instance to handle callbacks from the BleDevice
+    private val bleDeviceCallback = object : BleDeviceCallback() {
 
-            while(true) {
-                Log.d("BSK", "AutoUnlockService is running...")
-                delay(3000)
+        // Handle connection state changes
+        override fun onConnectionStateChanged(bleDevice: BleDevice, isConnected: Boolean) {
+            if (isConnected) {
+                // Read Door state
+                bleDevice.readDoorState()
+
+                // Run Auto unlock process for the device
+                unlockDeviceList.find { it.address == bleDevice.getAddress() }?.rssiToUnlock?.let { rssi ->
+                    bleDevice.autoUnlock(rssi)
+                }
+            } else {
+
             }
         }
 
-        Log.d("BSK", "AutoUnlockService::start")
+        // Handle door state changes
+        override fun onDoorStateChanged(bleDevice: BleDevice, isOpened: Boolean) {
+            Log.d("BSK", "isOpened: $isOpened")
+        }
+    }
+
+    fun start() {
+        if (autoUnlockJob == null) {
+            autoUnlockJob = CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+
+                // Collect the latest device list settings and update unlockDeviceList
+                dataModule.deviceListSettingsRepository().deviceListSettingsFlow.first { deviceListSettings ->
+                    unlockDeviceList = deviceListSettings.devicesList
+                        .filter { it.autoUnlockEnabled }
+                        .map {
+                            DeviceAutoUnlok(
+                                address = it.address,
+                                rssiToUnlock = it.autoUnlockRssiTh
+                            )
+                        }
+                    true
+                }
+
+                // If the unlock device list is empty, stop the service
+                if (unlockDeviceList.isEmpty()) {
+                    stopSelf()
+                } else {
+                    unlockBleDeviceList = unlockDeviceList.map {
+                        val bleDevice = BleDevice(dataModule.context, it.address, bleDeviceCallback)
+                        bleDevice.connect()
+                        bleDevice
+                    }
+                }
+            }
+        } else {
+            Log.w("BSK", "AutoUnlockService::start - Already running")
+        }
     }
 
     fun stop() {
-        Log.d("BSK", "AutoUnlockService::stop")
+        autoUnlockJob?.cancel()
+        autoUnlockJob = null
+
+        unlockBleDeviceList.forEach {
+            it.disconnect()
+        }
+        unlockBleDeviceList = listOf()
+
     }
+
 
     // onCreate ------------------------------------------------------------------------------------
     override fun onCreate() {
@@ -91,16 +141,14 @@ class AutoUnlockService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 
-        // Créer un canal de notification (pour Android 8.0 et supérieur)
+        // Create notification channel (for Android 8.0 and above)
         createNotificationChannel()
 
-        // Créer la notification
+        // Create the notification
         val notification = createNotification()
 
-        // Démarrer le service au premier plan
+        // Start service in foreground
         startForeground(NOTIFICATION_ID, notification)
-
-        //Todo intent est null et que pas de devicer avec auto unlock activé fermet le service
 
         Log.d("BSK", "AutoUnlockService::onStartCommand")
         return START_STICKY
@@ -116,6 +164,8 @@ class AutoUnlockService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+
+        stop()
 
         Log.d("BSK", "AutoUnlockService::onDestroy")
     }
@@ -164,7 +214,6 @@ class AutoUnlockService : Service() {
 //            .build()
 //        bluetoothManager?.adapter?.bluetoothLeScanner?.startScan(scanFilters, scanSettings, scanCallback)
 //    }
-
 
 
 //

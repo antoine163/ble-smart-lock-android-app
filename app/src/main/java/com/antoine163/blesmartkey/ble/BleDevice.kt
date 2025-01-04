@@ -376,6 +376,7 @@ class BleDevice(
                     (rssi >= autoUnlockRssi)) {
                     autoUnlockDisable()
                     unlock()
+                    Log.i("BSK", "$address -> Auto-unlock triggered!")
                 }
             } else {
                 Log.e("BSK", "$address -> Read remote RSSI failed! Status: $status")
@@ -658,7 +659,7 @@ class BleDevice(
             }
         }
 
-        Log.i("BSK", "Auto-unlock job started")
+        Log.i("BSK", "$address -> Auto-unlock job started")
     }
 
     /**
@@ -670,7 +671,7 @@ class BleDevice(
             autoUnlockJob?.cancel()
             autoUnlockJob = null
 
-            Log.i("BSK", "Auto-unlock job stopped")
+            Log.i("BSK", "$address -> Auto-unlock job stopped")
         }
     }
 
