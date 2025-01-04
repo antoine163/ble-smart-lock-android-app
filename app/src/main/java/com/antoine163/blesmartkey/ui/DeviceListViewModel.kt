@@ -19,6 +19,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
@@ -36,7 +37,7 @@ class DeviceListViewModel(
     private val _uiState = MutableStateFlow(DevicesListUiState())
     val uiState: StateFlow<DevicesListUiState> = _uiState.asStateFlow()
 
-    // Bluetooth manager and scanner
+    // Bluetooth scanner
     private val bluetoothLeScanner = dataModule.bluetoothManager().adapter.bluetoothLeScanner
 
 
@@ -77,25 +78,25 @@ class DeviceListViewModel(
                 var bleDevice: BleDevice? = null
                 var bleRssi: Int? = null
                 var bleDeviceCallback = object : BleDeviceCallback() {
-                    override fun onConnectionStateChanged(isConnected: Boolean) {
+                    override fun onConnectionStateChanged(bleDevice: BleDevice, isConnected: Boolean) {
                         // If the device is connected, read the door state
                         if (isConnected) {
-                            bleDevice?.readRssi()
-                            bleDevice?.readDoorState()
+                            bleDevice.readRssi()
+                            bleDevice.readDoorState()
                         }
                     }
 
-                    override fun onDoorStateChanged(isOpened: Boolean) {
+                    override fun onDoorStateChanged(bleDevice: BleDevice, isOpened: Boolean) {
                         // If the door is closed, open the door
                         if (isOpened == false) {
-                            bleDevice?.openDoor()
+                            bleDevice.openDoor()
                         } else {
                             // Completes the deferred object to indicate that the door is opened
                             deferred.complete(Unit)
                         }
                     }
 
-                    override fun onRssiRead(rssi: Int) {
+                    override fun onRssiRead(bleDevice: BleDevice, rssi: Int) {
                         bleRssi = rssi
                     }
                 }
@@ -248,7 +249,7 @@ class DeviceListViewModel(
             val scanFilters: MutableList<ScanFilter> = mutableListOf()
 
             // Collect the list of setting devices from repository
-            dataModule.deviceListSettingsRepository().deviceListSettingsFlow.collect { deviceListSettings ->
+            dataModule.deviceListSettingsRepository().deviceListSettingsFlow.collectLatest { deviceListSettings ->
 
                 // Convert the DevicesBleSettings object to a list of DeviceListItem objects and create a list of ScanFilter objects
                 val deviceList = deviceListSettings.devicesList.map { deviceSettings ->

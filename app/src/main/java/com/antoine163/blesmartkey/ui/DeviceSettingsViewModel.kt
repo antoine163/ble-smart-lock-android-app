@@ -103,7 +103,7 @@ class DeviceSettingsViewModel(
     private val bleDeviceCallback = object : BleDeviceCallback() {
 
         // Handle connection state changes
-        override fun onConnectionStateChanged(isConnected: Boolean) {
+        override fun onConnectionStateChanged(bleDevice: BleDevice, isConnected: Boolean) {
 
             if (isConnected) {
                 bleDevice.readDeviceName()
@@ -116,19 +116,19 @@ class DeviceSettingsViewModel(
             }
         }
 
-        override fun onConnectionFailed() {
+        override fun onConnectionStateFailed(bleDevice: BleDevice, ) {
             //Todo afficher un erreur a l'utilisateur
         }
 
         // Handle lock state changes
-        override fun onLockStateChanged(isLocked: Boolean) {
+        override fun onLockStateChanged(bleDevice: BleDevice, isLocked: Boolean) {
             _uiState.update { currentState ->
                 currentState.copy(setting = currentState.setting.copy(isUnlocked = !isLocked))
             }
         }
 
         // Handle door state changes
-        override fun onDoorStateChanged(isOpened: Boolean) {
+        override fun onDoorStateChanged(bleDevice: BleDevice, isOpened: Boolean) {
             _uiState.update { currentState ->
                 currentState.copy(setting = currentState.setting.copy(isOpened = isOpened))
             }
@@ -138,14 +138,14 @@ class DeviceSettingsViewModel(
         }
 
         // Handle current brightness read
-        override fun onBrightnessRead(brightness: Float) {
+        override fun onBrightnessRead(bleDevice: BleDevice, brightness: Float) {
             _uiState.update { currentState ->
                 currentState.copy(setting = currentState.setting.copy(currentBrightness = brightness))
             }
         }
 
         // Handle brightness threshold read
-        override fun onBrightnessThChanged(brightness: Float) {
+        override fun onBrightnessThChanged(bleDevice: BleDevice, brightness: Float) {
             _uiState.update { currentState ->
                 currentState.copy(setting = currentState.setting.copy(thresholdNight = brightness))
             }
@@ -155,7 +155,7 @@ class DeviceSettingsViewModel(
         }
 
         // Handle device name changes
-        override fun onDeviceNameChanged(deviceName: String) {
+        override fun onDeviceNameChanged(bleDevice: BleDevice, deviceName: String) {
             _uiState.update { currentState ->
                 currentState.copy(setting = currentState.setting.copy(name = deviceName))
             }
@@ -165,7 +165,7 @@ class DeviceSettingsViewModel(
         }
 
         // Handle rssi changes
-        override fun onRssiRead(rssi: Int) {
+        override fun onRssiRead(bleDevice: BleDevice, rssi: Int) {
             _uiState.update { currentState ->
                 currentState.copy(
                     setting = currentState.setting.copy(

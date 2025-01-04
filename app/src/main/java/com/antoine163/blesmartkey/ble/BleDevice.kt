@@ -117,14 +117,13 @@ class BleDevice(
                     Log.i("BSK", "$address -> Connected")
                 } else if (newState == BluetoothGatt.STATE_DISCONNECTED) {
                     // Disconnected from the GATT Server
-                    callback.onConnectionStateChanged(false)
+                    callback.onConnectionStateChanged(this@BleDevice, false)
 
                     Log.i("BSK", "$address -> Disconnected")
                 }
             } else {
                 Log.e("BSK", "$address -> Connection state change failed! Status: $status")
-                callback.onConnectionFailed()
-                disconnect()
+                callback.onConnectionStateFailed(this@BleDevice)
             }
         }
 
@@ -171,7 +170,7 @@ class BleDevice(
                     ) {
                         Log.e("BSK", "$address -> Service not found!")
 
-                        callback.onConnectionFailed()
+                        callback.onConnectionStateFailed(this@BleDevice)
                         disconnect()
                         return
                     }
@@ -190,14 +189,14 @@ class BleDevice(
                     }
 
                     // Successfully connected to the GATT Server and discovered services
-                    callback.onConnectionStateChanged(true)
+                    callback.onConnectionStateChanged(this@BleDevice, true)
 
                     // Handle the door state change, before a connection the lock is locked
-                    callback.onLockStateChanged(true)
+                    callback.onLockStateChanged(this@BleDevice, true)
                 }
             } else {
                 Log.e("BSK", "$address -> Service discovery failed! Status: $status")
-                callback.onConnectionFailed()
+                callback.onConnectionStateFailed(this@BleDevice)
                 disconnect()
             }
         }
@@ -241,7 +240,7 @@ class BleDevice(
                 // Handle the lock state write response
                 CHAR_UUID_LOCK_STATE -> {
                     if (status == BluetoothGatt.GATT_SUCCESS) {
-                        callback.onLockStateChanged(false)
+                        callback.onLockStateChanged(this@BleDevice, false)
                     }
                 }
 
@@ -289,27 +288,27 @@ class BleDevice(
                 // Handle the device name read response
                 CHAR_UUID_DEVICE_NAME -> {
                     val deviceName = String(value)
-                    callback.onDeviceNameChanged(deviceName)
+                    callback.onDeviceNameChanged(this@BleDevice, deviceName)
                 }
 
                 // Handle the door state read response
                 CHAR_UUID_DOOR_STATE -> {
                     val isOpened = value[0] == 0x01.toByte()
-                    callback.onDoorStateChanged(isOpened)
+                    callback.onDoorStateChanged(this@BleDevice, isOpened)
                 }
 
                 // Handle the brightness read response
                 CHAR_UUID_BRIGHTNESS -> {
                     val brightness =
                         ByteBuffer.wrap(value).order(ByteOrder.LITTLE_ENDIAN).getFloat()
-                    callback.onBrightnessRead(brightness)
+                    callback.onBrightnessRead(this@BleDevice, brightness)
                 }
 
                 // Handle the brightness threshold read response
                 CHAR_UUID_BRIGHTNESS_TH -> {
                     val brightness =
                         ByteBuffer.wrap(value).order(ByteOrder.LITTLE_ENDIAN).getFloat()
-                    callback.onBrightnessThChanged(brightness)
+                    callback.onBrightnessThChanged(this@BleDevice, brightness)
                 }
             }
 
@@ -338,7 +337,7 @@ class BleDevice(
             when (characteristic.uuid) {
                 CHAR_UUID_DOOR_STATE -> {
                     val isOpened = value[0] == 0x01.toByte()
-                    callback.onDoorStateChanged(isOpened)
+                    callback.onDoorStateChanged(this@BleDevice, isOpened)
                 }
             }
         }
@@ -369,7 +368,7 @@ class BleDevice(
                     pendingReadRssi = false
 
                     // Handle the RSSI value
-                    callback.onRssiRead(rssi)
+                    callback.onRssiRead(this@BleDevice, rssi)
                 }
 
                 // The auto unlock is enable ?
@@ -658,6 +657,8 @@ class BleDevice(
                 }
             }
         }
+
+        Log.i("BSK", "Auto-unlock job started")
     }
 
     /**
@@ -665,8 +666,12 @@ class BleDevice(
      * This effectively stops the scheduled auto-unlock operation.
      */
     private fun stopAutoUnlockJob() {
-        autoUnlockJob?.cancel()
-        autoUnlockJob = null
+        autoUnlockJob?.let {
+            autoUnlockJob?.cancel()
+            autoUnlockJob = null
+
+            Log.i("BSK", "Auto-unlock job stopped")
+        }
     }
 
     /**
