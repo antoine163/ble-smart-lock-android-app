@@ -62,4 +62,6 @@
     <string name="dlg_rssi_label">Rssi</string>
     <string name="dlg_rssi_invalid">Invalid input. Please enter a value between %1$s and %2$s.</string>
 
+    <string name="service_description">Manages automatic unlocking of your Bluetooth Smart Locks</string>
+
 </resources>
