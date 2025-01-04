@@ -29,7 +29,8 @@ data class DeviceSettingsUiState(
         thresholdNight = 50f,
         currentBrightness = null,
         autoUnlockEnabled = false,
-        autoUnlockRssiTh = -40
+        autoUnlockRssiTh = -40,
+        isConnectionStateError = false
     )
 )
 
@@ -59,7 +60,8 @@ class DeviceSettingsViewModel(
             thresholdNight = 50f,
             currentBrightness = null,
             autoUnlockEnabled = false,
-            autoUnlockRssiTh = -40
+            autoUnlockRssiTh = -40,
+            isConnectionStateError = false
         ))
     )
     val uiState: StateFlow<DeviceSettingsUiState> = _uiState.asStateFlow()
@@ -135,8 +137,10 @@ class DeviceSettingsViewModel(
             }
         }
 
-        override fun onConnectionStateFailed(bleDevice: BleDevice, ) {
-            //Todo afficher un erreur a l'utilisateur
+        override fun onConnectionStateFailed(bleDevice: BleDevice) {
+            _uiState.update { currentState ->
+                currentState.copy(setting = currentState.setting.copy(isConnectionStateError = true))
+            }
         }
 
         // Handle lock state changes
@@ -235,7 +239,8 @@ class DeviceSettingsViewModel(
                             thresholdNight = 50f,
                             currentBrightness = null,
                             autoUnlockEnabled = deviceSetting.autoUnlockEnabled,
-                            autoUnlockRssiTh = deviceSetting.autoUnlockRssiTh
+                            autoUnlockRssiTh = deviceSetting.autoUnlockRssiTh,
+                            isConnectionStateError = false
                         )
                     )
                 }

@@ -24,4 +24,5 @@ data class DeviceSettingsItem(
     val currentBrightness: Float?,
     val autoUnlockEnabled: Boolean,
     val autoUnlockRssiTh: Int,
+    val isConnectionStateError: Boolean
 )

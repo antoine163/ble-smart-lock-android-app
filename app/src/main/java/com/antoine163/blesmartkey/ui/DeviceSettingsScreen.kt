@@ -762,7 +762,8 @@ fun createDemoDeviceSetting(): DeviceSettingsItem {
         thresholdNight = 42.8f,
         currentBrightness = 68.7f,
         autoUnlockEnabled = true,
-        autoUnlockRssiTh = -80
+        autoUnlockRssiTh = -80,
+        isConnectionStateError = false
     )
 }
 
