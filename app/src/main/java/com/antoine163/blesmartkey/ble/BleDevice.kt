@@ -123,6 +123,8 @@ class BleDevice(
                 }
             } else {
                 Log.e("BSK", "$address -> Connection state change failed! Status: $status")
+                callback.onConnectionFailed()
+                disconnect()
             }
         }
 
