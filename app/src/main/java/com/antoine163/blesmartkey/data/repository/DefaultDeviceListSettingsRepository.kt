@@ -56,7 +56,12 @@ class DefaultDeviceListSettingsRepository (
         deviceListSettingsFlow.update { currentDevices ->
             val updatedDevices = currentDevices.devicesList
             val index = updatedDevices.indexOfFirst { it.address == address }
-            currentDevices.toBuilder().removeDevices(index).build()
+
+            if (index != -1) {
+                currentDevices.toBuilder().removeDevices(index).build()
+            }
+
+            currentDevices
         }
     }
 
