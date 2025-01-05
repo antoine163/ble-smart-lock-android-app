@@ -26,11 +26,15 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -52,7 +56,6 @@ import com.antoine163.blesmartkey.R
 import com.antoine163.blesmartkey.data.model.DeviceSettingsItem
 import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
 
-
 /**
  * Composable function for the device settings screen.
  *
@@ -66,9 +69,35 @@ import com.antoine163.blesmartkey.ui.theme.BleSmartKeyTheme
 fun DeviceSettingsScreen(
     modifier: Modifier = Modifier,
     viewModel: DeviceSettingsViewModel,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    snackbarHostState: SnackbarHostState
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    val snackbarMessage = stringResource(R.string.connection_state_error_action)
+    val snackbarActionLabel = stringResource(R.string.dissociate)
+    LaunchedEffect(
+        key1 = uiState.setting.isConnectionStateError
+    ) {
+        if (uiState.setting.isConnectionStateError) {
+            val result = snackbarHostState.showSnackbar(
+                message = snackbarMessage,
+                actionLabel = snackbarActionLabel,
+                duration = SnackbarDuration.Indefinite,
+                withDismissAction = true
+            )
+            when (result) {
+                SnackbarResult.ActionPerformed -> {
+                    viewModel.dissociate()
+                    onBack()
+                }
+
+                SnackbarResult.Dismissed -> {
+                    onBack()
+                }
+            }
+        }
+    }
 
     DeviceSettingsScreen(
         modifier = modifier,
@@ -80,7 +109,11 @@ fun DeviceSettingsScreen(
             onBack()
         },
         onDeviceNameChange = { deviceName -> viewModel.bleDevice.setDeviceName(deviceName) },
-        onBrightnessThChange = { brightnessTh -> viewModel.bleDevice.setBrightnessTh(brightnessTh) },
+        onBrightnessThChange = { brightnessTh ->
+            viewModel.bleDevice.setBrightnessTh(
+                brightnessTh
+            )
+        },
         onAutoUnlockChange = { autoUnlock -> viewModel.autoUnlock(autoUnlock) },
         onUnlockRssiThChange = { unlockRssiTh -> viewModel.setAutoUnlockRssiTh(unlockRssiTh) },
         onDissociate = {
@@ -252,36 +285,40 @@ fun DeviceSettingsScreen(
 
 
         // Actions Card
-        ActionsCard(modifier = Modifier
-            .padding(vertical = dimensionResource(id = R.dimen.padding_small))
-            .fillMaxWidth(),
+        ActionsCard(
+            modifier = Modifier
+                .padding(vertical = dimensionResource(id = R.dimen.padding_small))
+                .fillMaxWidth(),
             enabled = deviceSettings.currentRssi != null,
             isUnlock = deviceSettings.isUnlocked,
             isDoorOpen = deviceSettings.isOpened,
             onUnlock = onUnlock,
             onOpenDoor = onOpenDoor,
-            onDisconnect = onDisconnect)
+            onDisconnect = onDisconnect
+        )
 
         // Night Lighting Card
         NightLightingCard(
             modifier = Modifier
                 .padding(vertical = dimensionResource(id = R.dimen.padding_tiny))
                 .fillMaxWidth(),
-            currentBrightness = deviceSettings.currentRssi ?.let { deviceSettings.currentBrightness },
+            currentBrightness = deviceSettings.currentRssi?.let { deviceSettings.currentBrightness },
             brightnessTh = deviceSettings.thresholdNight,
             enabled = deviceSettings.currentRssi != null,
             onBrightnessThChange = onBrightnessThChange
         )
 
         // Auto Unlock Card
-        AutoUnlockCard(modifier = Modifier
-            .padding(vertical = dimensionResource(id = R.dimen.padding_small))
-            .fillMaxWidth(),
+        AutoUnlockCard(
+            modifier = Modifier
+                .padding(vertical = dimensionResource(id = R.dimen.padding_small))
+                .fillMaxWidth(),
             autoUnlock = deviceSettings.autoUnlockEnabled,
             unlockRssiTh = deviceSettings.autoUnlockRssiTh,
             currentRssi = deviceSettings.currentRssi,
             onAutoUnlockChange = onAutoUnlockChange,
-            onUnlockRssiThChange = onUnlockRssiThChange)
+            onUnlockRssiThChange = onUnlockRssiThChange
+        )
     }
 }
 
@@ -376,7 +413,6 @@ fun ActionsCard(
 }
 
 
-
 /**
  * A card displaying the night lighting settings.
  *
@@ -430,7 +466,7 @@ fun NightLightingCard(
             currentValue = currentBrightness?.let { "%.1f".format(it) },
             onNewValue = { showEditDialog = true },
             enabled = enabled,
-            onSetCurrentValue = { currentBrightness ?.let { onBrightnessThChange(it) } },
+            onSetCurrentValue = { currentBrightness?.let { onBrightnessThChange(it) } },
         )
     }
 }
@@ -466,7 +502,7 @@ fun AutoUnlockCard(
             EditValueDialog(
                 initialValue = unlockRssiTh,
                 onConfirm = {
-                    onUnlockRssiThChange( it )
+                    onUnlockRssiThChange(it)
                     showEditDialog = false
                 },
                 onDismiss = { showEditDialog = false },
@@ -492,7 +528,7 @@ fun AutoUnlockCard(
             value = unlockRssiTh.toString(),
             currentValue = currentRssi?.toString(),
             onNewValue = { showEditDialog = true },
-            onSetCurrentValue = { currentRssi ?.let { onUnlockRssiThChange(it) } },
+            onSetCurrentValue = { currentRssi?.let { onUnlockRssiThChange(it) } },
             enabled = autoUnlock,
             onEnabledChange = { onAutoUnlockChange(it) }
         )
@@ -530,13 +566,13 @@ fun ParamCard(
 ) {
     val isEnabled = enabled ?: true
 
-    Column (
+    Column(
         modifier = modifier
     ) {
         // Title
-        Row (
+        Row(
             verticalAlignment = Alignment.CenterVertically
-        ){
+        ) {
             // Title
             Text(
                 text = title,
@@ -576,13 +612,13 @@ fun ParamCard(
                 .clickable(enabled = isEnabled, onClick = onNewValue)
         ) {
             // Row with name, value, and current value
-            Column (
+            Column(
                 modifier = Modifier.padding(dimensionResource(id = R.dimen.padding_small)),
-            ){
+            ) {
                 // Row with name and value
-                Row (
+                Row(
                     verticalAlignment = Alignment.CenterVertically
-                ){
+                ) {
                     // Name
                     Text(
                         modifier = Modifier.weight(1f),
@@ -652,8 +688,8 @@ fun <T> EditValueDialog(
     stringToValue: (String) -> T?,
     suffix: String = "",
 ) {
-    var value by remember { mutableStateOf( TextFieldValue (valueToString( initialValue ) ) ) }
-    var isValid by remember { mutableStateOf( stringToValue( value.text ) != null ) }
+    var value by remember { mutableStateOf(TextFieldValue(valueToString(initialValue))) }
+    var isValid by remember { mutableStateOf(stringToValue(value.text) != null) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -664,7 +700,7 @@ fun <T> EditValueDialog(
                     value = value,
                     onValueChange = { newValue ->
                         value = newValue
-                        isValid = stringToValue( newValue.text ) != null
+                        isValid = stringToValue(newValue.text) != null
                     },
                     label = { Text(label) },
                     keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
@@ -688,7 +724,7 @@ fun <T> EditValueDialog(
         },
         confirmButton = {
             TextButton(
-                onClick = { onConfirm( stringToValue( value.text )!! ) },
+                onClick = { onConfirm(stringToValue(value.text)!!) },
                 enabled = isValid
             ) {
                 Text(stringResource(R.string.ok))

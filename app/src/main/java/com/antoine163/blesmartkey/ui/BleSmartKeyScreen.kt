@@ -1,6 +1,5 @@
 package com.antoine163.blesmartkey.ui
 
-import android.app.Application
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -13,13 +12,15 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -53,8 +54,10 @@ fun BleSmartKeyScreen(
     val currentScreen = SmartKeyScreen.valueOf(
         backStackEntry?.destination?.route?.substringBefore("/") ?: SmartKeyScreen.Main.name
     )
+    val snackbarHostState = remember { SnackbarHostState() }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             BleSmartKeyAppBar(
                 currentScreenName = stringResource(id = currentScreen.id),
@@ -130,7 +133,6 @@ fun BleSmartKeyScreen(
                 val deviceAdd = navBackStackEntry.arguments?.getString("deviceAdd") ?: ""
 
                 // Create and manage the DeviceSettingViewModel
-                val application = LocalContext.current.applicationContext as Application
                 val viewModel: DeviceSettingsViewModel = viewModel(
                     factory = DeviceSettingViewModelFactory(dataModule, deviceAdd)
                 )
@@ -143,7 +145,8 @@ fun BleSmartKeyScreen(
                         .fillMaxSize(1f)
                         .verticalScroll(scrollState),
                     viewModel = viewModel,
-                    onBack = { navController.navigateUp() }
+                    onBack = { navController.navigateUp() },
+                    snackbarHostState = snackbarHostState
                 )
             }
         }

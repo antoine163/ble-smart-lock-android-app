@@ -63,5 +63,6 @@
     <string name="dlg_rssi_invalid">Invalid input. Please enter a value between %1$s and %2$s.</string>
 
     <string name="service_description">Manages automatic unlocking of your Bluetooth Smart Locks</string>
+    <string name="connection_state_error_action">Hum, something went wrong... Try to dissocate the device and rebind it.</string>
 
 </resources>
