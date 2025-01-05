@@ -73,14 +73,23 @@ class AutoUnlockService : Service() {
                 unlockDeviceList.find { it.address == bleDevice.getAddress() }?.rssiToUnlock?.let { rssi ->
                     bleDevice.autoUnlock(rssi)
                 }
-            } else {
-
             }
         }
 
         // Handle door state changes
         override fun onDoorStateChanged(bleDevice: BleDevice, isOpened: Boolean) {
-            Log.d("BSK", "isOpened: $isOpened")
+            // Update the repository if the door status has changed
+            CoroutineScope(Dispatchers.IO).launch {
+
+                // Update the device list settings
+                dataModule.deviceListSettingsRepository()
+                    .getDevice(bleDevice.getAddress())?.let { deviceSetting ->
+                        if (deviceSetting.wasOpened != isOpened) {
+                            dataModule.deviceListSettingsRepository()
+                                .updateDevice(deviceSetting.copy { this.wasOpened = isOpened })
+                        }
+                    }
+            }
         }
     }
 
