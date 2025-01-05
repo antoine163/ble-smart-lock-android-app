@@ -16,9 +16,9 @@ package com.antoine163.blesmartkey.data.model
  * @param autoUnlockRssiTh The RSSI threshold for auto-unlock.
  * @param connectionStateFailed The number of connection failures for the device.
  * Can be a value of BluetoothGatt :
- * - 0 [BluetoothGatt.GATT_SUCCESS]: No error
+ * - 0 BluetoothGatt.GATT_SUCCESS: No error
  * - 22: Pairing failed
- * - 147 [BluetoothGatt.GATT_CONNECTION_TIMEOUT]: Connection timeout.
+ * - 147 BluetoothGatt.GATT_CONNECTION_TIMEOUT: Connection timeout.
  * - x: Unknown error
  */
 data class DeviceSettingsItem(
