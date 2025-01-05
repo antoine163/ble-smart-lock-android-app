@@ -155,6 +155,10 @@ class DeviceSettingsViewModel(
         }
 
         override fun onConnectionStateFailed(bleDevice: BleDevice, status: Int) {
+            // Cancel job connection state
+            connectionStateJob?.cancel()
+
+            // Update de UI
             _uiState.update { currentState ->
                 currentState.copy(setting = currentState.setting.copy(
                     connectionStateFailed = status,
