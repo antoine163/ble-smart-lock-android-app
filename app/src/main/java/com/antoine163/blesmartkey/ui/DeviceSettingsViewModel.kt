@@ -1,5 +1,6 @@
 package com.antoine163.blesmartkey.ui
 
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -8,12 +9,14 @@ import com.antoine163.blesmartkey.ble.BleDevice
 import com.antoine163.blesmartkey.ble.BleDeviceCallback
 import com.antoine163.blesmartkey.data.DataModule
 import com.antoine163.blesmartkey.data.model.DeviceSettingsItem
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.antoine163.blesmartkey.R
 
 /**
  * UI state for representing the state of a device setting.
@@ -30,7 +33,7 @@ data class DeviceSettingsUiState(
         currentBrightness = null,
         autoUnlockEnabled = false,
         autoUnlockRssiTh = -40,
-        isConnectionStateError = false
+        connectionErrorMessage = null
     )
 )
 
@@ -51,20 +54,25 @@ class DeviceSettingsViewModel(
 
     // MutableStateFlow to hold the UI state of the device setting
     private val _uiState = MutableStateFlow(
-        DeviceSettingsUiState(setting = DeviceSettingsItem(
-            name = "Unknown",
-            address = deviceAdd,
-            currentRssi = null,
-            isOpened = false,
-            isUnlocked = false,
-            thresholdNight = 50f,
-            currentBrightness = null,
-            autoUnlockEnabled = false,
-            autoUnlockRssiTh = -40,
-            isConnectionStateError = false
-        ))
+        DeviceSettingsUiState(
+            setting = DeviceSettingsItem(
+                name = "Unknown",
+                address = deviceAdd,
+                currentRssi = null,
+                isOpened = false,
+                isUnlocked = false,
+                thresholdNight = 50f,
+                currentBrightness = null,
+                autoUnlockEnabled = false,
+                autoUnlockRssiTh = -40,
+                connectionErrorMessage = null
+            )
+        )
     )
     val uiState: StateFlow<DeviceSettingsUiState> = _uiState.asStateFlow()
+
+    // Job manage timer of connection state
+    private var connectionStateJob: Job? = null
 
     /**
      * Enables or disables the auto-unlock feature.
@@ -92,7 +100,6 @@ class DeviceSettingsViewModel(
         _uiState.update { currentState ->
             currentState.copy(setting = currentState.setting.copy(autoUnlockRssiTh = rssiTh))
         }
-
         saveDeviceSetting(_uiState.value.setting)
     }
 
@@ -126,10 +133,17 @@ class DeviceSettingsViewModel(
         // Handle connection state changes
         override fun onConnectionStateChanged(bleDevice: BleDevice, isConnected: Boolean) {
 
+            // Cancel job connection state
+            connectionStateJob?.cancel()
+
             if (isConnected) {
+                // If connected read deferment priority
                 bleDevice.readDeviceName()
                 bleDevice.readDoorState()
                 bleDevice.readBrightnessTh()
+
+                bleDevice.readRssi()
+                bleDevice.readBrightness()
             } else {
                 _uiState.update { currentState ->
                     currentState.copy(setting = currentState.setting.copy(currentRssi = null))
@@ -139,7 +153,9 @@ class DeviceSettingsViewModel(
 
         override fun onConnectionStateFailed(bleDevice: BleDevice) {
             _uiState.update { currentState ->
-                currentState.copy(setting = currentState.setting.copy(isConnectionStateError = true))
+                currentState.copy(setting = currentState.setting.copy(
+                    connectionErrorMessage = R.string.connection_error_state,
+                    currentRssi = null))
             }
         }
 
@@ -164,6 +180,12 @@ class DeviceSettingsViewModel(
         override fun onBrightnessRead(bleDevice: BleDevice, brightness: Float) {
             _uiState.update { currentState ->
                 currentState.copy(setting = currentState.setting.copy(currentBrightness = brightness))
+            }
+
+            // Read the brightness again after a delay
+            viewModelScope.launch {
+                delay(800)
+                bleDevice.readBrightness()
             }
         }
 
@@ -195,6 +217,12 @@ class DeviceSettingsViewModel(
                         currentRssi = rssi
                     )
                 )
+            }
+
+            // Read the rssi again after a delay
+            viewModelScope.launch {
+                delay(800)
+                bleDevice.readRssi()
             }
         }
     }
@@ -240,19 +268,20 @@ class DeviceSettingsViewModel(
                             currentBrightness = null,
                             autoUnlockEnabled = deviceSetting.autoUnlockEnabled,
                             autoUnlockRssiTh = deviceSetting.autoUnlockRssiTh,
-                            isConnectionStateError = false
+                            connectionErrorMessage = null
                         )
                     )
                 }
             }
         }
 
-        // Read Rssi and brightness every 0.8s
-        viewModelScope.launch {
-            while (true) {
-                delay(800)
-                bleDevice.readRssi()
-                bleDevice.readBrightness()
+        // Manage connection timeout
+        connectionStateJob = viewModelScope.launch {
+            delay(5000)
+            _uiState.update { currentState ->
+                currentState.copy(setting = currentState.setting.copy(
+                    connectionErrorMessage = R.string.connection_error_timeout,
+                    currentRssi = null))
             }
         }
     }

@@ -74,14 +74,15 @@ fun DeviceSettingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    val snackbarMessage = stringResource(R.string.connection_state_error_action)
+    val snackbarErreurMessage = uiState.setting.connectionErrorMessage?.let { stringResource(it) } ?: run { "" }
+    val snackbarActionMessage = stringResource(R.string.connection_error_action)
     val snackbarActionLabel = stringResource(R.string.dissociate)
     LaunchedEffect(
-        key1 = uiState.setting.isConnectionStateError
+        key1 = uiState.setting.connectionErrorMessage
     ) {
-        if (uiState.setting.isConnectionStateError) {
+        uiState.setting.connectionErrorMessage?.let {
             val result = snackbarHostState.showSnackbar(
-                message = snackbarMessage,
+                message = "$snackbarErreurMessage $snackbarActionMessage",
                 actionLabel = snackbarActionLabel,
                 duration = SnackbarDuration.Indefinite,
                 withDismissAction = true
@@ -799,7 +800,7 @@ fun createDemoDeviceSetting(): DeviceSettingsItem {
         currentBrightness = 68.7f,
         autoUnlockEnabled = true,
         autoUnlockRssiTh = -80,
-        isConnectionStateError = false
+        connectionErrorMessage = null
     )
 }
 
