@@ -42,7 +42,8 @@ enum class SmartKeyScreen(
 ) {
     Main(id = R.string.app_name),
     Scanning(id = R.string.screen_scanning_name),
-    Setting(id = R.string.screen_setting_name);
+    Setting(id = R.string.screen_setting_name),
+    Menu(id = R.string.screen_menu_name)
 }
 
 @Composable
@@ -62,7 +63,8 @@ fun BleSmartKeyScreen(
             BleSmartKeyAppBar(
                 currentScreenName = stringResource(id = currentScreen.id),
                 canNavigateBack = navController.previousBackStackEntry != null,
-                navigateUp = { navController.navigateUp() }
+                navigateUp = { navController.navigateUp() },
+                onMenu = { navController.navigate(SmartKeyScreen.Menu.name) }
             )
         },
         floatingActionButton = {
@@ -100,6 +102,13 @@ fun BleSmartKeyScreen(
                     onSettingClick = { deviceAdd ->
                         navController.navigate(SmartKeyScreen.Setting.name + "/$deviceAdd")
                     }
+                )
+            }
+
+            // Define a composable function for the SmartKey menu screen
+            composable(route = SmartKeyScreen.Menu.name) {
+                MenuScreen(
+                    modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.padding_medium))
                 )
             }
 
@@ -159,6 +168,7 @@ fun BleSmartKeyAppBar(
     currentScreenName: String,
     canNavigateBack: Boolean,
     navigateUp: () -> Unit,
+    onMenu: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     CenterAlignedTopAppBar(
@@ -176,7 +186,7 @@ fun BleSmartKeyAppBar(
         },
         navigationIcon = {
             if (!canNavigateBack) {
-                IconButton(onClick = { /* TODO */ }) {
+                IconButton(onClick = onMenu) {
                     Icon(
                         painter = painterResource(id = R.drawable.rounded_menu_24),
                         contentDescription = stringResource(R.string.open_menu)

@@ -2,6 +2,7 @@
     <string name="app_name">Ble Smart Key</string>
     <string name="screen_scanning_name">Scanning…</string>
     <string name="screen_setting_name">Setting</string>
+    <string name="screen_menu_name">Menu</string>
     <string name="signal_strength">Signal Strength</string>
     <string name="open_door">Open</string>
     <string name="state_open">Opened</string>
@@ -67,5 +68,10 @@
     <string name="connection_dissocate_action">Try to dissocate the device and rebind it.</string>
     <string name="connection_state_error">Hum, something went wrong…</string>
     <string name="connection_state_timeout">Timeout connection…</string>
+    <string name="app_icon">App Icon</string>
+    <string name="see_on_github">See on Github</string>
+    <string name="build_date">Build date: %1$s</string>
+    <string name="author">Author: %1$s</string>
+    <string name="version">Version: %1$s</string>
 
 </resources>
