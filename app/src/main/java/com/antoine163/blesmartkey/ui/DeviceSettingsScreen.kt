@@ -1,5 +1,6 @@
 package com.antoine163.blesmartkey.ui
 
+import android.bluetooth.BluetoothGatt
 import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -74,29 +75,47 @@ fun DeviceSettingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    val snackbarErreurMessage = uiState.setting.connectionErrorMessage?.let { stringResource(it) } ?: run { "" }
-    val snackbarActionMessage = stringResource(R.string.connection_error_action)
-    val snackbarActionLabel = stringResource(R.string.dissociate)
+
+    // Select snackbar visuals from error state
+    data class MySnackbarVisuals (
+        val message: String,
+        val actionLabel: String? = null,
+        val withDismissAction: Boolean = false,
+        val duration: SnackbarDuration = SnackbarDuration.Indefinite,
+        val actionPerformed: (() -> Unit) = {},
+        val dismissed: (() -> Unit) = {}
+    )
+
+    val snackbarVisuals = when(uiState.setting.connectionStateFailed) {
+        BluetoothGatt.GATT_SUCCESS -> MySnackbarVisuals(
+            message = "")
+        BluetoothGatt.GATT_CONNECTION_TIMEOUT -> MySnackbarVisuals(
+            message = stringResource(R.string.connection_state_timeout))
+        else -> MySnackbarVisuals(
+            message = stringResource(R.string.connection_state_error) + " " + stringResource(R.string.connection_dissocate_action),
+            actionLabel = stringResource(R.string.dissociate),
+            withDismissAction = true,
+            actionPerformed = { viewModel.dissociate(); onBack()},
+            dismissed = { onBack() })
+    }
+
+    // Show snackbar message if error
     LaunchedEffect(
-        key1 = uiState.setting.connectionErrorMessage
+        key1 = uiState.setting.connectionStateFailed
     ) {
-        uiState.setting.connectionErrorMessage?.let {
+        if (uiState.setting.connectionStateFailed != BluetoothGatt.GATT_SUCCESS) {
             val result = snackbarHostState.showSnackbar(
-                message = "$snackbarErreurMessage $snackbarActionMessage",
-                actionLabel = snackbarActionLabel,
-                duration = SnackbarDuration.Indefinite,
-                withDismissAction = true
+                message = snackbarVisuals.message,
+                actionLabel = snackbarVisuals.actionLabel,
+                duration = snackbarVisuals.duration,
+                withDismissAction = snackbarVisuals.withDismissAction
             )
             when (result) {
-                SnackbarResult.ActionPerformed -> {
-                    viewModel.dissociate()
-                    onBack()
-                }
-
-                SnackbarResult.Dismissed -> {
-                    onBack()
-                }
+                SnackbarResult.ActionPerformed -> { snackbarVisuals.actionPerformed() }
+                SnackbarResult.Dismissed -> { snackbarVisuals.dismissed() }
             }
+        } else {
+            snackbarHostState.currentSnackbarData?.dismiss()
         }
     }
 
@@ -800,7 +819,7 @@ fun createDemoDeviceSetting(): DeviceSettingsItem {
         currentBrightness = 68.7f,
         autoUnlockEnabled = true,
         autoUnlockRssiTh = -80,
-        connectionErrorMessage = null
+        connectionStateFailed = BluetoothGatt.GATT_SUCCESS
     )
 }
 

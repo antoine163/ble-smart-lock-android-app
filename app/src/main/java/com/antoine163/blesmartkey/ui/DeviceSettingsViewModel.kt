@@ -1,6 +1,6 @@
 package com.antoine163.blesmartkey.ui
 
-import androidx.compose.ui.res.stringResource
+import android.bluetooth.BluetoothGatt
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import com.antoine163.blesmartkey.R
 
 /**
  * UI state for representing the state of a device setting.
@@ -33,7 +32,7 @@ data class DeviceSettingsUiState(
         currentBrightness = null,
         autoUnlockEnabled = false,
         autoUnlockRssiTh = -40,
-        connectionErrorMessage = null
+        connectionStateFailed = BluetoothGatt.GATT_SUCCESS
     )
 )
 
@@ -65,7 +64,7 @@ class DeviceSettingsViewModel(
                 currentBrightness = null,
                 autoUnlockEnabled = false,
                 autoUnlockRssiTh = -40,
-                connectionErrorMessage = null
+                connectionStateFailed = BluetoothGatt.GATT_SUCCESS
             )
         )
     )
@@ -136,25 +135,29 @@ class DeviceSettingsViewModel(
             // Cancel job connection state
             connectionStateJob?.cancel()
 
+            // If connected read deferment priority
             if (isConnected) {
-                // If connected read deferment priority
                 bleDevice.readDeviceName()
                 bleDevice.readDoorState()
                 bleDevice.readBrightnessTh()
 
                 bleDevice.readRssi()
                 bleDevice.readBrightness()
-            } else {
-                _uiState.update { currentState ->
-                    currentState.copy(setting = currentState.setting.copy(currentRssi = null))
-                }
+            }
+
+            // Update de UI
+            _uiState.update { currentState ->
+                currentState.copy(
+                    setting = currentState.setting.copy(
+                        currentRssi = if (isConnected) currentState.setting.currentRssi else null,
+                        connectionStateFailed = BluetoothGatt.GATT_SUCCESS))
             }
         }
 
-        override fun onConnectionStateFailed(bleDevice: BleDevice) {
+        override fun onConnectionStateFailed(bleDevice: BleDevice, status: Int) {
             _uiState.update { currentState ->
                 currentState.copy(setting = currentState.setting.copy(
-                    connectionErrorMessage = R.string.connection_error_state,
+                    connectionStateFailed = status,
                     currentRssi = null))
             }
         }
@@ -268,7 +271,7 @@ class DeviceSettingsViewModel(
                             currentBrightness = null,
                             autoUnlockEnabled = deviceSetting.autoUnlockEnabled,
                             autoUnlockRssiTh = deviceSetting.autoUnlockRssiTh,
-                            connectionErrorMessage = null
+                            connectionStateFailed = BluetoothGatt.GATT_SUCCESS
                         )
                     )
                 }
@@ -280,7 +283,7 @@ class DeviceSettingsViewModel(
             delay(5000)
             _uiState.update { currentState ->
                 currentState.copy(setting = currentState.setting.copy(
-                    connectionErrorMessage = R.string.connection_error_timeout,
+                    connectionStateFailed = BluetoothGatt.GATT_CONNECTION_TIMEOUT,
                     currentRssi = null))
             }
         }

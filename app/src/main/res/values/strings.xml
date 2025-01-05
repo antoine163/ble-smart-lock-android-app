@@ -64,8 +64,8 @@
 
     <string name="service_description">Manages automatic unlocking of your Bluetooth Smart Locks</string>
 
-    <string name="connection_error_action">Try to dissocate the device and rebind it.</string>
-    <string name="connection_error_state">Hum, something went wrong…</string>
-    <string name="connection_error_timeout">Timeout connection…</string>
+    <string name="connection_dissocate_action">Try to dissocate the device and rebind it.</string>
+    <string name="connection_state_error">Hum, something went wrong…</string>
+    <string name="connection_state_timeout">Timeout connection…</string>
 
 </resources>

@@ -123,7 +123,7 @@ class BleDevice(
                 }
             } else {
                 Log.e("BSK", "$address -> Connection state change failed! Status: $status")
-                callback.onConnectionStateFailed(this@BleDevice)
+                callback.onConnectionStateFailed(this@BleDevice, status)
             }
         }
 
@@ -170,7 +170,7 @@ class BleDevice(
                     ) {
                         Log.e("BSK", "$address -> Service not found!")
 
-                        callback.onConnectionStateFailed(this@BleDevice)
+                        callback.onConnectionStateFailed(this@BleDevice, BluetoothStatusCodes.FEATURE_NOT_SUPPORTED)
                         disconnect()
                         return
                     }
@@ -196,7 +196,7 @@ class BleDevice(
                 }
             } else {
                 Log.e("BSK", "$address -> Service discovery failed! Status: $status")
-                callback.onConnectionStateFailed(this@BleDevice)
+                callback.onConnectionStateFailed(this@BleDevice, status)
                 disconnect()
             }
         }
