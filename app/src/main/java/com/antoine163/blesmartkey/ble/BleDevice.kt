@@ -170,7 +170,10 @@ class BleDevice(
                     ) {
                         Log.e("BSK", "$address -> Service not found!")
 
-                        callback.onConnectionStateFailed(this@BleDevice, BluetoothStatusCodes.FEATURE_NOT_SUPPORTED)
+                        callback.onConnectionStateFailed(
+                            this@BleDevice,
+                            BluetoothStatusCodes.FEATURE_NOT_SUPPORTED
+                        )
                         disconnect()
                         return
                     }
@@ -373,10 +376,11 @@ class BleDevice(
 
                 // The auto unlock is enable ?
                 if ((isAutoUnlockEnabled == true) &&
-                    (rssi >= autoUnlockRssi)) {
-                    autoUnlockDisable()
+                    (rssi >= autoUnlockRssi)
+                ) {
                     unlock()
                     Log.i("BSK", "$address -> Auto-unlock triggered!")
+                    autoUnlockDisable()
                 }
             } else {
                 Log.e("BSK", "$address -> Read remote RSSI failed! Status: $status")
@@ -502,8 +506,7 @@ class BleDevice(
      * The result of the read operation will be handled by the corresponding callback
      * mechanism (e.g., onCharacteristicRead).
      */
-    fun readDeviceName()
-    {
+    fun readDeviceName() {
         readCharacteristics(gattCharDeviceName)
     }
 
@@ -535,8 +538,7 @@ class BleDevice(
      * is typically handled by a callback function that is registered when
      * setting up Bluetooth communication.
      */
-    fun readBrightnessTh()
-    {
+    fun readBrightnessTh() {
         readCharacteristics(gattCharBrightnessTh)
     }
 
@@ -550,8 +552,7 @@ class BleDevice(
      *
      * @see readCharacteristics
      */
-    fun readDoorState()
-    {
+    fun readDoorState() {
         readCharacteristics(gattCharDoorState)
     }
 

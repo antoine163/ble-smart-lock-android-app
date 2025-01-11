@@ -76,6 +76,11 @@ class AutoUnlockService : Service() {
             }
         }
 
+        override fun onConnectionStateFailed(bleDevice: BleDevice, status: Int) {
+            // Attempt to reconnect if the connection fails
+            bleDevice.connect()
+        }
+
         // Handle door state changes
         override fun onDoorStateChanged(bleDevice: BleDevice, isOpened: Boolean) {
             // Update the repository if the door status has changed
