@@ -89,7 +89,10 @@ class DeviceListViewModel(
                     override fun onDoorStateChanged(bleDevice: BleDevice, isOpened: Boolean) {
                         // If the door is closed, open the door
                         if (isOpened == false) {
-                            bleDevice.openDoor()
+                            viewModelScope.launch {
+                                delay(4700)
+                                bleDevice.openDoor()
+                            }
                         } else {
                             // Completes the deferred object to indicate that the door is opened
                             deferred.complete(Unit)
@@ -98,6 +101,26 @@ class DeviceListViewModel(
 
                     override fun onRssiRead(bleDevice: BleDevice, rssi: Int) {
                         bleRssi = rssi
+
+                        // Update the UI state to update rssi.
+                        _uiState.update { currentUiState ->
+                            currentUiState.copy(devices = currentUiState.devices.map { device ->
+                                if (device.address == address) {
+                                    // Update the last seen timestamp for the device
+                                    deviceLastSeen[device.address] = System.currentTimeMillis()
+
+                                    device.copy(
+                                        rssi = bleRssi
+                                    )
+                                } else device
+                            })
+                        }
+
+                        // Read rssi again in 1s
+                        viewModelScope.launch {
+                            delay(1000)
+                            bleDevice.readRssi()
+                        }
                     }
                 }
 
