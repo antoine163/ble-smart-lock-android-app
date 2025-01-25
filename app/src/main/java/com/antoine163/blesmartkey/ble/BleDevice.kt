@@ -55,6 +55,13 @@ class BleDevice(
 
 
     private var pendingReadRssi = false
+
+    // Variable to manage auto connection
+    private var isAutoDisconnectEnabled = false
+    private var autoDisconnectRssi: Int = 0
+    private var autoDisconnectJob: Job? = null
+
+    // Variable to manage auto unlock
     private var isAutoUnlockEnabled = false
     private var autoUnlockRssi: Int = 0
     private var autoUnlockJob: Job? = null
@@ -382,6 +389,15 @@ class BleDevice(
                     Log.i("BSK", "$address -> Auto-unlock triggered!")
                     autoUnlockDisable()
                 }
+
+                // The auto disconnect is enable ?
+                if ((isAutoDisconnectEnabled == true) &&
+                    (rssi < autoDisconnectRssi)
+                ) {
+                    disconnect()
+                    Log.i("BSK", "$address -> Auto-disconnect triggered!")
+                    autoDisconnectDisable()
+                }
             } else {
                 Log.e("BSK", "$address -> Read remote RSSI failed! Status: $status")
 
@@ -604,6 +620,66 @@ class BleDevice(
     }
 
     /**
+     * Enables automatic disconnection from the Bluetooth device based on the received signal strength indicator (RSSI).
+     *
+     * This function initiates a process that will automatically disconnect from the currently connected
+     * Bluetooth device if its RSSI falls below a specified threshold for a certain period.
+     *
+     *
+     * @param rssi The RSSI threshold below which the device should be considered for disconnection.
+     */
+    fun autoDisconnect(rssi: Int) {
+        stopAutoDisconnectJob()
+
+        gattDevice?.let { device ->
+            autoDisconnectRssi = rssi
+            isAutoDisconnectEnabled = true
+
+            startAutoDisconnectJob()
+        }
+    }
+
+    /**
+     * Disables the automatic disconnection feature.
+     */
+    fun autoDisconnectDisable() {
+        isAutoDisconnectEnabled = false
+        stopAutoDisconnectJob()
+    }
+
+    /**
+     * Starts a coroutine job that periodically checks the remote RSSI (Received Signal Strength Indicator)
+     * of the connected GATT (Generic Attribute Profile) device.
+     */
+    private fun startAutoDisconnectJob() {
+        autoDisconnectJob = CoroutineScope(Dispatchers.IO).launch {
+            while (true) {
+                gattDevice?.let { device ->
+                    device.readRemoteRssi()
+                    delay(AUTO_DISCONNECT_CHECK_INTERVAL)
+                } ?: run {
+                    autoDisconnectDisable()
+                    return@launch
+                }
+            }
+        }
+
+        Log.i("BSK", "$address -> Auto-disconnect job started")
+    }
+
+    /**
+     * Stops the auto-disconnect job if it is currently running.
+     */
+    private fun stopAutoDisconnectJob() {
+        autoDisconnectJob?.let {
+            autoDisconnectJob?.cancel()
+            autoDisconnectJob = null
+
+            Log.i("BSK", "$address -> Auto-disconnect job stopped")
+        }
+    }
+
+    /**
      * Enables and configures the auto-unlock feature.
      *
      * This function starts a job that periodically checks the RSSI value of the connected
@@ -743,6 +819,7 @@ class BleDevice(
 
     companion object {
         private const val AUTO_UNLOCK_CHECK_INTERVAL = 800L
+        private const val AUTO_DISCONNECT_CHECK_INTERVAL = 800L
 
         private val SERV_UUID_GENERIC_ACCESS =
             UUID.fromString("00001800-0000-1000-8000-00805f9b34fb")
