@@ -1,10 +1,16 @@
 package com.antoine163.blesmartkey
 
+import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.bluetooth.le.BluetoothLeScanner
+import android.bluetooth.le.ScanCallback
+import android.bluetooth.le.ScanFilter
+import android.bluetooth.le.ScanResult
+import android.bluetooth.le.ScanSettings
 import android.content.Intent
 import android.os.Binder
 import android.os.IBinder
@@ -21,14 +27,14 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-
+@SuppressLint("MissingPermission")
 class AutoUnlockService : Service() {
 
     private val binder = LocalBinder()
     private val dataModule: DataModule by lazy { (application as BskApplication).dataModule() }
+    private val bluetoothLeScanner: BluetoothLeScanner by lazy { dataModule.bluetoothManager().adapter.bluetoothLeScanner }
     private var autoUnlockJob: Job? = null
     private var unlockDeviceList = listOf<DeviceAutoUnlok>()
-    private var unlockBleDeviceList = listOf<BleDevice>()
 
 
     companion object {
@@ -59,8 +65,102 @@ class AutoUnlockService : Service() {
         fun getService(): AutoUnlockService = this@AutoUnlockService
     }
 
+    fun start() {
+        if (autoUnlockJob == null) {
+            autoUnlockJob = CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
 
-    // BleDeviceCallback instance to handle callbacks from the BleDevice
+                // Create a list of ScanFilter objects for each device to unlock
+                val scanFilters: MutableList<ScanFilter> = mutableListOf()
+
+                // Collect the latest device list settings and update unlockDeviceList
+                dataModule.deviceListSettingsRepository().deviceListSettingsFlow.first { deviceListSettings ->
+                    unlockDeviceList = deviceListSettings.devicesList
+                        .filter { it.autoUnlockEnabled }
+                        .map {
+                            // Create a ScanFilter for each device to unlock
+                            val scanFilter = ScanFilter.Builder()
+                                .setDeviceAddress(it.address)
+                                .build()
+                            scanFilters.add(scanFilter)
+
+                            DeviceAutoUnlok(
+                                bleDevice = BleDevice(dataModule.context, it.address, bleDeviceCallback),
+                                rssiToUnlock = it.autoUnlockRssiTh
+                            )
+                        }
+                    true
+                }
+
+                // No device to unlock ?
+                if (unlockDeviceList.isEmpty()) {
+                    // Stop the service
+                    stopSelf()
+                } else {
+                    // Scanning BLE unlock device list
+                    bluetoothLeScanner.stopScan(scanCallback)
+                    if (scanFilters.isNotEmpty()) {
+                        val scanSettings = ScanSettings.Builder()
+                            .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+                            .build()
+                        bluetoothLeScanner.startScan(scanFilters, scanSettings, scanCallback)
+                    }
+                }
+            }
+        } else {
+            Log.w("BSK", "AutoUnlockService::start - Already running")
+        }
+    }
+
+    fun stop() {
+        autoUnlockJob?.cancel()
+        autoUnlockJob = null
+
+        bluetoothLeScanner.stopScan(scanCallback)
+        unlockDeviceList.forEach {
+            it.bleDevice.disconnect()
+        }
+        unlockDeviceList = listOf()
+
+    }
+
+
+    // onCreate ------------------------------------------------------------------------------------
+    override fun onCreate() {
+        super.onCreate()
+    }
+
+    // onStartCommand -----------------------------------------------------------------------------------
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+
+        // Create notification channel (for Android 8.0 and above)
+        createNotificationChannel()
+
+        // Create the notification
+        val notification = createNotification()
+
+        // Start service in foreground
+        startForeground(NOTIFICATION_ID, notification)
+
+        return START_STICKY
+    }
+
+    // Binder --------------------------------------------------------------------------------------
+    override fun onBind(intent: Intent?): IBinder? {
+        Log.d("BSK", "AutoUnlockService::onBind")
+        return binder
+    }
+
+    // onDestroy -----------------------------------------------------------------------------------
+    override fun onDestroy() {
+        super.onDestroy()
+        stop()
+    }
+
+
+    // Bluetooth -----------------------------------------------------------------------------------
+    /**
+     * Callback object for handling BLE device events.
+     */
     private val bleDeviceCallback = object : BleDeviceCallback() {
 
         // Handle connection state changes
@@ -69,16 +169,14 @@ class AutoUnlockService : Service() {
                 // Read Door state
                 bleDevice.readDoorState()
 
-                // Run Auto unlock process for the device
-                unlockDeviceList.find { it.address == bleDevice.getAddress() }?.rssiToUnlock?.let { rssi ->
-                    bleDevice.autoUnlock(rssi)
-                }
+                // Unlock the ble device
+                bleDevice.unlock()
             }
         }
 
         override fun onConnectionStateFailed(bleDevice: BleDevice, status: Int) {
-            // Attempt to reconnect if the connection fails
-            bleDevice.connect()
+            Log.d("BSK", "Connection state failed for ${bleDevice.getAddress()}")
+            bleDevice.disconnect()
         }
 
         // Handle door state changes
@@ -95,181 +193,53 @@ class AutoUnlockService : Service() {
                         }
                     }
             }
+
+            // Enable auto disconnect if the door is close
+            if (isOpened == false)
+            {
+                unlockDeviceList.find { it.bleDevice == bleDevice }?.let { it ->
+                    bleDevice.autoDisconnect((it.rssiToUnlock * 1.3f).toInt()) // add 30% offset
+                }
+            } else {
+                bleDevice.autoDisconnectDisable()
+            }
         }
     }
 
-    fun start() {
-        if (autoUnlockJob == null) {
-            autoUnlockJob = CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+    /**
+     * Scan callback object that handles the results of Bluetooth LE scans.
+     */
+    private val scanCallback = object : ScanCallback() {
+        override fun onScanResult(callbackType: Int, result: ScanResult) {
+            super.onScanResult(callbackType, result)
 
-                // Collect the latest device list settings and update unlockDeviceList
-                dataModule.deviceListSettingsRepository().deviceListSettingsFlow.first { deviceListSettings ->
-                    unlockDeviceList = deviceListSettings.devicesList
-                        .filter { it.autoUnlockEnabled }
-                        .map {
-                            DeviceAutoUnlok(
-                                address = it.address,
-                                rssiToUnlock = it.autoUnlockRssiTh
-                            )
-                        }
-                    true
-                }
+//            // Extract device door state from advertising data
+//            val isDoorOpened =
+//                result.scanRecord?.advertisingDataMap?.get(0x2D)
+//                    ?.takeIf { it.size >= 3 }
+//                    ?.let { it[2].toInt() == 0x01 } == true
 
-                // If the unlock device list is empty, stop the service
-                if (unlockDeviceList.isEmpty()) {
-                    stopSelf()
-                } else {
-                    unlockBleDeviceList = unlockDeviceList.map {
-                        val bleDevice = BleDevice(dataModule.context, it.address, bleDeviceCallback)
-                        bleDevice.connect()
-                        bleDevice
-                    }
+            Log.d(
+                "BSK",
+                "${result.device.address} -> Scanned : '${result.rssi}dbm"
+            )
+
+            // Find the device in the unlock list to start the unlock
+            unlockDeviceList.find { it.bleDevice.getAddress() == result.device.address }?.let { it ->
+                if (result.rssi >= it.rssiToUnlock) {
+                    it.bleDevice.connect()
                 }
             }
-        } else {
-            Log.w("BSK", "AutoUnlockService::start - Already running")
+        }
+
+        override fun onBatchScanResults(results: List<ScanResult?>?) {
+            super.onBatchScanResults(results)
+        }
+
+        override fun onScanFailed(errorCode: Int) {
+            super.onScanFailed(errorCode)
+            // Handle scan failure
+            Log.e("BSK", "Scan failed with error code: $errorCode")
         }
     }
-
-    fun stop() {
-        autoUnlockJob?.cancel()
-        autoUnlockJob = null
-
-        unlockBleDeviceList.forEach {
-            it.disconnect()
-        }
-        unlockBleDeviceList = listOf()
-
-    }
-
-
-    // onCreate ------------------------------------------------------------------------------------
-    override fun onCreate() {
-        super.onCreate()
-        //createNotificationChannel()
-
-        Log.d("BSK", "AutoUnlockService::onCreate")
-    }
-
-    // onStartCommand -----------------------------------------------------------------------------------
-
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-
-        // Create notification channel (for Android 8.0 and above)
-        createNotificationChannel()
-
-        // Create the notification
-        val notification = createNotification()
-
-        // Start service in foreground
-        startForeground(NOTIFICATION_ID, notification)
-
-        Log.d("BSK", "AutoUnlockService::onStartCommand")
-        return START_STICKY
-    }
-
-    // Binder --------------------------------------------------------------------------------------
-    override fun onBind(intent: Intent?): IBinder? {
-        Log.d("BSK", "AutoUnlockService::onBind")
-        return binder
-    }
-
-    // onDestroy -----------------------------------------------------------------------------------
-
-    override fun onDestroy() {
-        super.onDestroy()
-
-        stop()
-
-        Log.d("BSK", "AutoUnlockService::onDestroy")
-    }
-
-//
-//    // Bluetooth -----------------------------------------------------------------------------------
-//
-//    private val bluetoothManager: BluetoothManager? by lazy {
-//        getSystemService(BLUETOOTH_SERVICE) as BluetoothManager?
-//
-//    }
-//
-//    private val scanCallback = object : ScanCallback() {
-//        override fun onScanResult(callbackType: Int, result: ScanResult) {
-//            super.onScanResult(callbackType, result)
-//            Log.d("BSK", "AutoUnlockService::Scan result: ${result.device.name} - ${result.device.address} - ${result.rssi}")
-//        }
-//
-//        override fun onBatchScanResults(results: List<ScanResult?>?) {
-//            super.onBatchScanResults(results)
-//            Log.d("BSK", "AutoUnlockService::Batch scan results: ${results?.size} devices detected:")
-//        }
-//
-//        override fun onScanFailed(errorCode: Int) {
-//            super.onScanFailed(errorCode)
-//            // Handle scan failure
-//            Log.e("BSK", "AutoUnlockService::Scan failed with error code: $errorCode")
-//        }
-//    }
-//
-//    fun updateListScan() {
-//
-//        bluetoothManager?.adapter?.bluetoothLeScanner?.stopScan(scanCallback)
-//
-//        val scanFilters: MutableList<ScanFilter> = mutableListOf()
-//        unlockDev.forEach {
-//            val scanFilter = ScanFilter.Builder()
-//                .setDeviceAddress(it.address)
-//                .build()
-//            scanFilters.add(scanFilter)
-//        }
-//
-//        val scanSettings = ScanSettings.Builder()
-//            .setScanMode(ScanSettings.SCAN_MODE_LOW_POWER)
-//            .setReportDelay(0)
-//            .build()
-//        bluetoothManager?.adapter?.bluetoothLeScanner?.startScan(scanFilters, scanSettings, scanCallback)
-//    }
-
-
-//
-//    // BleDeviceCallback instance to handle callbacks from the BleDevice
-//    private val bleDeviceCallback = object : BleDeviceCallback() {
-//
-//        // Handle connection state changes
-//        override fun onConnectionStateChanged(isConnected: Boolean) {
-//            Log.d("BSK", "isConnected: $isConnected")
-//        }
-//
-//        // Handle lock state changes
-//        override fun onLockStateChanged(isLocked: Boolean) {
-//            Log.d("BSK", "isLocked: $isLocked")
-//        }
-//
-//        // Handle door state changes
-//        override fun onDoorStateChanged(isOpened: Boolean) {
-//            Log.d("BSK", "isOpened: $isOpened")
-//        }
-//
-//        // Handle current brightness read
-//        override fun onBrightnessRead(brightness: Float) {
-//            Log.d("BSK", "brightness: $brightness")
-//        }
-//
-//        // Handle brightness threshold read
-//        override fun onBrightnessThChanged(brightness: Float) {
-//            Log.d("BSK", "brightness: $brightness")
-//        }
-//
-//        // Handle device name changes
-//        override fun onDeviceNameChanged(deviceName: String) {
-//            Log.d("BSK", "deviceName: $deviceName")
-//        }
-//
-//        // Handle rssi changes
-//        override fun onRssiRead(rssi: Int) {
-//            Log.d("BSK", "rssi: $rssi")
-//        }
-//    }
-//
-//    // bleDevice instance to interact with the Bluetooth device
-//    var bleDevice: BleDevice? = null
 }
