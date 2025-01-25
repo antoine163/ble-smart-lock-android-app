@@ -100,7 +100,7 @@ class AutoUnlockService : Service() {
                     bluetoothLeScanner.stopScan(scanCallback)
                     if (scanFilters.isNotEmpty()) {
                         val scanSettings = ScanSettings.Builder()
-                            .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+                            .setScanMode(ScanSettings.SCAN_MODE_LOW_POWER)
                             .build()
                         bluetoothLeScanner.startScan(scanFilters, scanSettings, scanCallback)
                     }
