@@ -18,7 +18,7 @@ Cette application Android, nommée **Ble Smart Key**, permet de déverrouiller d
 
 ## Installation
 
-1. **Télécharger l'APK** : Téléchargez le fichier APK depuis la section des [releases](...).
+1. **Télécharger l'APK** : Téléchargez le fichier APK depuis la section des [releases](https://github.com/antoine163/ble-smart-lock-android-app/releases/download/v1.0.0/ble_smart_key_v1.0.0.apk).
 2. **Installer l'application** : Transférez le fichier APK sur votre appareil Android et installez-le.
 3. **Activer le Bluetooth** : Assurez-vous que le Bluetooth est activé sur votre appareil.
 4. **Lancer l'application** : Ouvrez l'application et commencez à utiliser votre serrure intelligente.
